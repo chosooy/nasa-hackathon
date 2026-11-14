@@ -137,12 +137,26 @@ We believe technology should not make health management more complicated. It sho
 
 Our team's greatest strength is the way we bring together different perspectives and skills. With backgrounds in biology, programming and design, each of us approaches problems differently, but we share the same goal: making space health management more accessible and practical for astronauts.
 
-<!-- Roles: fill in from what each teammate wrote. -->
-| Name | Background | Role in KOOK |
-| --- | --- | --- |
-| Sooyeon Cho | | |
-| Haejun Paik | | |
-| Dahyun Lee | | |
+**Sooyeon Cho** — Development
+
+- Built the KOOK dashboard in HTML, CSS and JavaScript from the Figma designs: onboarding, the crew and ground doctor views, the Health Instruction Library, biomarker details, the calendar and one-on-one chat.
+- Connected the dashboard to the crew data and the biomarker rules, so every reading is classified as Normal, Potential or Urgent.
+- Designed the Mars–Earth data flow.
+  - Readings are buffered on Mars and sent when a biomarker newly turns Potential or Urgent, or every 6 hours.
+  - Files are packed as columns + deltas and compressed with zstd, then arrive 20 minutes later.
+  - Built the test bench that replays it, with voice guidance.
+- Deployed the project on GitHub Pages and wrote the documentation.
+
+**Haejun Paik** — Design
+
+- Brand identity and guidelines.
+- UI design.
+
+**Dahyun Lee** — Biology
+
+- Researched astronaut health and identified key physiological and cognitive biomarkers, considering the unique conditions of space missions.
+- Organized the biomarkers into categories and set reference ranges and risk thresholds that classify health conditions into steps.
+- Turned the biological data into practical health-monitoring features, including personalized recommendations and action guidelines for astronauts.
 
 ## Repository
 
