@@ -1157,3 +1157,18 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 .role-card.space .role-ico { background: rgba(234,254,7,.12); color: var(--yellow); }
 .role-card.earth .role-ico { background: var(--navy-100); color: var(--navy-900); }
 @media (max-width: 900px) { .landing:not(.onboard) { padding-top: 8vh; } .landing:not(.onboard) .logo { height: 96px; } }
+
+/* onboarding Earth baseline card: glass like the other cards (was white) */
+.onboard .baseline.ob-base { background-color: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(14px) saturate(1.15); -webkit-backdrop-filter: blur(14px) saturate(1.15); color: #fff;
+  --navy-400: #C9D3E6; --navy-500: #C9D3E6; --navy-600: #E3E8F1; --muted: #C9D3E6; }
+.ob-base .bl-kicker { color: #8AB4FF; }
+.onboard .ob-base h2, .ob-base .bl-step p { color: #fff; }
+.ob-base .bl-lead { color: #E3E8F1; }
+.ob-base hr { border-top-color: var(--glass-line); }
+.ob-base .bl-step i { background: rgba(255,255,255,.14); }
+.ob-base .bl-btn.light { background: rgba(255,255,255,.12); color: #fff; border-color: var(--glass-line); }
+.ob-base .bl-btn.light:hover { background: rgba(255,255,255,.2); }
+.ob-base .bl-drop { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.3); }
+.ob-base .bl-drop svg { background: rgba(255,255,255,.12); color: #8AB4FF; }
+.ob-base .bl-drop b { color: #fff; }
+.ob-base .bl-drop small { color: #C9D3E6; }
