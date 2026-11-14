@@ -853,3 +853,34 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 /* doctor hero: keep the grey/white title split but give the grey half enough contrast over the Earth photo */
 .hero-doc::before { background: linear-gradient(90deg, rgba(3,8,26,.88) 0%, rgba(3,8,26,.7) 45%, rgba(3,8,26,.2)); }
 .hero-doc .hero-title { color: var(--navy-300); }
+
+/* ---------- Round 28 ---------- */
+/* crew picker: neon yellow only on the selected card; hover = small lift only */
+.crew-choice, .crew-choice:hover { border-color: rgba(255,255,255,.12); box-shadow: none; }
+.crew-choice img { border: 3px solid rgba(255,255,255,.18); }
+.crew-choice:hover { transform: translateY(-4px); }
+.crew-choice.on, .crew-choice.on:hover { border-color: var(--yellow); background: var(--navy-800); box-shadow: 0 0 0 3px rgba(234,254,7,.25); }
+.crew-choice.on img { border-color: var(--yellow); }
+
+/* onboarding fits one screen */
+.landing.onboard { padding-top: 40px; padding-bottom: 24px; }
+.onboard .logo { height: 84px; }
+.onboard .ob-title { margin: 18px 0 18px; }
+.onboard .ob-title h1 { font-size: 40px; }
+.onboard .crew-choice { padding: 18px 12px 16px; gap: 8px; }
+.onboard .crew-choice img { width: 92px; height: 92px; }
+.onboard .crew-choice b { font-size: 20px; }
+.onboard .baseline { margin-top: 18px; padding: 24px 28px; gap: 28px; }
+.onboard .baseline h2 { font-size: 24px; margin: 12px 0 10px; }
+.onboard .baseline .bl-left p { font-size: 14.5px; }
+.onboard .bl-right { gap: 12px; }
+.onboard .bl-btn { height: 54px; font-size: 16px; }
+/* landing keeps the same logo spot as the picker */
+.landing { padding-top: 40px; }
+.landing .logo { height: 84px; }
+
+/* hero: profile photo left, title shifted right (astronaut + doctor share geometry) */
+.hero-crew, .hero-doc { flex-direction: row; align-items: center; justify-content: flex-start; gap: 28px; }
+.hero-face { width: 128px; height: 128px; border-radius: 50%; object-fit: cover; object-position: center 15%; border: 3px solid var(--yellow); flex: none; position: relative; z-index: 1; }
+.hero-text { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; position: relative; z-index: 1; }
+@media (max-width: 700px) { .hero-face { width: 72px; height: 72px; } .hero-crew, .hero-doc { gap: 16px; } }

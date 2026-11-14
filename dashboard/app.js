@@ -21,6 +21,7 @@ const IMG = {
   B: `${ROOT}/assets/image/B_profile.png`,
   C: `${ROOT}/assets/image/C_profile.png`,
   D: `${ROOT}/assets/image/D_profile.png`,
+  doctor: `${ROOT}/assets/image/doctor_profile.png`,
   logo: `${ROOT}/assets/logo/Logo_yellow%20ver..png`,
   earth: `${ROOT}/assets/background/Background_Earth.jpeg`,
   mars: `${ROOT}/assets/background/Background_Mars.jpeg`,
@@ -529,9 +530,10 @@ function crewHome() {
   const n = states.filter((s) => s.status === 'urgent' || s.status === 'potential').length;
   return `${topbar('crew', 'home')}<main class="page">
     <section class="hero-crew"><div class="planet"></div>
-      <span class="chip-day"><i>${ICON.planet}</i>${dayLabel(d)} · MARS</span>
+      <img class="hero-face" src="${IMG[DB.cur]}" alt="Crew ${DB.cur} profile photo">
+      <div class="hero-text"><span class="chip-day"><i>${ICON.planet}</i>${dayLabel(d)} · MARS</span>
       <h1 class="hero-title">Welcome back, <b>Crew ${DB.cur}</b></h1>
-      <p class="hero-sub">${weekday(d)}, ${shortDate(d)}<span class="bar">|</span>${n} thing${n === 1 ? '' : 's'} to check in your health today</p>
+      <p class="hero-sub">${weekday(d)}, ${shortDate(d)}<span class="bar">|</span>${n} thing${n === 1 ? '' : 's'} to check in your health today</p></div>
     </section>
     <section class="card" style="margin-bottom:16px;padding:20px">
       ${weekCalendar(DB.cur, (x) => `#/crew/day/${x}`)}
@@ -825,9 +827,10 @@ function doctorHome() {
   };
   return `${topbar('doctor', 'home')}<main class="page">
     <section class="hero-doc">
-      <span class="chip-day"><i>${ICON.planet}</i>${dayLabel(state.date)} · EARTH</span>
+      <img class="hero-face" src="${IMG.doctor}" alt="Ground doctor profile photo">
+      <div class="hero-text"><span class="chip-day"><i>${ICON.planet}</i>${dayLabel(state.date)} · EARTH</span>
       <h1 class="hero-title">Welcome back, <b>Doctor</b></h1>
-      <p class="hero-sub">${weekday(state.date)}, ${shortDate(state.date)}<span class="bar">|</span>4 astronauts in your care ·${flagged.length} reading${flagged.length === 1 ? '' : 's'} to review today</p>
+      <p class="hero-sub">${weekday(state.date)}, ${shortDate(state.date)}<span class="bar">|</span>4 astronauts in your care · ${flagged.length} reading${flagged.length === 1 ? '' : 's'} to review today</p></div>
     </section>
     <div class="grid g-doc">
       <section class="card soft"><div class="card-head"><h3>Health Instruction</h3><a class="chev" href="#/doctor/instructions" aria-label="Open">›</a></div>
@@ -875,7 +878,6 @@ function crewSelect() {
         <div class="bl-kicker">${ICON.globe}EARTH BASELINE</div>
         <h2>Bring your health data from Earth.</h2>
         <p>To support your care throughout the mission, we collect your health data on Earth as your baseline. The same biomarkers are measured again in space and compared with it, so your care team can see what has changed for you.</p>
-        <div class="bl-chips"><span><b>77</b> biomarkers</span><span>${ICON.tube}Samples</span><span>${ICON.monitor}Cognitive tests</span><span>${ICON.device}Device Outputs</span></div>
       </div>
       <div class="bl-right">
         <div class="bl-step"><i>1</i><p>Download the template to see which biomarkers to prepare and how to measure each one.</p></div>
