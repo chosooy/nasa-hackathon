@@ -647,3 +647,14 @@ p { margin: 0; }
 .home-hazard .hazard-wrap { height: 270px; }
 .home-instr, .home-hazard { height: 836px; }
 @media (max-width: 1000px) { .home-instr, .home-hazard { height: auto; } .home-hazard .hazard-wrap { height: auto; } }
+
+/* ---------- Round 14: biomarker detail = 3 rows, equal heights per row ---------- */
+.detail-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: stretch; margin-bottom: 16px; }
+.detail-row > * { margin: 0; min-width: 0; align-self: stretch; }
+.detail-row .do-now { display: flex; flex-direction: column; }
+.detail-row .do-now details { margin-top: auto; }
+.detail-summary { margin-bottom: 16px; }
+.detail-summary p { font-size: 14px; margin: 8px 0 14px; color: var(--navy-700); }
+.sum-meta { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 12.5px; }
+.sum-meta b { display: block; font-size: 9.5px; font-weight: 700; color: var(--navy-500); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px; }
+@media (max-width: 1000px) { .detail-row { grid-template-columns: 1fr; } }

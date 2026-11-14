@@ -601,20 +601,25 @@ function bioPage(role, b) {
   return `${topbar(role, 'instr')}<main class="page">
     <a class="back" data-back href="${crewSide ? '#/crew/instructions' : '#/doctor/instructions'}" aria-label="Back" title="Back">←</a>
     <div class="title-row"><h1 class="page-title" style="margin:0">${esc(s.name)}</h1><span class="badge solid ${s.status === 'urgent' ? '' : s.status}">${SEV_LABEL[s.status]}</span></div>
-    <p class="page-sub" style="max-width:560px;margin-top:10px">${esc(info.summary || '')}</p>
-    <section class="do-now ${s.status}">
-      <div class="k">${s.status === 'urgent' ? 'DO THIS NOW' : s.status === 'potential' ? 'WHAT TO DO' : 'YOUR STATUS'}</div>
-      <p>${esc(instructionFor(s))}</p>
-      <div class="rec"><b>Latest reading: ${esc(fmtU(s.v, b))}</b><span class="hint">${s.r ? `${dayLabel(s.r.date)} ${s.r.time} UTC${cont ? ' · most recent 5-minute reading' : ''}` : 'Not measured yet'}</span></div>
-      <details><summary>Guidance by state</summary>${info.yellow_instruction ? `<p><b>Potential —</b> ${esc(info.yellow_instruction)}</p>` : ''}${info.red_instruction ? `<p><b>Urgent —</b> ${esc(info.red_instruction)}</p>` : ''}</details>
-    </section>
-    <div class="grid g-detail">
-      <div class="stack">
-        <section class="card"><h3 style="margin-bottom:12px">My past record</h3>${zoneChart(b, pts)}</section>
-        <section class="card measure"><h3>Measure period</h3>
-          <div class="k">CRITERIA</div><p>${esc(raw.numeric || (DB.rules[b] ? `${DB.rules[b].yellowRaw} normal; ${DB.rules[b].redRaw} urgent` : '—'))}</p>
-          <div class="k">RECOMMENDED TIMING</div><p>${esc(raw.timing || s.period || '—')}</p></section>
-      </div>
+    <div style="height:20px"></div>
+    <!-- Row 1: [My past record] [Instruction] -->
+    <div class="detail-row">
+      <section class="card"><h3 style="margin-bottom:12px">My past record</h3>${zoneChart(b, pts)}</section>
+      <section class="do-now ${s.status}">
+        <div class="k">${s.status === 'urgent' ? 'DO THIS NOW' : s.status === 'potential' ? 'WHAT TO DO' : 'YOUR STATUS'}</div>
+        <p>${esc(instructionFor(s))}</p>
+        <div class="rec"><b>Latest reading: ${esc(fmtU(s.v, b))}</b><span class="hint">${s.r ? `${dayLabel(s.r.date)} ${s.r.time} UTC${cont ? ' · most recent 5-minute reading' : ''}` : 'Not measured yet'}</span></div>
+        <details><summary>Guidance by state</summary>${info.yellow_instruction ? `<p><b>Potential —</b> ${esc(info.yellow_instruction)}</p>` : ''}${info.red_instruction ? `<p><b>Urgent —</b> ${esc(info.red_instruction)}</p>` : ''}</details>
+      </section>
+    </div>
+    <!-- Row 2: [Summary] full width -->
+    <section class="card detail-summary"><h3>Summary</h3><p>${esc(info.summary || '—')}</p>
+      <div class="sum-meta"><span><b>Category</b>${esc(s.category)}</span><span><b>Method</b>${esc(s.method || '—')}</span><span><b>Hazards</b>${esc(s.hazards.join(', ') || '—')}</span></div></section>
+    <!-- Row 3: [Measure period] [Earth vs space] -->
+    <div class="detail-row">
+      <section class="card measure"><h3>Measure period</h3>
+        <div class="k">CRITERIA</div><p>${esc(raw.numeric || (DB.rules[b] ? `${DB.rules[b].yellowRaw} normal; ${DB.rules[b].redRaw} urgent` : '—'))}</p>
+        <div class="k">RECOMMENDED TIMING</div><p>${esc(raw.timing || s.period || '—')}</p></section>
       <section class="earth-space"><div class="track"><img src="${IMG.earth}" alt=""><i></i><img src="${IMG.mars}" alt=""></div><h4>Earth vs space</h4><p>${esc(raw.earth || 'Compare in-flight values with the preflight baseline.')}</p></section>
     </div>
   </main>`;
