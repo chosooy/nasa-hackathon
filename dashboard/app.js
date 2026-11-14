@@ -65,6 +65,12 @@ const ICON = {
   user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
   doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.5h6V4M9 10h6M9 14h6"/></svg>',
   open: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 17 17 7M8 7h9v9"/></svg>',
+  globe: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" fill="#07173F"/><path d="M7 6.5c1.6.4 2 1.6 3.4 1.7.9.1 1.1 1 .6 1.8-.7 1.1-2.4.6-3 1.9-.4 1 .5 2.4-.4 3.2-.6.5-1.7-.6-2.3-1.6A8 8 0 0 1 7 6.5zM14.6 4.5c.4 1 1.6 1.2 2.2 2 .8 1.1-.3 2.3.3 3.3.6 1 2 .8 2.7 1.8.3 2.2-.4 4.1-1.6 5.6-.6-.9-.4-2.3-1.4-2.9-1-.6-2.4.1-3-.9-.6-1 .7-2.2.1-3.2-.6-1-2.2-.9-2.5-2-.2-.9.7-1.9 1.6-2.2.5-.2 1.1-.6 1.6-1.5z" fill="#fff"/></svg>',
+  download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>',
+  upload: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>',
+  tube: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3h5M9 3v14a2.5 2.5 0 0 0 5 0V3"/><path d="M9 11h5"/><circle cx="18" cy="7" r="1.6"/></svg>',
+  monitor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4M7 10l2.5 2 3-4 2.5 3"/></svg>',
+  device: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 14a5 5 0 1 1 9 3c-1 1.4-2.5 1.7-2.5 3.5a2 2 0 0 1-3.5 1.2"/><path d="M10 13a2 2 0 1 1 3.5 1.3M4.5 6.5A8 8 0 0 0 3 11"/></svg>',
   pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
   steth: (c = '#EAFE07') => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.2" stroke-linecap="round"><path d="M6 3v6a4 4 0 0 0 8 0V3"/><path d="M10 13v3a5 5 0 0 0 10 0v-3"/><circle cx="20" cy="11" r="2"/></svg>`,
   astro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="6"/><ellipse cx="12" cy="9" rx="3.4" ry="2.4"/><path d="M6 22c0-3 2.7-5 6-5s6 2 6 5" stroke-linecap="round"/></svg>',
@@ -855,11 +861,27 @@ function doctorCrew(c) {
 
 /* ---------------- onboarding: which crew member are you? ---------------- */
 function crewSelect() {
-  return `<main class="landing"><div class="inner">
+  const sel = state.pick || state.me;
+  return `<main class="landing onboard"><div class="inner wide">
     <img class="logo" src="${IMG.logo}" alt="KOOK — Kinetic Observation &amp; Optimal Keel">
     <h1>Who's checking in?</h1>
-    <div class="crew-choose">${CREWS.map((c) => `<button type="button" class="crew-choice ${c === state.me ? 'last' : ''}" data-me="${c}">
+    <div class="crew-choose">${CREWS.map((c) => `<button type="button" class="crew-choice ${c === sel ? 'on' : ''}" data-pick="${c}" aria-pressed="${c === sel}">
       <img src="${IMG[c]}" alt=""><b>Crew ${c}</b></button>`).join('')}</div>
+    <section class="baseline">
+      <div class="bl-left">
+        <div class="bl-kicker">${ICON.globe}EARTH BASELINE</div>
+        <h2>Bring your health data from Earth.</h2>
+        <p>To support your care throughout the mission, we collect your health data on Earth as your baseline. The same biomarkers are measured again in space and compared with it, so your care team can see what has changed for you.</p>
+        <div class="bl-chips"><span><b>77</b> biomarkers</span><span>${ICON.tube}Samples</span><span>${ICON.monitor}Cognitive tests</span><span>${ICON.device}Device Outputs</span></div>
+      </div>
+      <div class="bl-right">
+        <div class="bl-step"><i>1</i><p>Download the template to see which biomarkers to prepare and how to measure each one.</p></div>
+        <a class="bl-btn light" href="${ROOT}/ui/baseline_template.csv" download="baseline_template.csv">${ICON.download}Download baseline template (.csv)</a>
+        <div class="bl-step"><i>2</i><p>Fill in your Earth results and upload the file.</p></div>
+        <button type="button" class="bl-btn primary" data-upload-done>${ICON.upload}Upload baseline records (.csv)</button>
+      </div>
+    </section>
+    <button type="button" class="btn yellow-cta" data-me="${sel}">Continue as Crew ${sel} →</button>
     <a class="test" href="#/">← Back</a>
   </div></main>`;
 }
@@ -873,7 +895,6 @@ function landing() {
       <a class="role-card space" href="#/select"><span class="ws">SPACE WORKSPACE</span><span class="orb"></span><h2>I'm an astronaut</h2><p>View your schedule, health instructions and conversations with your ground doctor.</p></a>
       <a class="role-card earth" href="#/doctor"><span class="ws">EARTH WORKSPACE</span><span class="orb"></span><h2>I'm a doctor</h2><p>Review crew schedules, health instructions and conversations with astronauts.</p></a>
     </div>
-    <a class="test" href="#/crew">Test without Account</a>
   </div></main>`;
 }
 
@@ -965,6 +986,8 @@ document.addEventListener('click', (e) => {
   else if (d.rec) { state.recCrew = (state.recCrew || 0) + +d.rec; rerender(); }
   else if (d.car) { const k = d.carKey || 'carousel'; state[k] = (state[k] || 0) + +d.car; rerender(); }
   else if (d.attachNote !== undefined) toast('File attachments are not available yet. They will be added in a later version.');
+  else if (d.pick) { state.pick = d.pick; rerender(); }
+  else if (d.uploadDone !== undefined) toast(`Crew ${state.pick || state.me}'s Earth baseline records were already submitted. You can't upload them again.`);
   else if (d.me) { state.me = d.me; store.set('me', d.me); state.crewCarousel = 0; location.hash = '#/crew'; }
   else if (d.crew) { state.docCrew = d.crew; state.carousel = 0; rerender(); }
   else if (d.modal) openModal(d.modal, d.bio);
