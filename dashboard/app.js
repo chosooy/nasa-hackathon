@@ -730,44 +730,57 @@ function profilePage(role) {
 }
 
 /* ================= DOCTOR (EARTH) ================= */
-function libraryItems(states) {
-  const sA = Object.fromEntries(states.map((s) => [s.b, s]));
+/** Per biomarker across all crews: worst state, crews flagged Urgent/Potential, and any measured crew. */
+function crewMatrix() {
+  const by = {};
+  CREWS.forEach((c) => statesFor(c).forEach((x) => { (by[x.b] = by[x.b] || []).push({ c, s: x }); }));
+  return (b) => {
+    const rows = (by[b] || []).filter((r) => r.s.status !== 'nodata');
+    const worst = rows.reduce((m, r) => (SEV[r.s.status] > SEV[m] ? r.s.status : m), 'nodata');
+    const flagged = rows.filter((r) => r.s.status === 'urgent' || r.s.status === 'potential').sort((a, z) => SEV[z.s.status] - SEV[a.s.status]);
+    const top = flagged[0] || rows[0];
+    return { worst, flagged, rows, top };
+  };
+}
+const crewChips = (list) => `<div class="crew-chips">${list.map((r) => `<span class="crew-chip" title="Crew ${r.c} · ${esc(fmtU(r.s.v, r.s.b))} · ${SEV_LABEL[r.s.status]}"><img src="${IMG[r.c]}" alt="">Crew ${r.c}</span>`).join('')}</div>`;
+
+function libraryItems() {
+  const m = crewMatrix();
   const base = Object.values(DB.info).map((i) => {
-    const s = sA[i.biomarker];
-    const st = s ? s.status : 'nodata';
-    return { b: i.biomarker, category: i.category, status: st, forCrew: st === 'urgent' || st === 'potential', text: st === 'urgent' || st === 'potential' ? instructionFor(s) : i.summary };
+    const x = m(i.biomarker);
+    const flagged = x.flagged.length > 0;
+    return { b: i.biomarker, category: i.category, status: x.worst, flagged: x.flagged, forCrew: flagged, text: flagged ? withCrew(x.flagged[0].c, () => instructionFor(x.flagged[0].s)) : i.summary };
   });
-  const mine = libExtra().map((x) => ({ b: x.title, category: '', status: 'mine', forCrew: false, mine: true, text: x.text }));
+  const mine = libExtra().map((x) => ({ b: x.title, category: '', status: 'mine', flagged: [], forCrew: false, mine: true, text: x.text }));
   return [...mine, ...base].sort((a, z) => (SEV[z.status] || 0) - (SEV[a.status] || 0) || a.b.localeCompare(z.b));
 }
-function libraryList(states, limit, crew = 'A') {
+function libraryList(limit) {
   const f = state.libFilter, q = state.libQuery.toLowerCase();
-  const items = libraryItems(states).filter((i) => (f === 'all' || (f === 'potential' && i.status === 'potential') || (f === 'urgent' && i.status === 'urgent')) && (!q || (i.b + i.category + i.text).toLowerCase().includes(q)));
+  const items = libraryItems().filter((i) => (f === 'all' || (f === 'potential' && i.status === 'potential') || (f === 'urgent' && i.status === 'urgent')) && (!q || (i.b + i.category + i.text).toLowerCase().includes(q)));
   const chips = [['all', 'All'], ['potential', 'Potential'], ['urgent', 'Urgent']].map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" data-lf="${k}">${l}</button>`).join('');
   return `<form class="search" data-search="libQuery"><label class="field" style="background:#fff">${ICON.search}<input name="q" value="${esc(state.libQuery)}" placeholder="Search a biomarker, category or protocol…"></label></form>
     <div class="chips" style="margin-bottom:14px">${chips}</div>
     <div class="items lib" style="max-height:${limit ? '560px' : 'none'};overflow-y:auto">${items.map((i) => `<a class="item ${i.forCrew ? 'care ' + i.status : ''}" href="${i.mine ? '#/doctor/instructions' : '#/doctor/bio/' + enc(i.b)}">
-      ${i.forCrew ? `<div class="tags"><span class="badge match">Matches Crew ${crew}</span></div>` : ''}
+      ${i.forCrew ? crewChips(i.flagged) : ''}
       <div class="ttl">${esc(nice(i.b))}<span>${esc(i.category)}</span></div><div class="desc">${esc(i.text)}</div></a>`).join('') || '<div class="empty">Nothing matches.</div>'}</div>`;
 }
 /** Doctor › Health Instruction: the full instruction library, two columns, no status tags. */
 function doctorLibraryPage() {
   const q = state.libQuery.toLowerCase();
   const f = state.libAtt || 'all';
-  const crew = state.docCrew || 'A';
-  const byB = Object.fromEntries(statesFor(crew).map((x) => [x.b, x]));          // selected crew's state per biomarker
-  const mine = libExtra().map((x) => ({ b: x.title, category: 'Added instruction', method: '', summary: x.text, mine: true, status: 'nodata' }));
-  const lib = [...mine, ...Object.values(DB.info).map((i) => ({ b: i.biomarker, category: i.category, method: i.method, summary: i.summary, yi: i.yellow_instruction, ri: i.red_instruction, status: byB[i.biomarker] ? byB[i.biomarker].status : 'nodata', s: byB[i.biomarker] }))]
+  const m = crewMatrix();                                   // every crew, worst state per biomarker
+  const mine = libExtra().map((x) => ({ b: x.title, category: 'Added instruction', method: '', summary: x.text, mine: true, status: 'nodata', x: { flagged: [], rows: [] } }));
+  const lib = [...mine, ...Object.values(DB.info).map((i) => { const x = m(i.biomarker); return { b: i.biomarker, category: i.category, method: i.method, summary: i.summary, yi: i.yellow_instruction, ri: i.red_instruction, status: x.worst, x }; })]
     .filter((i) => !q || (i.b + i.category + i.summary + (i.yi || '') + (i.ri || '')).toLowerCase().includes(q));
   const cnt = (k) => lib.filter((i) => i.status === k).length;
   const chip = (k, l) => `<button class="chip ${f === k ? 'on' : ''}" data-la="${k}">${k !== 'all' ? `<i class="dot ${k}"></i>` : ''}${l}<span class="n">${k === 'all' ? lib.length : cnt(k)}</span></button>`;
   const HEAD = { urgent: 'URGENT', potential: 'POTENTIAL', normal: 'NORMAL', nodata: 'NOT MEASURED' };
   const card = (i) => {
     const tag = i.mine ? 'article' : `a href="#/doctor/bio/${enc(i.b)}"`;
-    const crewTag = i.status === 'urgent' || i.status === 'potential' ? `<span class="badge match">Matches Crew ${crew}</span>` : i.status === 'normal' ? `<span class="badge normal">Crew ${crew} · Normal</span>` : '';
-    const val = i.s && i.s.r ? `<div class="v">${esc(fmtU(i.s.v, i.b))}<small style="color:var(--navy-400)">Crew ${crew} · ${dayLabel(i.s.r.date)} ${i.s.r.time} UTC</small></div>` : '';
+    const crewTag = i.x.flagged.length ? crewChips(i.x.flagged) : '';
+    const val = '';
     return `<${tag} class="alert lib-row">
-      <div class="top"><div class="nm">${crewTag ? `<div class="tags">${crewTag}</div>` : ''}<h4>${esc(nice(i.b))}</h4><small>${esc(i.category)}${i.method ? ' · ' + esc(i.method) : ''}</small></div>${val}${i.mine ? '' : '<span class="chev">›</span>'}</div>
+      <div class="top"><div class="nm">${crewTag}<h4>${esc(nice(i.b))}</h4><small>${esc(i.category)}${i.method ? ' · ' + esc(i.method) : ''}</small></div>${val}${i.mine ? '' : '<span class="chev">›</span>'}</div>
       <div class="body st-${i.status}"><div class="k">SUMMARY</div><p>${esc(i.summary)}</p>
         ${i.yi || i.ri ? `<div class="lib-ins-row">${i.yi ? `<div class="lib-ins potential"><b>If Potential</b>${esc(i.yi)}</div>` : ''}${i.ri ? `<div class="lib-ins urgent"><b>If Urgent</b>${esc(i.ri)}</div>` : ''}</div>` : ''}</div>
     </${i.mine ? 'article' : 'a'}>`;
@@ -775,13 +788,12 @@ function doctorLibraryPage() {
   const sections = ['urgent', 'potential', 'normal', 'nodata'].filter((k) => f === 'all' || f === k).map((k) => {
     const items = lib.filter((i) => i.status === k);
     if (!items.length) return '';
-    if (k === 'normal') return `<div class="sev-h normal">${HEAD[k]} · ${items.length}</div><div class="normal-grid">${items.map((i) => `<a class="nrow" href="#/doctor/bio/${enc(i.b)}"><div class="nm"><b>${esc(nice(i.b))}</b><small>${esc(i.category)} · ${esc(i.method)}</small></div><div class="v">${esc(fmtU(i.s.v, i.b))}<small>Crew ${crew} · ${dayLabel(i.s.r.date)} ${i.s.r.time} UTC</small></div><span class="chev">›</span></a>`).join('')}</div>`;
+    if (k === 'normal') return `<div class="sev-h normal">${HEAD[k]} · ${items.length}</div><div class="normal-grid">${items.map((i) => `<a class="nrow" href="#/doctor/bio/${enc(i.b)}"><div class="nm"><b>${esc(nice(i.b))}</b><small>${esc(i.category)} · ${esc(i.method)}</small></div><div class="v">All crews<small>${i.x.rows.length} measured · Normal</small></div><span class="chev">›</span></a>`).join('')}</div>`;
     return `<div class="sev-h ${k}">${HEAD[k]} · ${items.length}</div>${items.map(card).join('')}`;
   }).join('');
   return `${topbar('doctor', 'instr')}<main class="page dark">
     <div class="title-row"><h1 class="page-title" style="margin:0">Health Instruction</h1><button class="edit-btn" type="button" data-modal="library" aria-label="Add instruction" title="Add instruction">${ICON.pencil}</button></div>
-    <p class="page-sub" style="margin-top:8px">The full instruction library, matched to Crew ${crew}'s latest readings — most urgent first.</p>
-    <div class="crew-pick">${CREWS.map((c) => `<button type="button" class="${c === crew ? 'on' : ''}" data-crew="${c}" aria-pressed="${c === crew}"><img class="avatar" src="${IMG[c]}" alt="">Crew ${c}</button>`).join('')}</div>
+    <p class="page-sub" style="margin-top:8px">The full instruction library, matched to every crew's latest readings — most urgent first.</p>
     ${searchBar('libQuery', 'Search a biomarker, category or protocol…', true)}
     <div class="chips">${chip('all', 'All')}${chip('urgent', 'Urgent')}${chip('potential', 'Potential')}${chip('normal', 'Normal')}</div>
     ${sections || '<div class="empty">Nothing matches your search.</div>'}
@@ -825,7 +837,7 @@ function doctorHome() {
     </section>
     <div class="grid g-doc">
       <section class="card soft"><div class="card-head"><h3>Health Instruction</h3><a class="chev" href="#/doctor/instructions" aria-label="Open">›</a></div>
-        ${libraryList(states, true, sel)}
+        ${libraryList(true)}
         <button class="btn navy block doc-add" data-modal="library">+ &nbsp;Add instruction</button></section>
       <section class="card">
         <div class="card-head"><h3>Crew hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div>
