@@ -642,3 +642,8 @@ p { margin: 0; }
 .crew-bio { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--navy-100); }
 .home-instr, .home-hazard { height: 896px; }
 @media (max-width: 1000px) { .home-instr, .home-hazard { height: auto; } .home-hazard .hazard-wrap { height: auto; } }
+
+/* ---------- Round 13: smaller hazard donut with profile photo ---------- */
+.home-hazard .hazard-wrap { height: 270px; }
+.home-instr, .home-hazard { height: 836px; }
+@media (max-width: 1000px) { .home-instr, .home-hazard { height: auto; } .home-hazard .hazard-wrap { height: auto; } }

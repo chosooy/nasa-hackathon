@@ -368,10 +368,10 @@ function donutSvg(hz, size, centerSvg) {
   return g;
 }
 function hazardBoard(states) {
-  const size = 320;
+  const size = 260;
   const hz = hazardStatus(states);
-  const toCheck = states.filter((s) => s.status === 'urgent' || s.status === 'potential').length;
-  const inner = donutSvg(hz, size, (C) => `<text x="${C}" y="${C + 8}" font-size="44" font-weight="700" text-anchor="middle" fill="#EAFE07">${toCheck}</text><text x="${C}" y="${C + 30}" font-size="11" font-weight="600" text-anchor="middle" fill="#fff">TO CHECK</text>`);
+  // Centre of the ring: Crew A's profile photo.
+  const inner = donutSvg(hz, size, (C, r) => `<clipPath id="hzface"><circle cx="${C}" cy="${C}" r="${r}"/></clipPath><image href="${IMG.A}" x="${C - r}" y="${C - r}" width="${r * 2}" height="${r * 2 * 1.33}" preserveAspectRatio="xMidYMin slice" clip-path="url(#hzface)"/>`);
   return `<svg class="donut" viewBox="0 0 ${size} ${size}" width="100%" style="max-width:${size}px" role="img" aria-label="Hazard board">${inner}</svg>`;
 }
 function miniDonut(states, c) {
