@@ -8,7 +8,7 @@
 const ROOT = '..';
 const PATHS = {
   events: `${ROOT}/data/calendar/events.csv`,
-  crewA: `${ROOT}/data/crew/A_hotdata.csv`,
+  crewA: `${ROOT}/data/crew/A_hotdata_all_SBP_urgent.csv`,
   rules: `${ROOT}/data/biomarker/biomarker.csv`,
   raw: `${ROOT}/data/biomarker/raw%20biomarker.csv`,
   instr: `${ROOT}/data/health_instruction/health_instruction.csv`,
@@ -189,15 +189,18 @@ function buildModel(raw) {
   });
   DB.bios = Object.keys(DB.series);
 }
+/** Latest reading at or before the dashboard's "now": the current sim time on today, end of day otherwise.
+ *  Status, hazard board and instructions all use this latest reading. */
+const cutoffFor = (date) => (date === TODAY ? simNow().toISOString().slice(11, 16) : '23:59');
 function valueAt(b, date) {
-  if (DB.continuous.has(b)) {
-    const d = DB.daily[b][date];
-    if (!d) return null;
-    const last = DB.series[b].filter((p) => p.date === date).pop();
-    return { v: d.mean, date, time: last ? last.time : '23:55', n: d.n, flag: d.flag };
-  }
+  const cut = date + ' ' + cutoffFor(date);
   let hit = null;
-  for (const p of DB.series[b]) { if (p.date <= date) hit = p; else break; }
+  for (const p of DB.series[b]) { if (p.date + ' ' + p.time <= cut) hit = p; else break; }
+  if (!hit) return null;
+  if (DB.continuous.has(b)) {
+    const d = DB.daily[b][hit.date];
+    return { ...hit, n: d ? d.n : 1, flag: d ? d.flag : 0 };
+  }
   return hit;
 }
 function dailyPoints(b, upto) {
@@ -253,8 +256,8 @@ const notes = () => store.get('notesA', []);
 const libExtra = () => store.get('library', []);
 
 /* ---------------- charts ---------------- */
-const ZC = { urgent: '#FDE7DF', potential: '#F4FFB0', normal: '#E2F3E8' };
-const ZL = { urgent: '#E43700', potential: '#C27400', normal: '#1B7F5A' };
+const ZC = { urgent: '#FDE7DF', potential: '#F4FFB0', normal: '#E6EEF8' };
+const ZL = { urgent: '#E43700', potential: '#C27400', normal: '#0042A6' };
 function zoneBands(b, lo, hi, n = 90) {
   const out = []; const step = (hi - lo) / n;
   for (let i = 0; i < n; i++) {
@@ -411,21 +414,17 @@ function weekCalendar(crew, dayHref) {
   // Hazard tags turn neon yellow (potential) or red (urgent) from the crew's current biomarker status.
   const hzSt = Object.fromEntries((crew === 'A' ? hazardStatus(allStates(state.date)) : []).map((h) => [h.key, h.status]));
   const chips = ['all', ...HAZARDS.map((h) => h.key)].map((k) => {
-    const sev = k !== 'all' && hzSt[k] && hzSt[k] !== 'normal' ? `hz-${hzSt[k]}` : '';
+    const sev = k !== 'all' && hzSt[k] ? `hz-${hzSt[k]}` : '';
     return `<button class="chip ${sev} ${state.hazardFilter === k ? 'on' : ''}" data-hz="${k}">${k === 'all' ? 'All' : HAZARDS.find((h) => h.key === k).label}</button>`;
   }).join('');
   const cols = days.map((d) => {
     const evs = eventsFor(crew, d);
-    const tst = crew === 'A' ? valueAt('Total Sleep Time', d) : null;
-    const sleep = crew === 'A' ? (tst && tst.date === d
-      ? `<div class="ev sleep"><div class="t">07:00 · Sleep</div><b>${fmt(tst.v, 'Total Sleep Time')} h</b></div>`
-      : `<div class="ev sleep"><div class="t">Sleep</div><b style="font-size:11px">No data yet</b></div>`) : '';
     const list = evs.slice(0, 3).map((e) => {
       const dim = state.hazardFilter !== 'all' && !e.hazards.includes(state.hazardFilter);
       const kind = e.category === 'Spacewalk' ? 'eva' : e.category === 'Health' ? 'health' : '';
       return `<div class="ev ${kind} ${dim ? 'dim' : ''}" title="${esc(`${e.start_time}–${e.end_time} · ${e.title} · ${e.category} · ${e.hazards.join(', ')}`)}"><div class="t">${e.start_time}</div>${esc(e.title)}</div>`;
     }).join('');
-    return `<a class="dayc ${d === state.date ? 'today' : ''}" href="${dayHref(d)}"><div class="dn">${WD[toD(d).getUTCDay()]} ${String(toD(d).getUTCDate()).padStart(2, '0')}</div><div class="dd">${dayLabel(d)}</div>${sleep}${list}${evs.length > 3 ? `<div class="ev-more">+${evs.length - 3} more</div>` : ''}</a>`;
+    return `<a class="dayc ${d === state.date ? 'today' : ''}" href="${dayHref(d)}"><div class="dn">${WD[toD(d).getUTCDay()]} ${String(toD(d).getUTCDate()).padStart(2, '0')}</div><div class="dd">${dayLabel(d)}</div>${list}${evs.length > 3 ? `<div class="ev-more">+${evs.length - 3} more</div>` : ''}</a>`;
   }).join('');
   const s = toD(state.week), e = toD(days[6]);
   const range = `${MON[s.getUTCMonth()]} ${String(s.getUTCDate()).padStart(2, '0')}–${s.getUTCMonth() !== e.getUTCMonth() ? MON[e.getUTCMonth()].slice(0, 3) + ' ' : ''}${String(e.getUTCDate()).padStart(2, '0')}, ${e.getUTCFullYear()}`;
@@ -598,7 +597,7 @@ function bioPage(role, b) {
     <section class="do-now ${s.status}">
       <div class="k">${s.status === 'urgent' ? 'DO THIS NOW' : s.status === 'potential' ? 'WHAT TO DO' : 'YOUR STATUS'}</div>
       <p>${esc(instructionFor(s))}</p>
-      <div class="rec"><b>Latest reading: ${esc(fmtU(s.v, b))}</b><span class="hint">${s.r ? `${dayLabel(s.r.date)} ${s.r.time} UTC${cont ? ` · daily average of ${s.r.n} readings` : ''}` : 'Not measured yet'}</span></div>
+      <div class="rec"><b>Latest reading: ${esc(fmtU(s.v, b))}</b><span class="hint">${s.r ? `${dayLabel(s.r.date)} ${s.r.time} UTC${cont ? ' · most recent 5-minute reading' : ''}` : 'Not measured yet'}</span></div>
       <details><summary>Guidance by state</summary>${info.yellow_instruction ? `<p><b>Potential —</b> ${esc(info.yellow_instruction)}</p>` : ''}${info.red_instruction ? `<p><b>Urgent —</b> ${esc(info.red_instruction)}</p>` : ''}</details>
     </section>
     <div class="grid g-detail">
@@ -878,8 +877,16 @@ window.addEventListener('hashchange', () => {
   closeModal(); render(); window.scrollTo(0, 0);
 });
 window.addEventListener('storage', (e) => { if (e.key && e.key.startsWith('kook.')) rerender(); });
+let lastSlot = Math.floor(simNow().getTime() / 300000);
 setInterval(() => {
   const c = $('#clock'); if (c) c.textContent = `UTC ${simStamp()}`;
+  // A new 5-minute reading becomes "latest": refresh today's view unless the viewer is typing or in a dialog.
+  const slot = Math.floor(simNow().getTime() / 300000);
+  if (slot !== lastSlot) {
+    lastSlot = slot;
+    const busy = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+    if (state.date === TODAY && !busy && !$('#modal-root').innerHTML && route().parts[0]) rerender();
+  }
   // Day rollover (incl. Nov 30 → Nov 1 loop): move "today" and follow it if the viewer was on today.
   const now = simNow().toISOString().slice(0, 10);
   if (now !== TODAY) {
