@@ -722,3 +722,9 @@ a.lib-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,
 .edit-btn { width: 40px; height: 40px; border-radius: 50%; display: inline-grid; place-items: center; background: rgba(255,255,255,.12); color: #fff; flex: none; }
 .edit-btn:hover { background: var(--yellow); color: var(--navy-900); }
 .edit-btn svg { width: 18px; height: 18px; }
+
+/* ---------- Round 20: day cards scroll inside, no "+N more" ---------- */
+.dc-list, .bd-list { overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-right: 2px; }
+.dc-list::-webkit-scrollbar, .bd-list::-webkit-scrollbar { width: 4px; }
+.dc-list::-webkit-scrollbar-thumb { background: var(--navy-300); border-radius: 4px; }
+.bd-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.35); border-radius: 4px; }

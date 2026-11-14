@@ -435,8 +435,8 @@ function weekCalendar(crew, dayHref) {
     const evSt = e.hazards.map((h) => hzSt[h]).filter(Boolean).reduce((m, x) => (SEV[x] > SEV[m] ? x : m), 'nodata');
     return `<div class="ev st-${evSt} ${dim ? 'dim' : ''}" title="${esc(`${e.start_time}–${e.end_time} · ${e.title} · ${e.category} · ${e.hazards.join(', ')}`)}"><div class="t">${e.start_time}</div>${esc(e.title)}</div>`;
   };
-  const MAX = 5;
-  const evList = (evs) => `${evs.slice(0, MAX).map(evCard).join('')}${evs.length > MAX ? `<div class="ev-more">+${evs.length - MAX} more</div>` : ''}`;
+  // Every event is listed; each day card scrolls inside itself.
+  const evList = (evs) => evs.map(evCard).join('');
   const fEvs = eventsFor(crew, focus);
   const big = `<div class="big-day">
       <div class="bd-head"><div class="lbl">${focus === TODAY ? 'TODAY' : weekday(focus).toUpperCase()}</div><div class="big">${dayLabel(focus)}</div><div class="dt">${weekday(focus)}, ${shortDate(focus)}</div></div>
