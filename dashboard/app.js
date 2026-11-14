@@ -1,5 +1,5 @@
 /* KOOK dashboard — Crew A, November 2026. Layout follows Figma "최종" frames.
- * Data: ../data/calendar/events.csv, ../data/crew/A_hotdata.csv, ../data/biomarker/biomarker.csv,
+ * Data: ../data/calendar/events.csv, ../data/crew/{A,B,C,D}_hotdata.csv, ../data/biomarker/biomarker.csv,
  *       ../data/biomarker/raw biomarker.csv, ../data/health_instruction/health_instruction.csv
  */
 (() => {
@@ -8,7 +8,10 @@
 const ROOT = '..';
 const PATHS = {
   events: `${ROOT}/data/calendar/events.csv`,
-  crewA: `${ROOT}/data/crew/A_hotdata_hazard_mix.csv`,
+  crewA: `${ROOT}/data/crew/A_hotdata.csv`,
+  crewB: `${ROOT}/data/crew/B_hotdata.csv`,
+  crewC: `${ROOT}/data/crew/C_hotdata.csv`,
+  crewD: `${ROOT}/data/crew/D_hotdata.csv`,
   rules: `${ROOT}/data/biomarker/biomarker.csv`,
   raw: `${ROOT}/data/biomarker/raw%20biomarker.csv`,
   instr: `${ROOT}/data/health_instruction/health_instruction.csv`,
@@ -131,7 +134,15 @@ const test1 = (p, v) => (p.op === 'range' ? v >= p.lo && v <= p.hi : p.op === '<
 const matches = (rule, v) => rule.some((p) => test1(p, v));
 
 /* ---------------- data model ---------------- */
-const DB = { events: [], rules: {}, info: {}, raw: {}, series: {}, daily: {}, continuous: new Set(), bios: [] };
+const DB = { events: [], rules: {}, info: {}, raw: {}, crews: {}, cur: 'A' };
+// Readings live per crew; the accessors below always point at the current crew (DB.cur).
+['series', 'daily', 'continuous', 'bios'].forEach((k) => Object.defineProperty(DB, k, {
+  get: () => (DB.crews[DB.cur] || { series: {}, daily: {}, continuous: new Set(), bios: [] })[k],
+}));
+/** Run fn with another crew's readings as the current data (restores the previous crew afterwards). */
+function withCrew(c, fn) { const prev = DB.cur; DB.cur = c; try { return fn(); } finally { DB.cur = prev; } }
+const hasCrew = (c) => !!DB.crews[c];
+const statesFor = (c, date = state.date) => (hasCrew(c) ? withCrew(c, () => allStates(date)) : []);
 
 function statusOf(b, v) {
   if (v == null || Number.isNaN(v)) return 'nodata';
@@ -167,17 +178,21 @@ function buildModel(raw) {
   raw.rules.forEach((r) => { DB.rules[r.biomarker] = { yellow: parseRule(r.yellow), red: parseRule(r.red), yellowRaw: r.yellow, redRaw: r.red, unit: r.unit }; });
   raw.instr.forEach((r) => { DB.info[r.biomarker] = { ...r, summary: fixText(r.summary), hazards: (r.hazard || '').split(',').map((s) => s.trim()).filter(Boolean) }; });
   raw.raw.forEach((r) => { DB.raw[(r.Biomarker || '').trim()] = { earth: fixText(r.earth_space_comparison), numeric: fixText(r.Numeric_criteria_or_limitation), timing: fixText(r.Recommended_timing) }; });
+  CREWS.forEach((c) => { if (raw['crew' + c]) DB.crews[c] = buildCrew(raw['crew' + c]); });
+}
+function buildCrew(rows) {
+  const crew = { series: {}, daily: {}, continuous: new Set(), bios: [] };
   const s = {};
-  raw.crewA.forEach((r) => {
+  rows.forEach((r) => {
     const v = parseFloat(r.figure);
     if (!r.biomarker || Number.isNaN(v)) return;
     (s[r.biomarker] = s[r.biomarker] || []).push({ date: r.date, time: r.time, v });
   });
   Object.entries(s).forEach(([b, arr]) => {
     arr.sort((a, z) => (a.date + a.time).localeCompare(z.date + z.time));
-    DB.series[b] = arr;
+    crew.series[b] = arr;
     if (arr.length > 200) {
-      DB.continuous.add(b);
+      crew.continuous.add(b);
       const by = {};
       arr.forEach((p) => {
         const d = (by[p.date] = by[p.date] || { sum: 0, n: 0, min: Infinity, max: -Infinity, flag: 0 });
@@ -185,10 +200,11 @@ function buildModel(raw) {
         if (statusOf(b, p.v) !== 'normal') d.flag++;
       });
       Object.values(by).forEach((d) => { d.mean = d.sum / d.n; });
-      DB.daily[b] = by;
+      crew.daily[b] = by;
     }
   });
-  DB.bios = Object.keys(DB.series);
+  crew.bios = Object.keys(crew.series);
+  return crew;
 }
 /** Latest reading at or before the dashboard's "now": the current sim time on today, end of day otherwise.
  *  Status, hazard board and instructions all use this latest reading. */
@@ -424,7 +440,7 @@ function weekCalendar(crew, dayHref) {
   const focus = state.date;
   const days = [...Array(6)].map((_, i) => addDays(focus, i + 1));
   // Hazard tags use the crew's current state: Normal blue, Potential neon yellow, Urgent red.
-  const hzSt = Object.fromEntries((crew === 'A' ? hazardStatus(allStates(state.date)) : []).map((h) => [h.key, h.status]));
+  const hzSt = Object.fromEntries((hasCrew(crew) ? hazardStatus(statesFor(crew)) : []).map((h) => [h.key, h.status]));
   const chips = ['all', ...HAZARDS.map((h) => h.key)].map((k) => {
     const sev = k !== 'all' && hzSt[k] ? `hz-${hzSt[k]}` : '';
     return `<button class="chip ${sev} ${state.hazardFilter === k ? 'on' : ''}" data-hz="${k}">${k === 'all' ? 'All' : HAZARDS.find((h) => h.key === k).label}</button>`;
@@ -552,34 +568,34 @@ function attentionPage(role) {
   const chip = (k, l) => `<button class="chip ${state.attFilter === k ? 'on' : ''}" data-af="${k}"><i class="dot ${k}"></i>${l}<span class="n">${cnt(k)}</span></button>`;
   return `${topbar(role, 'instr')}<main class="page dark">
     <h1 class="page-title">Health Instruction</h1>
-    <p class="page-sub">${role === 'crew' ? 'Your biomarkers, most urgent first. Tap one to see what it means and your past records.' : "Crew A's biomarkers, most urgent first. Tap one to see the guidance and past records."}</p>
+    <p class="page-sub">${role === 'crew' ? 'Your biomarkers, most urgent first. Tap one to see what it means and your past records.' : `Crew ${DB.cur}'s biomarkers, most urgent first. Tap one to see the guidance and past records.`}</p>
     ${searchBar('query', 'Search a biomarker, a category or a symptom…', true)}
     <div class="chips"><button class="chip ${state.attFilter === 'all' ? 'light' : ''}" data-af="all">All<span class="n">${states.length}</span></button>${chip('urgent', 'Urgent')}${chip('potential', 'Potential')}${chip('normal', 'Normal')}</div>
     ${role === 'crew' && notes().length && state.attFilter === 'all' ? `<div class="sev-h notes">DOCTOR'S NOTES · ${notes().length}</div>${notes().slice().reverse().map((n) => `<div class="alert"><div class="top"><div class="nm"><div class="lbl" style="color:var(--electric)">GROUND DOCTOR</div><h4>${esc(n.title)}</h4><small>${n.bio ? esc(nice(n.bio)) + ' · ' : ''}${dayLabel(n.date)} ${n.time} UTC</small></div></div><div class="body" style="background:var(--blue-tint)"><div class="k">INSTRUCTION</div>${esc(n.text)}</div></div>`).join('')}` : ''}
     ${list || '<div class="empty">Nothing matches your search.</div>'}
   </main>`;
 }
-function dayPage(role, date) {
+function dayPage(role, date, crew = 'A') {
   date = clampData(date);
   const states = allStates(date);
   const crewSide = role === 'crew';
-  const dayBase = crewSide ? '#/crew/day' : '#/doctor/day/A';
+  const dayBase = crewSide ? '#/crew/day' : `#/doctor/day/${crew}`;
   const bioBase = crewSide ? '#/crew/bio' : '#/doctor/bio';
   const tst = valueAt('Total Sleep Time', date);
   const ok = tst && tst.date === date;
   const st = ok ? statusOf('Total Sleep Time', tst.v) : 'nodata';
   const core = SLEEP_CORE.map((b) => states.find((s) => s.b === b)).filter(Boolean);
-  const evs = eventsFor('A', date);
+  const evs = eventsFor(crew, date);
   // Other health checks: Urgent > Potential > Normal (states are already severity-sorted).
   const others = states.filter((s) => !SLEEP_CORE.includes(s.b) && s.status !== 'nodata');
   const bySev = ['urgent', 'potential', 'normal'].map((k) => [k, others.filter((s) => s.status === k)]).filter(([, ss]) => ss.length);
   const msg = { normal: ['Your sleep looks normal', 'Sleep time is within the normal range.'], potential: ['Your sleep needs attention', 'Sleep time is outside the normal range.'], urgent: ['Your sleep is severely short', 'Sleep time is in the urgent range.'], nodata: ['No sleep record yet', 'Sleep is recorded each morning at 07:00.'] }[st];
   const coreRow = (s) => `<a class="row" href="${bioBase}/${enc(s.b)}"><div class="nm"><b>${esc(s.name)}</b><small>${s.r ? `${dayLabel(s.r.date)} ${s.r.time} · ${SLEEP_SUB[s.b]}` : 'No reading yet'}</small></div><span class="val">${esc(fmt(s.v, s.b))}${unitOf(s.b) && unitOf(s.b) !== '%' ? ` <small>${esc(unitOf(s.b))}</small>` : unitOf(s.b)}</span><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></a>`;
   return `${topbar(role, 'home')}<main class="page">
-    <a class="back" data-back href="${crewSide ? '#/crew' : '#/doctor/crew/A'}" aria-label="Back" title="Back">←</a>
+    <a class="back" data-back href="${crewSide ? '#/crew' : `#/doctor/crew/${crew}`}" aria-label="Back" title="Back">←</a>
     <div class="dayhead"><div class="big">${dayLabel(date)}</div><div><div class="dw">${weekday(date).toUpperCase()}</div><div class="dt">${longDate(date)}</div></div>
       <div class="nav"><a class="arrow" href="${dayBase}/${addDays(date, -1)}" aria-label="Previous day" ${date <= DATA_FIRST ? 'style="visibility:hidden"' : ''}>‹</a><a class="arrow" href="${dayBase}/${addDays(date, 1)}" aria-label="Next day" ${date >= DATA_LAST ? 'style="visibility:hidden"' : ''}>›</a></div></div>
-    <section class="sleep-sum"><span class="pill">${msg[0]}</span><h3>${ok ? `${crewSide ? 'You' : 'Crew A'} slept ${fmt(tst.v, 'Total Sleep Time')} hours last night.` : 'Sleep not recorded yet.'}</h3><p class="hint">${msg[1]}</p></section>
+    <section class="sleep-sum"><span class="pill">${msg[0]}</span><h3>${ok ? `${crewSide ? 'You' : `Crew ${crew}`} slept ${fmt(tst.v, 'Total Sleep Time')} hours last night.` : 'Sleep not recorded yet.'}</h3><p class="hint">${msg[1]}</p></section>
     <div class="stack">
         <section class="card"><h3>${crewSide ? 'Your health checks' : 'Health checks'}</h3><p class="hint" style="margin:2px 0 14px">Every record includes its measurement time.</p><div class="items">${core.map(coreRow).join('')}</div></section>
         <section class="card"><h3 style="margin-bottom:12px">${crewSide ? 'Your activities' : 'Activities'}</h3><div class="acts">${evs.map((e) => `<span><b>${e.start_time}</b>${esc(e.title)}</span>`).join('') || '<span class="hint">No scheduled activities.</span>'}</div></section>
@@ -633,12 +649,13 @@ function bioPage(role, b) {
 /** Doctor's biomarker page: Summary, a crew record you can page through (Crew A → D), and both instructions. */
 function doctorBioPage(b) {
   const crew = CREWS[((state.recCrew || 0) % CREWS.length + CREWS.length) % CREWS.length];
-  const s = bioState(b, state.date);            // Crew A is the only crew with readings in this dataset
-  const has = crew === 'A' && DB.series[b];
-  const st = has ? s.status : 'nodata';
+  const s = bioState(b, state.date);                       // static info (summary, instructions)
+  const has = hasCrew(crew) && withCrew(crew, () => !!DB.series[b]);
+  const cs = has ? withCrew(crew, () => bioState(b, state.date)) : null;   // this crew's readings
+  const st = cs ? cs.status : 'nodata';
   const info = s.info;
   const record = has
-    ? `<div class="rec-sub"><span class="badge ${st}">${SEV_LABEL[st]}</span><span class="hint">Latest ${esc(fmtU(s.v, b))}${s.r ? ` · ${dayLabel(s.r.date)} ${s.r.time} UTC` : ''}</span></div>${zoneChart(b, recordPoints(b))}`
+    ? `<div class="rec-sub"><span class="badge ${st}">${SEV_LABEL[st]}</span><span class="hint">Latest ${esc(fmtU(cs.v, b))}${cs.r ? ` · ${dayLabel(cs.r.date)} ${cs.r.time} UTC` : ''}</span></div>${zoneChart(b, withCrew(crew, () => recordPoints(b)))}`
     : `<div class="empty rec-empty">No ${esc(nice(b))} records for Crew ${crew} yet.</div>`;
   return `${topbar('doctor', 'instr')}<main class="page">
     <a class="back" data-back href="#/doctor/instructions" aria-label="Back" title="Back">←</a>
@@ -716,21 +733,22 @@ function libraryItems(states) {
   const mine = libExtra().map((x) => ({ b: x.title, category: '', status: 'mine', forCrew: false, mine: true, text: x.text }));
   return [...mine, ...base].sort((a, z) => (SEV[z.status] || 0) - (SEV[a.status] || 0) || a.b.localeCompare(z.b));
 }
-function libraryList(states, limit) {
+function libraryList(states, limit, crew = 'A') {
   const f = state.libFilter, q = state.libQuery.toLowerCase();
   const items = libraryItems(states).filter((i) => (f === 'all' || (f === 'potential' && i.status === 'potential') || (f === 'urgent' && i.status === 'urgent')) && (!q || (i.b + i.category + i.text).toLowerCase().includes(q)));
   const chips = [['all', 'All'], ['potential', 'Potential'], ['urgent', 'Urgent']].map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" data-lf="${k}">${l}</button>`).join('');
   return `<form class="search" data-search="libQuery"><label class="field" style="background:#fff">${ICON.search}<input name="q" value="${esc(state.libQuery)}" placeholder="Search a biomarker, category or protocol…"></label></form>
     <div class="chips" style="margin-bottom:14px">${chips}</div>
     <div class="items lib" style="max-height:${limit ? '560px' : 'none'};overflow-y:auto">${items.map((i) => `<a class="item ${i.forCrew ? 'care ' + i.status : ''}" href="${i.mine ? '#/doctor/instructions' : '#/doctor/bio/' + enc(i.b)}">
-      ${i.forCrew ? '<div class="tags"><span class="badge match">Matches Crew A</span></div>' : ''}
+      ${i.forCrew ? `<div class="tags"><span class="badge match">Matches Crew ${crew}</span></div>` : ''}
       <div class="ttl">${esc(nice(i.b))}<span>${esc(i.category)}</span></div><div class="desc">${esc(i.text)}</div></a>`).join('') || '<div class="empty">Nothing matches.</div>'}</div>`;
 }
 /** Doctor › Health Instruction: the full instruction library, two columns, no status tags. */
 function doctorLibraryPage() {
   const q = state.libQuery.toLowerCase();
   const f = state.libAtt || 'all';
-  const byB = Object.fromEntries(allStates(state.date).map((x) => [x.b, x]));          // Crew A state per biomarker
+  const crew = state.docCrew || 'A';
+  const byB = Object.fromEntries(statesFor(crew).map((x) => [x.b, x]));          // selected crew's state per biomarker
   const mine = libExtra().map((x) => ({ b: x.title, category: 'Added instruction', method: '', summary: x.text, mine: true, status: 'nodata' }));
   const lib = [...mine, ...Object.values(DB.info).map((i) => ({ b: i.biomarker, category: i.category, method: i.method, summary: i.summary, yi: i.yellow_instruction, ri: i.red_instruction, status: byB[i.biomarker] ? byB[i.biomarker].status : 'nodata', s: byB[i.biomarker] }))]
     .filter((i) => !q || (i.b + i.category + i.summary + (i.yi || '') + (i.ri || '')).toLowerCase().includes(q));
@@ -739,8 +757,8 @@ function doctorLibraryPage() {
   const HEAD = { urgent: 'URGENT', potential: 'POTENTIAL', normal: 'NORMAL', nodata: 'NOT MEASURED' };
   const card = (i) => {
     const tag = i.mine ? 'article' : `a href="#/doctor/bio/${enc(i.b)}"`;
-    const crewTag = i.status === 'urgent' || i.status === 'potential' ? '<span class="badge match">Matches Crew A</span>' : i.status === 'normal' ? '<span class="badge normal">Crew A · Normal</span>' : '';
-    const val = i.s && i.s.r ? `<div class="v">${esc(fmtU(i.s.v, i.b))}<small style="color:var(--navy-400)">Crew A · ${dayLabel(i.s.r.date)} ${i.s.r.time} UTC</small></div>` : '';
+    const crewTag = i.status === 'urgent' || i.status === 'potential' ? `<span class="badge match">Matches Crew ${crew}</span>` : i.status === 'normal' ? `<span class="badge normal">Crew ${crew} · Normal</span>` : '';
+    const val = i.s && i.s.r ? `<div class="v">${esc(fmtU(i.s.v, i.b))}<small style="color:var(--navy-400)">Crew ${crew} · ${dayLabel(i.s.r.date)} ${i.s.r.time} UTC</small></div>` : '';
     return `<${tag} class="alert lib-row">
       <div class="top"><div class="nm">${crewTag ? `<div class="tags">${crewTag}</div>` : ''}<h4>${esc(nice(i.b))}</h4><small>${esc(i.category)}${i.method ? ' · ' + esc(i.method) : ''}</small></div>${val}${i.mine ? '' : '<span class="chev">›</span>'}</div>
       <div class="body st-${i.status}"><div class="k">SUMMARY</div><p>${esc(i.summary)}</p>
@@ -750,12 +768,13 @@ function doctorLibraryPage() {
   const sections = ['urgent', 'potential', 'normal', 'nodata'].filter((k) => f === 'all' || f === k).map((k) => {
     const items = lib.filter((i) => i.status === k);
     if (!items.length) return '';
-    if (k === 'normal') return `<div class="sev-h normal">${HEAD[k]} · ${items.length}</div><div class="normal-grid">${items.map((i) => `<a class="nrow" href="#/doctor/bio/${enc(i.b)}"><div class="nm"><b>${esc(nice(i.b))}</b><small>${esc(i.category)} · ${esc(i.method)}</small></div><div class="v">${esc(fmtU(i.s.v, i.b))}<small>Crew A · ${dayLabel(i.s.r.date)} ${i.s.r.time} UTC</small></div><span class="chev">›</span></a>`).join('')}</div>`;
+    if (k === 'normal') return `<div class="sev-h normal">${HEAD[k]} · ${items.length}</div><div class="normal-grid">${items.map((i) => `<a class="nrow" href="#/doctor/bio/${enc(i.b)}"><div class="nm"><b>${esc(nice(i.b))}</b><small>${esc(i.category)} · ${esc(i.method)}</small></div><div class="v">${esc(fmtU(i.s.v, i.b))}<small>Crew ${crew} · ${dayLabel(i.s.r.date)} ${i.s.r.time} UTC</small></div><span class="chev">›</span></a>`).join('')}</div>`;
     return `<div class="sev-h ${k}">${HEAD[k]} · ${items.length}</div>${items.map(card).join('')}`;
   }).join('');
   return `${topbar('doctor', 'instr')}<main class="page dark">
     <div class="title-row"><h1 class="page-title" style="margin:0">Health Instruction</h1><button class="edit-btn" type="button" data-modal="library" aria-label="Add instruction" title="Add instruction">${ICON.pencil}</button></div>
-    <p class="page-sub" style="margin-top:8px">The full instruction library, matched to Crew A's latest readings — most urgent first.</p>
+    <p class="page-sub" style="margin-top:8px">The full instruction library, matched to Crew ${crew}'s latest readings — most urgent first.</p>
+    <div class="crew-pick">${CREWS.map((c) => `<button type="button" class="${c === crew ? 'on' : ''}" data-crew="${c}" aria-pressed="${c === crew}"><img class="avatar" src="${IMG[c]}" alt="">Crew ${c}</button>`).join('')}</div>
     ${searchBar('libQuery', 'Search a biomarker, category or protocol…', true)}
     <div class="chips">${chip('all', 'All')}${chip('urgent', 'Urgent')}${chip('potential', 'Potential')}${chip('normal', 'Normal')}</div>
     ${sections || '<div class="empty">Nothing matches your search.</div>'}
@@ -781,13 +800,14 @@ function biomarkerCarousel({ ranked, key, bioBase, title, emptyText }) {
     <div class="pager-dots">${[...Array(8)].map((_, i) => `<i class="${i === Math.min(7, Math.floor((at / Math.max(1, pages - 1)) * 7)) ? 'on' : ''}"></i>`).join('')}</div>`;
 }
 function doctorHome() {
-  const states = allStates(state.date);
-  const flagged = states.filter((s) => s.status === 'urgent' || s.status === 'potential');
+  const all = Object.fromEntries(CREWS.map((c) => [c, statesFor(c)]));
+  const flagged = CREWS.flatMap((c) => all[c].filter((s) => s.status === 'urgent' || s.status === 'potential'));
   const sel = state.docCrew;
-  // Biomarkers ordered Urgent > Potential > Normal (allStates is severity-sorted). Only Crew A has data.
-  const ranked = sel === 'A' ? states.filter((s) => s.status !== 'nodata') : [];
+  const states = all[sel];
+  // Biomarkers ordered Urgent > Potential > Normal (allStates is severity-sorted).
+  const ranked = states.filter((s) => s.status !== 'nodata');
   const tile = (c) => {
-    const st = c === 'A' ? states : null;
+    const st = hasCrew(c) ? all[c] : null;
     return `<div class="crew-tile ${c === sel ? 'on' : ''}"><button type="button" class="tile-sel" data-crew="${c}" aria-pressed="${c === sel}">${miniDonut(st, c)}<b>Crew ${c}</b></button><a class="tile-open" href="#/doctor/crew/${c}">View page ›</a></div>`;
   };
   return `${topbar('doctor', 'home')}<main class="page">
@@ -798,7 +818,7 @@ function doctorHome() {
     </section>
     <div class="grid g-doc">
       <section class="card soft"><div class="card-head"><h3>Health Instruction</h3><a class="chev" href="#/doctor/instructions" aria-label="Open">›</a></div>
-        ${libraryList(states, true)}
+        ${libraryList(states, true, sel)}
         <button class="btn navy block doc-add" data-modal="library">+ &nbsp;Add instruction</button></section>
       <section class="card">
         <div class="card-head"><h3>Crew hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div>
@@ -810,8 +830,8 @@ function doctorHome() {
   </main>`;
 }
 function doctorCrew(c) {
-  const hasData = c === 'A';
-  const states = hasData ? allStates(state.date) : [];
+  const hasData = hasCrew(c);
+  const states = statesFor(c);
   const TILE = [['Total Sleep Time', 'Time asleep'], ['Sleep Efficiency', 'Sleep efficiency'], ['Self-reported sleep quality', 'slept'], ['Mood', 'Mood'], ['Team cohesion', 'Team cohesion'], ['LDL-cholesterol', 'Cholesterol']];
   const tiles = TILE.map(([b, l]) => { const s = states.find((x) => x.b === b); return s ? `<a class="tile" href="#/doctor/bio/${enc(b)}"><small>${l}</small><div class="num ${s.status}">${esc(fmt(s.v, b))}${unitOf(b) && unitOf(b).length < 4 ? `<small>${esc(unitOf(b))}</small>` : ''}</div><div class="st ${s.status}">${SEV_LABEL[s.status]}</div>${areaChart(b, s.pts.slice(-10), { w: 160, h: 34, axis: false })}</a>` : ''; }).join('');
   const shown = states.filter((s) => s.status !== 'nodata');
@@ -822,8 +842,8 @@ function doctorCrew(c) {
     <a class="back" data-back href="#/doctor" aria-label="Back" title="Back">←</a>
     <div class="crew-head">${head}<div><div class="lbl">ASTRONAUT · MARS MISSION</div><h1>Crew ${c}</h1><small>${dayLabel(state.date)} &nbsp; Mission start Oct 1</small></div>
       <div class="right">
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn outline" href="${hasData ? `#/doctor/day/A/${state.date}` : '#/doctor/crew/' + c}">Daily records</a><button class="btn outline" data-modal="instruction" ${hasData ? '' : 'disabled'}>Send instruction</button><a class="btn primary" href="#/doctor/chat">${ICON.chat}Message</a></div></div></div>
-    <section class="card" style="padding:20px">${weekCalendar(c, (x) => (hasData ? `#/doctor/day/A/${x}` : `#/doctor/crew/${c}`))}</section>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn outline" href="${hasData ? `#/doctor/day/${c}/${state.date}` : '#/doctor/crew/' + c}">Daily records</a><button class="btn outline" data-modal="instruction" ${c === 'A' ? '' : 'disabled'} title="${c === 'A' ? '' : 'Instructions can be sent to Crew A in this demo'}">Send instruction</button><a class="btn primary" href="#/doctor/chat">${ICON.chat}Message</a></div></div></div>
+    <section class="card" style="padding:20px">${weekCalendar(c, (x) => (hasData ? `#/doctor/day/${c}/${x}` : `#/doctor/crew/${c}`))}</section>
     ${hasData ? `<div class="tiles">${tiles}</div>
     <section class="card"><h3 style="margin-bottom:12px">Biomarkers</h3>
       <div class="chips" style="margin-bottom:16px">${cats.map((k) => `<button class="chip ${state.bioCat === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(k)}</button>`).join('')}</div>
@@ -895,9 +915,9 @@ function render() {
   } else if (role === 'doctor') {
     r = 'doctor';
     if (sub === 'crew') html = doctorCrew(CREWS.includes(a1) ? a1 : 'A');
-    else if (sub === 'day') { setDate(a2 || state.date); html = dayPage('doctor', state.date); }
+    else if (sub === 'day') { setDate(a2 || state.date); const c = CREWS.includes(a1) ? a1 : 'A'; html = withCrew(c, () => dayPage('doctor', state.date, c)); }
     else if (sub === 'instructions') html = doctorLibraryPage();
-    else if (sub === 'attention') html = attentionPage('doctor');
+    else if (sub === 'attention') html = withCrew(state.docCrew, () => attentionPage('doctor'));
     else if (sub === 'bio') { if (state.recBio !== a1) { state.recBio = a1; state.recCrew = 0; } html = bioPage('doctor', a1); }
     else if (sub === 'chat') html = chatPage('doctor');
     else if (sub === 'profile') html = profilePage('doctor');
