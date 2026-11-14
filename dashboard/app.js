@@ -859,7 +859,7 @@ function crewSelect() {
     <img class="logo" src="${IMG.logo}" alt="KOOK — Kinetic Observation &amp; Optimal Keel">
     <h1>Who's checking in?</h1>
     <div class="crew-choose">${CREWS.map((c) => `<button type="button" class="crew-choice ${c === state.me ? 'last' : ''}" data-me="${c}">
-      <img src="${IMG[c]}" alt=""><b>Crew ${c}</b><span>Mars mission · Space workspace</span></button>`).join('')}</div>
+      <img src="${IMG[c]}" alt=""><b>Crew ${c}</b></button>`).join('')}</div>
     <a class="test" href="#/">← Back</a>
   </div></main>`;
 }
