@@ -51,3 +51,60 @@ So at the same moment the two screens can show different latest values, and the 
 **Log entry:** file name, number of readings, raw size → size on the wire, number of packets (cold only), verification, and send/arrival times.
 
 **Note:** a hot bundle usually holds a single reading (readings come every 5 minutes), so zstd's frame overhead can make it a few bytes larger than the raw CSV. The gain shows up in the hourly cold batches.
+
+### Size experiments: what we tried
+
+All numbers are for one 24-hour day (2026-11-13) of crew data, measured with real zstd (level 19). Status rules come from `data/biomarker/biomarker.csv`. The scripts live outside the repo; the method is described here so the numbers can be redone.
+
+**1. Four ways to send the same day (Crew A: 1,168 readings, 322 of them Potential/Urgent)**
+
+| Method | Size | vs raw |
+| --- | ---: | ---: |
+| 1. Raw CSV | 45.6 KB | 100% |
+| 2. Whole day, zstd | **3.5 KB** | **7.7%** |
+| 3. Whole day, CCSDS packets (no compression, 46 packets) | 46.2 KB | 101.4% |
+| 4. Split, as the dashboard does | 29.3 KB | 64.2% |
+| └ hot: Potential/Urgent, 1-minute zstd bundles (288) | 22.9 KB | 50.2% |
+| └ cold: Normal, hourly zstd + CCSDS (24 batches) | 6.4 KB | 14.1% |
+| (reference) whole day, zstd + CCSDS | 3.6 KB | 7.9% |
+
+Crews B, C and D have almost no Potential/Urgent readings. For them method 4 comes to 7.7–8.0 KB (about 17%), against 3.7–4.0 KB for method 2.
+
+- **CCSDS is packaging, not compression.** Each packet adds 14 bytes (6 B primary header, 6 B time, 2 B CRC), so the size grows by about 1.4%.
+- **Compressing a whole day at once is the smallest**, because dates, biomarker names and the CSV header repeat thousands of times and zstd stores each only once.
+- **Splitting costs bytes but buys time.** An Urgent reading reaches the doctor in about 21 minutes instead of after the day ends.
+
+**2. Why the hot lane is so big: 22.9 KB from 21.4 KB of raw rows**
+
+A 1-minute hot bundle almost always holds a single reading, because readings come every 5 minutes. Each bundle contains:
+
+| Part | Size |
+| --- | ---: |
+| CSV header `date,time,biomarker,figure` | 27 B |
+| One row, e.g. `2026-11-13,12:05,Blood Pressure (SBP),142.1` | ~45 B |
+| zstd frame overhead added to every bundle | ~9–13 B |
+
+A single row gives zstd nothing earlier to refer back to, so the ~72 B bundle grows to ~80 B. Crew A's SBP is Potential all day, so there are 288 such bundles.
+
+**3. A mistake we made with the test bench, and the correction**
+
+The test bench's size table first showed "priority: 1.5% of raw". That looked like proof that sending anomalies every second compresses far better than 1-minute bundles. It doesn't. The figure came from compressing *all* anomaly rows so far in one go.
+
+The files the simulator actually sent (`A_priority.bin`) were 127–155 B each, larger than the rows inside them. Sending every second only helps when several anomalies pile up within that second. That happens in the fast replay, but not in real time, where readings are 5 minutes apart. The test bench now shows both: "If compressed in one go (reference)" and "Files actually sent so far".
+
+**4. What actually shrinks small bundles** (Crew A, 288 hot bundles, raw with header 21.9 KB)
+
+| Option | Total | vs raw | Per bundle |
+| --- | ---: | ---: | ---: |
+| a) header + rows, zstd (dashboard today) | 23.4 KB | 107% | 81 B |
+| b) rows only, no compression | 14.1 KB | 64% | 49 B |
+| c) rows only, zstd | 15.8 KB | 72% | 55 B |
+| d) rows only, zstd with a shared dictionary | 9.4 KB | 43% | 33 B |
+| d2) same, with zstd frame header fields trimmed | 8.2 KB | 38% | 29 B |
+| (whole day of hot rows at once, for reference) | 0.7 KB | 3% | 2 B |
+
+For d, the 2 KB dictionary was trained on Nov 1–12 readings. Both Mars and Earth would hold it before the mission.
+
+A shared dictionary gives zstd the repeated parts (dates, biomarker names, number formats) before the first bundle, so even a one-row bundle compresses. It keeps the 21-minute delivery and cuts the hot lane by almost two-thirds. The dashboard still uses option a; switching to d is the next step if we want it.
+
+**Test bench:** [`test/`](test/) runs the ear-worn device and the compression simulator on our data, so these effects can be watched live. See [`test/README.md`](test/README.md).

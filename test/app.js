@@ -6,7 +6,7 @@
 // - Link side (minuncho/prep space-sim, Rust → WebAssembly in ./pkg): the device feeds the same rows to the
 //   simulator one by one (Sim.playStep). It keeps the raw stream (hot), summarises Normal rows per
 //   biomarker and compresses them with CCSDS 121 (cold), sends anomalies right away (priority, zstd), and
-//   delivers files to the Earth window (?side=earth, same browser) after the one-way delay.
+//   logs each file with its Earth arrival time (one-way delay). Mars window only.
 // Status rules are the dashboard's: biomarker.csv yellow = normal range, red = urgent, otherwise potential.
 // The simulator expects Normal / Warning / Critical, so potential → Warning and urgent → Critical.
 
@@ -27,15 +27,7 @@ const VOICE_LANG = 'en-US';
 const MAX_LOG_ROWS = 400;
 const DEFAULT_DAY = '2026-11-13';
 
-const SIDE = new URLSearchParams(location.search).get('side') === 'earth' ? 'earth' : 'mars';
 const $ = (id) => document.getElementById(id);
-if (DELAY_MIN !== 20) $('delayNote').textContent = `test delay: ${DELAY_MIN} min (normally 20)`;
-if (SIDE === 'earth') {
-  document.body.classList.add('earth');
-  $('title').textContent = 'KOOK test bench · Earth';
-  $('subtitle').textContent = 'Files sent from the Mars window arrive here after the 20-minute one-way delay. Keep the Mars window open in the same browser.';
-  document.title = 'KOOK Test Bench · Earth';
-}
 
 // ===== CSV + status rules (same as dashboard/app.js) =====
 function parseCSV(text) {
@@ -97,7 +89,7 @@ parseCSV(instrCsv).forEach((r) => { INFO[r.biomarker] = r; });
 // ===== Rust simulator =====
 await init({ module_or_path: new URL(`./pkg/space_sim_bg.wasm${VERSION}`, import.meta.url) });
 // Our timestamps are UTC, so the simulator runs with a 0-minute time zone offset.
-const sim = new Sim(SIDE === 'mars', 0, 0, TX_DELAY_MS, LINK_BYTES_PER_SEC, COLD_EVERY_MS, PRIO_EVERY_MS, Date.now());
+const sim = new Sim(true, 0, 0, TX_DELAY_MS, LINK_BYTES_PER_SEC, COLD_EVERY_MS, PRIO_EVERY_MS, Date.now());
 
 let zstd = null;
 import(`${ZSTD_PKG}/+esm`).then(async (m) => { await m.init(`${ZSTD_PKG}/dist/esm/zstd.wasm`); zstd = m; }).catch((e) => console.error('zstd failed to load', e));
@@ -157,7 +149,7 @@ function stop() {
 function resetDevice() {
   stop();
   sim.reset();
-  slotIdx = 0; records.length = 0;
+  slotIdx = 0; records.length = 0; resetSent();
   Object.keys(lastStatus).forEach((k) => delete lastStatus[k]);
   $('dataLog').innerHTML = '<div class="empty">Press Start to replay the crew\'s readings.</div>';
   $('voiceLog').innerHTML = '<div class="empty">Announced when a reading turns Potential or Urgent.</div>';
@@ -256,12 +248,12 @@ document.querySelectorAll('[data-part]').forEach((t) => {
 document.addEventListener('click', hideTip);
 addEventListener('scroll', hideTip, true);
 
-// ===== link: requests → bytes → BroadcastChannel (from space-sim/web/app.js) =====
-const channel = new BroadcastChannel('kook-test-bench');
-const pendingBytes = new Map(), inTransit = [], inbox = [];
-channel.onmessage = (e) => { if (e.data.from !== SIDE) inTransit.push(e.data); };
+// ===== link: the simulator asks for files, we compress them, it queues and "sends" them =====
+const pendingBytes = new Map();
+const SENT = { hot: { n: 0, bytes: 0 }, cold: { n: 0, bytes: 0 }, priority: { n: 0, bytes: 0 } };
+const kindOf = (name) => (/priority/i.test(name) ? 'priority' : /cold/i.test(name) ? 'cold' : /hot/i.test(name) ? 'hot' : null);
 function pumpRequests(now) {
-  if (SIDE !== 'mars' || !zstd) return;
+  if (!zstd) return;
   for (;;) {
     const s = sim.nextRequest(now); if (!s) break;
     const req = JSON.parse(s);
@@ -274,20 +266,11 @@ function pumpDispatch(now) {
     const s = sim.dispatch(now); if (!s) break;
     const d = JSON.parse(s);
     const bytes = pendingBytes.get(d.blockId); pendingBytes.delete(d.blockId);
-    channel.postMessage({ from: SIDE, id: d.blockId, name: d.name, size: bytes.length, bytes, arriveAt: d.arriveAt });
+    const k = kindOf(d.name);
+    if (k && bytes) { SENT[k].n++; SENT[k].bytes += bytes.length; }
   }
 }
-function moveArrivals(now) {
-  let changed = false;
-  for (let i = inTransit.length - 1; i >= 0; i--) {
-    if (now >= inTransit[i].arriveAt) {
-      const [m] = inTransit.splice(i, 1);
-      inbox.unshift({ ...m, url: URL.createObjectURL(new Blob([m.bytes], { type: 'application/octet-stream' })), receivedAt: now });
-      changed = true;
-    }
-  }
-  return changed;
-}
+function resetSent() { Object.values(SENT).forEach((x) => { x.n = 0; x.bytes = 0; }); }
 
 // ===== link rendering =====
 function fillTable(id, headers, rows, numCols = []) {
@@ -300,47 +283,50 @@ const fmtBytes = (n) => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFix
 function renderSizes() {
   const texts = JSON.parse(sim.sizeTexts());
   const raw = texts.hot ? utf8.encode(texts.hot).length : 0;
+  const prioRaw = texts.prio ? utf8.encode(texts.prio).length : 0;
   const z = (t) => (!t ? 0 : zstd ? compress(t).length : null);
   const cell = (n) => (n === null ? 'Loading zstd…' : fmtBytes(n));
-  const pct = (n) => (n === null || !raw ? '' : `${((n / raw) * 100).toFixed(1)}%`);
+  const pct = (n, base = raw) => (n === null || !base ? '' : `${((n / base) * 100).toFixed(1)}%`);
   const hot = z(texts.hot), cold = sim.coldPayload().length, prio = z(texts.prio);
-  fillTable('sizeTable', ['Played so far', 'Size', 'vs raw'], [
+  const sec = (t) => [t, '', ''];
+  const files = (k) => (SENT[k].n ? `${SENT[k].n} file${SENT[k].n > 1 ? 's' : ''} · ${fmtBytes(SENT[k].bytes)}` : '0 files');
+  const rows = [
     ['Day file (all rows, raw CSV)', fmtBytes(rawBytes), ''],
-    ['Raw CSV, played rows', fmtBytes(raw), raw ? '100%' : ''],
+    ['Played rows, raw CSV', fmtBytes(raw), raw ? '100%' : ''],
+    sec('If compressed in one go (reference)'),
     ['hot: all played rows, zstd', cell(hot), pct(hot)],
     ['cold: per-biomarker summary, CCSDS 121', fmtBytes(cold), pct(cold)],
     ['priority: Potential/Urgent rows, zstd', cell(prio), pct(prio)],
-  ], [1, 2]);
-}
-function renderInbox() {
-  if (!inbox.length) return;
-  $('inbox').replaceChildren(...inbox.map((m) => {
-    const li = document.createElement('li');
-    li.textContent = `${m.name} (${fmtBytes(m.size)}) `;
-    const a = document.createElement('a'); a.href = m.url; a.download = m.name; a.textContent = 'Download';
-    li.append(a, span(`  · arrived ${new Date(m.receivedAt).toISOString().slice(11, 19)} UTC`, 'sub'));
-    return li;
+    sec('Files actually sent so far'),
+    ['priority files (each zstd on its own)', files('priority'), pct(SENT.priority.bytes, prioRaw) && `${pct(SENT.priority.bytes, prioRaw)} of its rows`],
+    ['cold files (CCSDS 121)', files('cold'), ''],
+  ];
+  if (SENT.hot.n) rows.push(['hot files', files('hot'), '']);
+  const head = document.createElement('tr');
+  ['', 'Size', 'vs raw'].forEach((h) => { const th = document.createElement('th'); th.textContent = h; head.appendChild(th); });
+  $('sizeTable').replaceChildren(head, ...rows.map((r) => {
+    const tr = document.createElement('tr');
+    if (r[1] === '' && r[2] === '') { tr.className = 'sec'; const td = document.createElement('td'); td.colSpan = 3; td.textContent = r[0]; tr.appendChild(td); return tr; }
+    r.forEach((v, i) => { const td = document.createElement('td'); td.textContent = v; if (i) td.className = 'num'; tr.appendChild(td); });
+    return tr;
   }));
 }
-let lastInbox = -1;
 function render(snap) {
   $('clock').textContent = snap.clock;
   $('date').textContent = `${snap.date} · UTC`;
   fillTable('blockTable', ['block', 'Clock', 'Send start', 'File', 'Size', 'Status', 'ETA'], snap.blocks);
-  if (SIDE === 'mars') {
+  {
     $('sendInfo').textContent = `next ${snap.nextCold}`;
     $('priorityStatus').textContent = `pending ${snap.prioPending} · sent ${snap.prioSent}`;
     fillTable('coldTable', ['Biomarker', 'count', 'min', 'max', 'mean', 'start', 'end'], snap.coldRows, [1, 2, 3, 4]);
     fillTable('prioTable', ['timestamp', 'Biomarker', 'Figure', 'Status', 'Reason', 'State'], snap.prioRows);
     renderSizes();
   }
-  if (inbox.length !== lastInbox) { renderInbox(); lastInbox = inbox.length; }
 }
 function tick() {
   const now = Date.now();
   pumpRequests(now);
   pumpDispatch(now);
-  if (moveArrivals(now)) renderInbox();
   render(JSON.parse(sim.snapshot(now)));
 }
 setInterval(tick, 400);
@@ -362,5 +348,5 @@ for (let d = 1; d <= 30; d++) {
   const v = `2026-11-${String(d).padStart(2, '0')}`;
   $('daySel').add(new Option(v, v, false, v === DEFAULT_DAY));
 }
-if (SIDE === 'mars') await loadDataset();
+await loadDataset();
 tick();

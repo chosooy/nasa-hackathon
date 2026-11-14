@@ -3,9 +3,8 @@
 One page that joins the **ear-worn device simulator** and the **Mars → Earth compression simulator**
 (both from [minuncho/prep](https://github.com/minuncho/prep): `simulator/` and `space-sim/`), running on this repo's data.
 
-- Open the Mars window: `test/index.html`
-- Open the Earth window: `test/index.html?side=earth` (same browser; it receives what Mars sends)
-- Shorter link delay for testing: `test/index.html?delay=0.5` (minutes, Mars window; default 20)
+- Open: `test/index.html` (Mars side only; the transmission log shows each file's Earth arrival time)
+- Shorter link delay for testing: `test/index.html?delay=0.5` (minutes; default 20)
 
 Serve the repository root so the page can read `../data`:
 
@@ -26,6 +25,6 @@ Then open http://localhost:8765/test/.
    - **hot:** the raw stream, zstd
    - **cold:** a per-biomarker summary compressed with CCSDS 121, sent hourly
    - **priority:** Potential/Urgent rows, zstd, sent every second
-   - Files reach the Earth window after the one-way delay.
+   - The size table shows two things. The first is what each stream would be if compressed in one go, as a reference. The second is the files actually sent so far. In fast replay several anomalies share a second; in real time each priority file holds about one row (see the root README, "Size experiments").
 
 The simulator expects `Normal / Warning / Critical`, so Potential is passed as `Warning` and Urgent as `Critical`.
