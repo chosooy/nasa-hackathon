@@ -53,8 +53,6 @@ The demo dashboard uses 32 of these biomarkers for four crew members (`data/crew
 
 ### Gathering biodata
 
-<p align="center"><img src="assets/diagram/gathering_biodata.jpg" width="520" alt="Gathering biodata: baseline saved on Earth, then updated in space from computer tests, the ear-worn device and samples"></p>
-
 Before launch, each crew member records an individual **baseline** of their health on Earth. After launch, KOOK compares that baseline with the biodata gathered in space from **computer tests, devices and samples**. These values are used to assess each crew member's health.
 
 ### Phased diagnosis
@@ -63,21 +61,15 @@ KOOK sorts each biomarker into one of three severity levels: **Urgent**, **Poten
 
 **Step 1 — Immediate response** (Potential)
 
-<p align="center"><img src="assets/diagram/diagnosis_potential.jpg" width="480" alt="Potential: the crew dashboard's health instruction is read aloud by the ear-worn device"></p>
-
 - Astronauts open the **Health Instruction Library**. Its health guidelines and responses are uploaded and updated by medical professionals.
 - A **linked audio device** reads the instructions aloud, so astronauts can follow the recommended steps without relying only on the screen.
 
 **Step 2 — In-depth consultation** (Urgent, or whenever more help is needed)
 
-<p align="center"><img src="assets/diagram/diagnosis_urgent.jpg" width="440" alt="Urgent: crew dashboard and doctor dashboard talk through the conversation"></p>
-
 - Astronauts talk directly with medical professionals on Earth in **one-on-one chat consultations**.
 - They can report a serious health problem and get out of the hazard quickly.
 
 ### Earth–space interaction
-
-<p align="center"><img src="assets/diagram/earth_space_interaction.jpg" width="480" alt="Earth-space interaction: biodata is sent, health instructions are updated, conversation goes both ways"></p>
 
 | Crew dashboard (space) | | Doctor dashboard (Earth) |
 | --- | :---: | --- |
@@ -91,8 +83,6 @@ KOOK sorts each biomarker into one of three severity levels: **Urgent**, **Poten
 - Readings go to the doctor's dashboard as small compressed files. A new Potential or Urgent reading is sent at once, and everything else at least every 6 hours.
 - Each file arrives 20 minutes later, the one-way light delay. Chat has the same delay.
 - See [Data flow](docs/data-flow.md) for the details and the experiments behind it.
-
-<p align="center"><img src="assets/diagram/data_flow.png" width="720" alt="Data flow: raw readings → astronaut dashboard → 20 min → doctor dashboard"></p>
 
 ## Screens
 
