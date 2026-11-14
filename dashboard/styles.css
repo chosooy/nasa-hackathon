@@ -521,3 +521,57 @@ p { margin: 0; }
 .bio-card .h > small { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nrow .nm b, .row .nm b, .alert h4 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nrow .v, .row .val, .row .badge, .alert .v, .alert .chev { flex: none; }
+
+/* ---------- Round 8 ---------- */
+/* calendar strip: [big focus day] ‹ [6 upcoming days] › — fixed sizes */
+.cal-head .range { width: auto; text-align: left; font-family: var(--display); font-size: 16px; }
+.strip { display: grid; grid-template-columns: 300px 32px minmax(0, 1fr) 32px; gap: 10px; align-items: center; }
+.strip-arrow { width: 32px; height: 32px; }
+.big-day { height: 340px; background: var(--navy-900); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 14px; color: #fff; min-width: 0; }
+.bd-head .lbl { color: var(--yellow); font-size: 10.5px; font-weight: 600; }
+.bd-head .big { font-family: var(--display); font-weight: 700; font-size: 34px; margin: 4px 0 2px; }
+.bd-head .dt { color: var(--navy-300); font-size: 12px; }
+.bd-head .open { color: var(--yellow); font-size: 11.5px; font-weight: 600; display: inline-block; margin-top: 8px; }
+.bd-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; }
+.bd-list .ev { height: auto; min-height: 40px; flex: none; font-size: 12px; }
+.bd-list .ev > :last-child:not(.t) { -webkit-line-clamp: 2; }
+.bd-list .ev.st-nodata { background: #F3F5FA; }
+.bd-list .ev.st-normal { background: #DCE8FF; }
+.bd-list .ev.st-potential { background: #F8FFB8; }
+.bd-list .ev.st-urgent { background: #FBDCD1; }
+.bd-list .ev-more { color: var(--navy-300); }
+.week.six { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.week.six .dayc { height: 340px; }
+
+/* hazard board: bigger donut with names in the ring */
+.home-hazard { height: 446px; }
+.home-hazard .hazard-wrap { height: calc(100% - 40px); }
+.chat.mini { height: 322px; }
+
+/* doctor Health Instruction library: two columns */
+.lib-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 8px; }
+.lib-card { background: #fff; color: var(--text); border-radius: 18px; padding: 20px 22px; height: 300px; display: flex; flex-direction: column; min-width: 0; }
+.lib-card h3 { font-family: var(--display); font-size: 17px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-card > .hint { margin: 2px 0 10px; }
+.lib-body { flex: 1; min-height: 0; overflow-y: auto; font-size: 12.5px; color: var(--navy-700); display: flex; flex-direction: column; gap: 8px; padding-right: 4px; }
+.lib-ins { border-radius: 10px; padding: 9px 12px; }
+.lib-ins b { display: block; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px; }
+.lib-ins.potential { background: var(--yellow-tint); } .lib-ins.potential b { color: var(--on-yellow); }
+.lib-ins.urgent { background: var(--crit-bg); } .lib-ins.urgent b { color: var(--crit); }
+
+/* round + floating button */
+.fab-plus { width: 60px; height: 60px; padding: 0; justify-content: center; font-size: 30px; font-weight: 400; line-height: 1; cursor: pointer; }
+
+@media (max-width: 1000px) {
+  .strip { grid-template-columns: 32px minmax(0, 1fr) 32px; }
+  .big-day { grid-column: 1 / -1; height: 300px; }
+  .week.six { grid-template-columns: repeat(6, 150px); overflow-x: auto; }
+  .lib-grid { grid-template-columns: 1fr; }
+  .home-hazard { height: auto; }
+}
+
+/* ---------- Round 9: crew home care guidance cards ---------- */
+.item.care, .item.care .ttl, .item.care .desc, .item.care .foot { color: #000; }
+.item.care .foot { opacity: .55; }
+.item.care.urgent { background: var(--crit-bg); }
+.item.care.potential { background: var(--yellow-tint); }

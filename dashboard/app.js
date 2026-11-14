@@ -258,6 +258,20 @@ const libExtra = () => store.get('library', []);
 /* ---------------- charts ---------------- */
 const ZC = { urgent: '#FDE7DF', potential: '#F4FFB0', normal: '#E6EEF8' };
 const ZL = { urgent: '#E43700', potential: '#C27400', normal: '#0042A6' };
+// Line colours per segment: deep red / deep yellow where readings are Urgent / Potential.
+const LINE = { urgent: '#C21F00', potential: '#C9A100' };
+function statusLine(b, pts, X, Y, base, width) {
+  let g = '';
+  for (let i = 1; i < pts.length; i++) {
+    const a = statusOf(b, pts[i - 1].v), z = statusOf(b, pts[i].v);
+    const st = SEV[a] >= SEV[z] ? a : z;
+    g += `<line x1="${X(i - 1).toFixed(1)}" y1="${Y(pts[i - 1].v).toFixed(1)}" x2="${X(i).toFixed(1)}" y2="${Y(pts[i].v).toFixed(1)}" stroke="${LINE[st] || base}" stroke-width="${width}" stroke-linecap="round"/>`;
+  }
+  if (pts.length === 1) g += `<circle cx="${X(0)}" cy="${Y(pts[0].v)}" r="3" fill="${LINE[statusOf(b, pts[0].v)] || base}"/>`;
+  // invisible hover targets for the tooltip
+  pts.forEach((p, i) => { g += `<circle cx="${X(i)}" cy="${Y(p.v)}" r="6" fill="transparent" data-tip="${esc(`${p.label || dayLabel(p.date)} · ${fmtU(p.v, b)} · ${SEV_LABEL[statusOf(b, p.v)]}`)}"/>`; });
+  return g;
+}
 function zoneBands(b, lo, hi, n = 90) {
   const out = []; const step = (hi - lo) / n;
   for (let i = 0; i < n; i++) {
@@ -301,11 +315,7 @@ function zoneChart(b, pts, w = 600, h = 250) {
   }
   const idx = [...new Set([0, Math.round((pts.length - 1) / 3), Math.round((2 * (pts.length - 1)) / 3), pts.length - 1])];
   idx.forEach((i) => { g += `<text x="${X(i)}" y="${h - 9}" font-size="9" fill="#9CA7B8" text-anchor="middle">${esc(pts[i].label || dayLabel(pts[i].date))}</text>`; });
-  g += `<path d="${pts.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(p.v).toFixed(1)}`).join('')}" fill="none" stroke="#07173F" stroke-width="1.6" stroke-linejoin="round"/>`;
-  pts.forEach((p, i) => {
-    const st = statusOf(b, p.v);
-    if (st !== 'normal' || i === pts.length - 1) g += `<circle cx="${X(i)}" cy="${Y(p.v)}" r="${i === pts.length - 1 ? 4 : 2.6}" fill="${ZL[st]}" data-tip="${esc(`${p.label || dayLabel(p.date)} · ${fmtU(p.v, b)} · ${SEV_LABEL[st]}`)}"/>`;
-  });
+  g += statusLine(b, pts, X, Y, '#07173F', 2);
   return `<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="${esc(nice(b))} past record">${g}</svg>`;
 }
 /** Area chart: blue gradient fill, flagged points coloured (Figma doctor home / crew page). */
@@ -332,16 +342,13 @@ function areaChart(b, pts, { w = 400, h = 220, axis = true } = {}) {
     [0, Math.round((pts.length - 1) / 2), pts.length - 1].forEach((i) => { g += `<text x="${X(i)}" y="${h - 6}" font-size="8.5" fill="#9CA7B8" text-anchor="middle">${dayLabel(pts[i].date)}</text>`; });
   }
   if (!banded) g += `<path d="${line}L${X(pts.length - 1)},${h - P.b}L${X(0)},${h - P.b}Z" fill="url(#${id})"/>`;
-  g += `<path d="${line}" fill="none" stroke="#0042A6" stroke-width="1.6" stroke-linejoin="round"/>`;
-  pts.forEach((p, i) => {
-    const st = statusOf(b, p.v);
-    if (st !== 'normal' || (axis && i === pts.length - 1)) g += `<circle cx="${X(i)}" cy="${Y(p.v)}" r="${axis ? 3 : 2.2}" fill="${st === 'urgent' ? '#E43700' : st === 'potential' ? '#EAB400' : '#0042A6'}" data-tip="${esc(`${dayLabel(p.date)} · ${fmtU(p.v, b)} · ${SEV_LABEL[st]}`)}"/>`;
-  });
+  g += statusLine(b, pts, X, Y, '#0042A6', axis ? 2 : 1.8);
   return `<svg viewBox="0 0 ${w} ${h}" width="100%" preserveAspectRatio="none" style="display:block">${g}</svg>`;
 }
 
 function donutSvg(hz, size, centerSvg) {
-  const C = size / 2, R = size * 0.34, T = size * 0.105;
+  const big = size > 120;
+  const C = size / 2, R = size * (big ? 0.37 : 0.34), T = size * (big ? 0.15 : 0.105);
   const col = { urgent: '#E43700', potential: '#EAFE07', normal: '#A8C8FF' };
   const pt = (a, r) => [C + r * Math.cos((a * Math.PI) / 180), C + r * Math.sin((a * Math.PI) / 180)];
   let g = '';
@@ -349,25 +356,23 @@ function donutSvg(hz, size, centerSvg) {
     const a0 = -90 + i * 72 + 3, a1 = a0 + 66;
     const [x0, y0] = pt(a0, R), [x1, y1] = pt(a1, R);
     g += `<path d="M${x0},${y0}A${R},${R} 0 0 1 ${x1},${y1}" fill="none" stroke="${col[h.status]}" stroke-width="${T}" data-tip="${esc(`${h.label}: ${h.hits.length ? h.hits.map((s) => s.name).join(', ') : 'All normal'}`)}"/>`;
-    if (size > 120) { const [tx, ty] = pt((a0 + a1) / 2, R); g += `<text x="${tx}" y="${ty + 3}" font-size="${size * 0.038}" font-weight="700" text-anchor="middle" fill="${h.status === 'urgent' ? '#fff' : '#07173F'}">${h.code}</text>`; }
+    if (big) {
+      // Hazard name written along the segment; bottom segments run the other way so text stays upright.
+      const id = `hzt${i}`, mid = ((a0 + a1) / 2) * Math.PI / 180, flip = Math.sin(mid) > 0.2;
+      const [sx, sy] = pt(flip ? a1 : a0, R), [ex, ey] = pt(flip ? a0 : a1, R);
+      g += `<path id="${id}" d="M${sx},${sy}A${R},${R} 0 0 ${flip ? 0 : 1} ${ex},${ey}" fill="none"/>`;
+      g += `<text font-size="${size * 0.046}" font-weight="700" fill="${h.status === 'urgent' ? '#fff' : '#07173F'}" dominant-baseline="central"><textPath href="#${id}" startOffset="50%" text-anchor="middle">${h.label}</textPath></text>`;
+    }
   });
   g += `<circle cx="${C}" cy="${C}" r="${R - T * 0.8}" fill="#07173F"/>${centerSvg(C, R - T * 0.8)}`;
   return g;
 }
 function hazardBoard(states) {
-  const size = 230, OX = 115;
+  const size = 320;
   const hz = hazardStatus(states);
   const toCheck = states.filter((s) => s.status === 'urgent' || s.status === 'potential').length;
-  const inner = donutSvg(hz, size, (C) => `<text x="${C}" y="${C + 6}" font-size="26" font-weight="700" text-anchor="middle" fill="#EAFE07">${toCheck}</text><text x="${C}" y="${C + 20}" font-size="7.5" font-weight="600" text-anchor="middle" fill="#fff">TO CHECK</text>`);
-  let labels = '';
-  hz.forEach((h, i) => {
-    const mid = ((-90 + i * 72 + 36) * Math.PI) / 180, rr = size * 0.5 + 18;
-    const x = OX + size / 2 + rr * Math.cos(mid), y = size / 2 + rr * Math.sin(mid);
-    const anchor = Math.cos(mid) > 0.3 ? 'start' : Math.cos(mid) < -0.3 ? 'end' : 'middle';
-    labels += `<text x="${x}" y="${y + 4}" font-size="12" font-weight="600" text-anchor="${anchor}" fill="#07173F">${h.label}</text>`;
-  });
-  const W = size + OX * 2;
-  return `<svg class="donut" viewBox="0 -30 ${W} ${size + 66}" width="100%" style="max-width:${W}px"><g transform="translate(${OX},0)">${inner}</g>${labels}</svg>`;
+  const inner = donutSvg(hz, size, (C) => `<text x="${C}" y="${C + 8}" font-size="44" font-weight="700" text-anchor="middle" fill="#EAFE07">${toCheck}</text><text x="${C}" y="${C + 30}" font-size="11" font-weight="600" text-anchor="middle" fill="#fff">TO CHECK</text>`);
+  return `<svg class="donut" viewBox="0 0 ${size} ${size}" width="100%" style="max-width:${size}px" role="img" aria-label="Hazard board">${inner}</svg>`;
 }
 function miniDonut(states, c) {
   const size = 92;
@@ -381,8 +386,8 @@ function todayArt() {
 }
 
 /* ---------------- state + routing ---------------- */
-const state = { date: TODAY, week: weekStart(TODAY), hazardFilter: 'all', instrFilter: 'all', attFilter: 'all', query: '', libFilter: 'all', libQuery: '', bioCat: 'All', carousel: 0, docCrew: 'A' };
-const setDate = (d) => { state.date = clampData(d); state.week = weekStart(state.date); };
+const state = { date: TODAY, week: weekStart(TODAY), hazardFilter: 'all', instrFilter: 'all', attFilter: 'all', query: '', libFilter: 'all', libQuery: '', bioCat: 'All', carousel: 0, docCrew: 'A', calStart: TODAY };
+const setDate = (d) => { state.date = clampData(d); state.week = weekStart(state.date); state.calStart = state.date; };
 function route() {
   const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
   return { parts: path.split('/').filter(Boolean).map(decodeURIComponent), qs: new URLSearchParams(qs || '') };
@@ -402,6 +407,10 @@ function topbar(role, active) {
   </header>`;
 }
 function fab(role) {
+  if (role === 'doctor' && route().parts[1] === 'instructions') {
+    $('#fab-root').innerHTML = `<button class="fab fab-plus" type="button" data-modal="library" aria-label="Add instruction" title="Add instruction">+</button>`;
+    return;
+  }
   $('#fab-root').innerHTML = role === 'crew'
     ? `<a class="fab" href="#/crew/chat">${ICON.chat}Ground Doctor</a>`
     : `<a class="fab" href="#/doctor/chat">${ICON.chat}Crew conversation</a>`;
@@ -410,26 +419,33 @@ const searchBar = (key, placeholder, button) => `<form class="search" data-searc
 
 /* ---------------- shared widgets ---------------- */
 function weekCalendar(crew, dayHref) {
-  const days = [...Array(7)].map((_, i) => addDays(state.week, i));
-  // Hazard tags turn neon yellow (potential) or red (urgent) from the crew's current biomarker status.
+  const focus = state.calStart;
+  const days = [...Array(6)].map((_, i) => addDays(focus, i + 1));
+  // Hazard tags use the crew's current state: Normal blue, Potential neon yellow, Urgent red.
   const hzSt = Object.fromEntries((crew === 'A' ? hazardStatus(allStates(state.date)) : []).map((h) => [h.key, h.status]));
   const chips = ['all', ...HAZARDS.map((h) => h.key)].map((k) => {
     const sev = k !== 'all' && hzSt[k] ? `hz-${hzSt[k]}` : '';
     return `<button class="chip ${sev} ${state.hazardFilter === k ? 'on' : ''}" data-hz="${k}">${k === 'all' ? 'All' : HAZARDS.find((h) => h.key === k).label}</button>`;
   }).join('');
+  const evCard = (e) => {
+    const dim = state.hazardFilter !== 'all' && !e.hazards.includes(state.hazardFilter);
+    // Card tint = most severe state among the event's hazards (Urgent > Potential > Normal).
+    const evSt = e.hazards.map((h) => hzSt[h]).filter(Boolean).reduce((m, x) => (SEV[x] > SEV[m] ? x : m), 'nodata');
+    return `<div class="ev st-${evSt} ${dim ? 'dim' : ''}" title="${esc(`${e.start_time}–${e.end_time} · ${e.title} · ${e.category} · ${e.hazards.join(', ')}`)}"><div class="t">${e.start_time}</div>${esc(e.title)}</div>`;
+  };
+  const fEvs = eventsFor(crew, focus);
+  const big = `<div class="big-day">
+      <div class="bd-head"><div class="lbl">${focus === TODAY ? 'TODAY' : weekday(focus).toUpperCase()}</div><div class="big">${dayLabel(focus)}</div><div class="dt">${weekday(focus)}, ${shortDate(focus)}</div><a class="open" href="${dayHref(focus)}">Open my day →</a></div>
+      <div class="bd-list">${fEvs.map(evCard).join('') || '<div class="ev-more">No scheduled activities.</div>'}</div>
+    </div>`;
   const cols = days.map((d) => {
     const evs = eventsFor(crew, d);
-    const list = evs.slice(0, 3).map((e) => {
-      const dim = state.hazardFilter !== 'all' && !e.hazards.includes(state.hazardFilter);
-      // Card tint = most severe state among the event's hazards (Urgent > Potential > Normal).
-      const evSt = e.hazards.map((h) => hzSt[h]).filter(Boolean).reduce((m, x) => (SEV[x] > SEV[m] ? x : m), 'nodata');
-      return `<div class="ev st-${evSt} ${dim ? 'dim' : ''}" title="${esc(`${e.start_time}–${e.end_time} · ${e.title} · ${e.category} · ${e.hazards.join(', ')}`)}"><div class="t">${e.start_time}</div>${esc(e.title)}</div>`;
-    }).join('');
-    return `<a class="dayc ${d === state.date ? 'today' : ''}" href="${dayHref(d)}"><div class="dn">${WD[toD(d).getUTCDay()]} ${String(toD(d).getUTCDate()).padStart(2, '0')}</div><div class="dd">${dayLabel(d)}</div>${list}${evs.length > 3 ? `<div class="ev-more">+${evs.length - 3} more</div>` : ''}</a>`;
+    return `<a class="dayc" href="${dayHref(d)}"><div class="dn">${WD[toD(d).getUTCDay()]} ${String(toD(d).getUTCDate()).padStart(2, '0')}</div><div class="dd">${dayLabel(d)}</div>${evs.slice(0, 4).map(evCard).join('')}${evs.length > 4 ? `<div class="ev-more">+${evs.length - 4} more</div>` : ''}</a>`;
   }).join('');
-  const s = toD(state.week), e = toD(days[6]);
-  const range = `${MON[s.getUTCMonth()]} ${String(s.getUTCDate()).padStart(2, '0')}–${s.getUTCMonth() !== e.getUTCMonth() ? MON[e.getUTCMonth()].slice(0, 3) + ' ' : ''}${String(e.getUTCDate()).padStart(2, '0')}, ${e.getUTCFullYear()}`;
-  return `<div class="cal-head"><button class="arrow" data-week="-7" aria-label="Previous week">‹</button><span class="range">${range}</span><button class="arrow" data-week="7" aria-label="Next week">›</button><div class="chips">${chips}</div></div><div class="week">${cols}</div>`;
+  const s0 = toD(focus), e0 = toD(days[5]);
+  const range = `${MON[s0.getUTCMonth()]} ${String(s0.getUTCDate()).padStart(2, '0')}–${s0.getUTCMonth() !== e0.getUTCMonth() ? MON[e0.getUTCMonth()].slice(0, 3) + ' ' : ''}${String(e0.getUTCDate()).padStart(2, '0')}, ${e0.getUTCFullYear()}`;
+  return `<div class="cal-head"><span class="range">${range}</span><div class="chips">${chips}</div></div>
+    <div class="strip">${big}<button class="arrow strip-arrow" data-cal="-1" aria-label="Previous day">‹</button><div class="week six">${cols}</div><button class="arrow strip-arrow" data-cal="1" aria-label="Next day">›</button></div>`;
 }
 function chatLog(role, mini) {
   const msgs = mini ? chat().slice(-2) : chat();
@@ -461,24 +477,20 @@ function chatCard(role, mini) {
 const statusRow = (s, href) => `<a class="row" href="${href}" title="${esc(s.info.summary || '')}"><div class="nm"><b>${esc(s.name)}</b><small>${esc(metaLine(s))}</small></div><span class="val">${esc(fmt(s.v, s.b))}${unitOf(s.b) ? `<small>${esc(unitOf(s.b))}</small>` : ''}</span><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></a>`;
 
 /* ================= CREW (SPACE) ================= */
+// Crew home "Health Instruction" card: care guidance only (Urgent / Potential biomarkers).
 function crewInstructionItems(states) {
-  const d = state.date; const items = [];
-  states.filter((s) => s.status === 'urgent' || s.status === 'potential').forEach((s) => {
-    items.push({ kind: 'care', text: s.name + s.category + instructionFor(s), html: `<a class="item" href="#/crew/bio/${enc(s.b)}"><div class="k">Care guidance</div><div class="ttl ${s.status}">${esc(s.name)} · ${SEV_LABEL[s.status]}</div><div class="desc">${esc(instructionFor(s))}</div><div class="foot">${dayLabel(s.r.date)} ${s.r.time} · ${esc(fmt(s.v, s.b))} · ${esc(s.category)} · Based on health_instruction.csv</div></a>` });
-  });
-  const tst = valueAt('Total Sleep Time', d), se = valueAt('Sleep Efficiency', d);
-  if (tst) items.push({ kind: 'health', text: 'sleep check', html: `<a class="item" href="#/crew/day/${d}"><div class="k">My health</div><div class="ttl">Your sleep check on ${shortDate(tst.date)} ›</div><div class="desc">Time asleep: ${fmt(tst.v, 'Total Sleep Time')} hours · Sleep efficiency: ${se ? fmt(se.v, 'Sleep Efficiency') : '—'}%</div><div class="foot">${dayLabel(tst.date)} ${tst.time} · A_hotdata.csv</div></a>` });
-  const ns = notes();
-  if (ns.length) ns.slice().reverse().forEach((n) => items.push({ kind: 'notes', text: n.title + n.text, html: `<div class="item"><div class="k">Doctor's notes</div><div class="ttl">${esc(n.title)}</div><div class="desc">${esc(n.text)}</div><div class="foot">${dayLabel(n.date)} ${n.time} · Ground doctor</div></div>` }));
-  else items.push({ kind: 'notes', text: 'doctor notes', html: `<div class="item"><div class="k">Doctor's notes</div><div class="ttl">Your doctor's notes will appear here ›</div><div class="desc">Prior consultations and diagnoses are saved here when you add them.</div><div class="foot">No physician notes supplied</div></div>` });
-  return items;
+  return states.filter((s) => s.status === 'urgent' || s.status === 'potential').map((s) => ({
+    kind: 'care',
+    text: s.name + s.category + instructionFor(s),
+    html: `<a class="item care ${s.status}" href="#/crew/bio/${enc(s.b)}"><div class="ttl">${esc(s.name)} · ${SEV_LABEL[s.status]}</div><div class="desc">${esc(instructionFor(s))}</div><div class="foot">${dayLabel(s.r.date)} ${s.r.time} · ${esc(fmtU(s.v, s.b))} · ${esc(s.category)}</div></a>`,
+  }));
 }
 function instrChips() {
   return [['all', 'All'], ['health', 'My health'], ['notes', "Doctor's notes"], ['care', 'Care guidance']].map(([k, l]) => `<button class="chip ${state.instrFilter === k ? 'on' : ''}" data-if="${k}">${l}</button>`).join('');
 }
 function filteredInstr(states) {
   const q = state.query.toLowerCase();
-  return crewInstructionItems(states).filter((i) => (state.instrFilter === 'all' || i.kind === state.instrFilter) && (!q || i.text.toLowerCase().includes(q))).map((i) => i.html).join('') || '<div class="empty">Nothing matches your search.</div>';
+  return crewInstructionItems(states).filter((i) => !q || i.text.toLowerCase().includes(q)).map((i) => i.html).join('') || `<div class="empty">${q ? 'Nothing matches your search.' : 'No care guidance right now — everything is normal.'}</div>`;
 }
 
 // Health Instruction page: no tag filter, only the instruction list.
@@ -497,15 +509,11 @@ function crewHome() {
       <p class="hero-sub">${weekday(d)}, ${shortDate(d)}<span class="bar">|</span>${n} thing${n === 1 ? '' : 's'} to check in your health today</p>
     </section>
     <section class="card" style="margin-bottom:16px;padding:20px">
-      <div class="cal">
-        <div class="today-card"><div class="lbl">TODAY</div><div class="big">${dayLabel(d)}</div><div class="dt">${weekday(d)}, ${shortDate(d)}</div><a class="open" href="#/crew/day/${d}">Open my day →</a>${todayArt()}</div>
-        <div>${weekCalendar('A', (x) => `#/crew/day/${x}`)}</div>
-      </div>
+      ${weekCalendar('A', (x) => `#/crew/day/${x}`)}
     </section>
     <div class="grid g-home">
       <section class="card home-instr">
-        <div class="card-head" style="margin-bottom:12px"><h3>Health Instruction</h3><a class="chev" href="#/crew/instructions" aria-label="Open Health Instruction">›</a></div>
-        ${searchBar('query', "Search a symptom, a health check or a doctor's note…", false)}
+        ${searchBar('query', 'Search a symptom or a biomarker…', false)}
         <div class="items">${filteredInstr(states)}</div>
       </section>
       <div class="stack">
@@ -679,6 +687,24 @@ function libraryList(states, limit) {
       ${i.forCrew ? `<div class="tags"><span class="badge ${i.status}">${SEV_LABEL[i.status]}</span><span class="badge match">Matches Crew A</span></div>` : ''}
       <div class="ttl">${esc(nice(i.b))}<span>${esc(i.category)}</span></div><div class="desc">${esc(i.text)}</div></a>`).join('') || '<div class="empty">Nothing matches.</div>'}</div>`;
 }
+/** Doctor › Health Instruction: the full instruction library, two columns, no status tags. */
+function doctorLibraryPage() {
+  const q = state.libQuery.toLowerCase();
+  const mine = libExtra().map((x) => ({ b: x.title, category: 'Added instruction', summary: x.text, mine: true }));
+  const all = [...mine, ...Object.values(DB.info).map((i) => ({ b: i.biomarker, category: i.category, summary: i.summary, yi: i.yellow_instruction, ri: i.red_instruction }))]
+    .filter((i) => !q || (i.b + i.category + i.summary + (i.yi || '') + (i.ri || '')).toLowerCase().includes(q));
+  return `${topbar('doctor', 'instr')}<main class="page dark">
+    <h1 class="page-title">Health Instruction</h1>
+    <p class="page-sub">The full instruction library from health_instruction.csv — ${all.length} entries.</p>
+    ${searchBar('libQuery', 'Search a biomarker, category or protocol…', true)}
+    <div class="lib-grid">${all.map((i) => `<article class="lib-card">
+      <h3>${esc(nice(i.b))}</h3><p class="hint">${esc(i.category)}</p>
+      <div class="lib-body"><p>${esc(i.summary)}</p>
+        ${i.yi ? `<div class="lib-ins potential"><b>If Potential</b>${esc(i.yi)}</div>` : ''}
+        ${i.ri ? `<div class="lib-ins urgent"><b>If Urgent</b>${esc(i.ri)}</div>` : ''}</div>
+    </article>`).join('') || '<div class="empty">Nothing matches your search.</div>'}</div>
+  </main>`;
+}
 function doctorHome() {
   const states = allStates(state.date);
   const flagged = states.filter((s) => s.status === 'urgent' || s.status === 'potential');
@@ -735,7 +761,7 @@ function doctorCrew(c) {
   return `${topbar('doctor', 'home')}<main class="page">
     <a class="back" data-back href="#/doctor">← Home</a>
     <div class="crew-head">${head}<div><div class="lbl">ASTRONAUT · MARS MISSION</div><h1>Crew ${c}</h1><small>${dayLabel(state.date)} &nbsp; Mission start Oct 1</small></div>
-      <div class="right"><div class="crew-switch">${CREWS.map((x) => `<a class="${x === c ? 'on' : ''}" href="#/doctor/crew/${x}">${x}</a>`).join('')}</div>
+      <div class="right">
         <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn outline" href="${hasData ? `#/doctor/day/A/${state.date}` : '#/doctor/crew/' + c}">Daily records</a><button class="btn outline" data-modal="instruction" ${hasData ? '' : 'disabled'}>Send instruction</button><a class="btn primary" href="#/doctor/chat">${ICON.chat}Message</a></div></div></div>
     <section class="card" style="padding:20px">${weekCalendar(c, (x) => (hasData ? `#/doctor/day/A/${x}` : `#/doctor/crew/${c}`))}</section>
     ${hasData ? `<div class="tiles">${tiles}</div>
@@ -800,7 +826,8 @@ function render() {
     r = 'doctor';
     if (sub === 'crew') html = doctorCrew(CREWS.includes(a1) ? a1 : 'A');
     else if (sub === 'day') { setDate(a2 || state.date); html = dayPage('doctor', state.date); }
-    else if (sub === 'instructions' || sub === 'attention') html = attentionPage('doctor');
+    else if (sub === 'instructions') html = doctorLibraryPage();
+    else if (sub === 'attention') html = attentionPage('doctor');
     else if (sub === 'bio') html = bioPage('doctor', a1);
     else if (sub === 'chat') html = chatPage('doctor');
     else if (sub === 'profile') html = profilePage('doctor');
@@ -821,7 +848,7 @@ function refocus(key) { const inp = document.querySelector(`form[data-search="${
 document.addEventListener('click', (e) => {
   const t = e.target.closest('button, [data-close]'); if (!t) return;
   const d = t.dataset;
-  if (d.week) { state.week = addDays(state.week, +d.week); rerender(); }
+  if (d.cal) { state.calStart = addDays(state.calStart, +d.cal); rerender(); }
   else if (d.hz) { state.hazardFilter = d.hz; rerender(); }
   else if (d.if) { state.instrFilter = d.if; rerender(); }
   else if (d.af) { state.attFilter = d.af; rerender(); }
