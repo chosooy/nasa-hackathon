@@ -1,7 +1,8 @@
 // KOOK test bench: replays one crew's day and shows what each transmission lane carries.
 //
 //   RAW   every reading as CSV (what the crew measured)
-//   HOT   Potential / Urgent readings, gathered every second, each file zstd-compressed
+//   HOT   Potential / Urgent readings, gathered every second, each file zstd-compressed with the shared
+//         dictionary in data/compression/hot.zdict (same one the dashboard uses)
 //   COLD  Normal readings summarised per biomarker, compressed with CCSDS 121, sent hourly
 //
 // The lane logic is the Rust/WebAssembly simulator in ./pkg (from minuncho/prep space-sim):
@@ -73,8 +74,13 @@ parseCSV(await fetch(`${ROOT}/data/biomarker/biomarker.csv`).then((r) => r.text(
 // ===== simulator + zstd =====
 await init({ module_or_path: new URL(`./pkg/space_sim_bg.wasm${VERSION}`, import.meta.url) });
 const sim = new Sim(true, 0, 0, TX_DELAY_MS, LINK_BYTES_PER_SEC, COLD_EVERY_MS, PRIO_EVERY_MS, Date.now());
-let zstd = null;
-import(`${ZSTD_PKG}/+esm`).then(async (m) => { await m.init(`${ZSTD_PKG}/dist/esm/zstd.wasm`); zstd = m; }).catch((e) => console.error('zstd failed to load', e));
+let zstd = null, dict = null, cctx = 0;
+import(`${ZSTD_PKG}/+esm`).then(async (m) => {
+  await m.init(`${ZSTD_PKG}/dist/esm/zstd.wasm`);
+  dict = new Uint8Array(await fetch(`${ROOT}/data/compression/hot.zdict`).then((r) => r.arrayBuffer()));
+  cctx = m.createCCtx();
+  zstd = m;
+}).catch((e) => console.error('zstd failed to load', e));
 
 // ===== state =====
 let slots = [], slotIdx = 0, timer = null, total = 0;
@@ -143,7 +149,10 @@ function pump(now) {
     for (;;) {
       const s = sim.nextRequest(now); if (!s) break;
       const req = JSON.parse(s);
-      const bytes = req.encoding === 'ccsds121' ? new Uint8Array(req.bytes) : zstd.compress(utf8.encode(req.text), ZSTD_LEVEL);
+      const text = utf8.encode(req.text || '');
+      const bytes = req.encoding === 'ccsds121' ? new Uint8Array(req.bytes)
+        : req.kind === 'priority' ? zstd.compressUsingDict(cctx, text, dict, ZSTD_LEVEL)   // HOT: shared dictionary
+        : zstd.compress(text, ZSTD_LEVEL);
       pending.set(sim.enqueue(req.kind, req.name, bytes.length), bytes);
     }
   }
@@ -166,8 +175,10 @@ function cell(el, text, cls) { const s = document.createElement('span'); s.textC
 function render() {
   const snap = JSON.parse(sim.snapshot(Date.now()));
   const cur = slots[Math.max(0, slotIdx - 1)];
-  $('now').firstChild.textContent = slotIdx && cur ? cur[0].ts.slice(11) : '--:--';
-  $('nowSub').textContent = `Crew ${$('crewSel').value} · ${$('daySel').value}`;
+  const crew = $('crewSel').value;
+  if (!$('stampImg').src.endsWith(`${crew}_profile.jpg`)) { $('stampImg').src = `${ROOT}/assets/image/web/${crew}_profile.jpg`; $('stampImg').alt = `Crew ${crew}`; }
+  $('stampDate').textContent = $('daySel').value;
+  $('stampTime').textContent = slotIdx && cur ? cur[0].ts.slice(11) : '--:--';
   $('progress').style.width = slots.length ? `${(slotIdx / slots.length) * 100}%` : '0';
 
   // RAW

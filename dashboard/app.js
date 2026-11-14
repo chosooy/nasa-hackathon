@@ -473,13 +473,22 @@ const CCSDS_MAX_DATA = 1018;                  // payload bytes per packet → pa
 const APID = { A: 0x101, B: 0x102, C: 0x103, D: 0x104 };
 const TX_DOC = 'https://github.com/chosooy/nasa-hackathon#compressed-transmission';
 const MISSION_EPOCH = Date.UTC(2026, 9, 1);   // CUC coarse time counts seconds from Oct 1, 2026
-const TX = { zstd: null, loading: null, error: null, cache: new Map() };
+const HOT_DICT = `${ROOT}/data/compression/hot.zdict`;   // shared zstd dictionary for hot bundles (see data/compression/train_dict.py)
+const TX = { zstd: null, dict: null, cctx: 0, dctx: 0, loading: null, error: null, cache: new Map() };
 
 function loadZstd() {
   if (TX.zstd || TX.error) return Promise.resolve();
   if (!TX.loading) {
     TX.loading = import(`${ZSTD_PKG}/+esm`)
-      .then(async (m) => { await m.init(`${ZSTD_PKG}/dist/web/zstd.wasm`); TX.zstd = m; })
+      .then(async (m) => {
+        await m.init(`${ZSTD_PKG}/dist/web/zstd.wasm`);
+        // shared dictionary for the hot lane (trained on Nov 1–12; Mars and Earth both hold it)
+        const res = await fetch(HOT_DICT);
+        if (!res.ok) throw new Error(`hot dictionary → ${res.status}`);
+        TX.dict = new Uint8Array(await res.arrayBuffer());
+        TX.cctx = m.createCCtx(); TX.dctx = m.createDCtx();
+        TX.zstd = m;
+      })
       .catch((e) => { TX.error = e && e.message ? e.message : 'zstd failed to load'; })
       .finally(() => { if (route().parts[1] === 'chat' && route().parts[0] === 'crew') rerender(); });
   }
@@ -533,7 +542,8 @@ function ccsdsUnpack(file) {
 }
 const fmtBytes = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`);
 const hhmm = (ms) => new Date(ms).toISOString().slice(11, 16);
-const toCsv = (rows) => 'date,time,biomarker,figure\n' + rows.map((r) => `${r.date},${r.time},${r.b},${r.v}`).join('\n') + '\n';
+const toRows = (rows) => rows.map((r) => `${r.date},${r.time},${r.b},${r.v}\n`).join('');
+const toCsv = (rows) => 'date,time,biomarker,figure\n' + toRows(rows);
 
 /** Everything transmitted (or buffering) for crew c on the dashboard's current day, up to the dashboard clock. */
 function transmissionLog(c) {
@@ -577,9 +587,11 @@ function transmissionLog(c) {
     const key = `${c}|${day}|hot|${m}`;
     let e = TX.cache.get(key);
     if (!e && z) {
-      const raw = utf8.encode(toCsv(list));
-      const packed = z.compress(raw, ZSTD_LEVEL);
-      const ok = unutf8.decode(z.decompress(packed)) === unutf8.decode(raw);
+      // rows only (no CSV header: the receiver knows the columns) + shared dictionary, so even a
+      // one-reading bundle compresses — plain zstd made these larger than the raw rows
+      const raw = utf8.encode(toRows(list));
+      const packed = z.compressUsingDict(TX.cctx, raw, TX.dict, ZSTD_LEVEL);
+      const ok = unutf8.decode(z.decompressUsingDict(TX.dctx, packed, TX.dict)) === unutf8.decode(raw);
       const st = list.some((r) => r.st === 'urgent') ? 'urgent' : 'potential';
       const names = [...new Set(list.map((r) => nice(r.b)))];
       e = { kind: 'hot', st, name: `hot_${c}_${day}T${hhmm(m).replace(':', '')}.zst`, label: `${list.length} reading${list.length > 1 ? 's' : ''} · ${names.slice(0, 2).join(', ')}${names.length > 2 ? '…' : ''}`, readings: list.length, raw: raw.length, zst: packed.length, wire: packed.length, ok, sentAt };

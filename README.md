@@ -26,7 +26,7 @@ How crew health data travels from Mars to Earth in the dashboard. The **Conversa
 | Lane | Readings | When | Encoding |
 | --- | --- | --- | --- |
 | **Cold data** | Normal | Hourly batch, sent on the hour | CSV → zstd (level 19) → CCSDS Space Packets |
-| **Hot data** | Potential / Urgent | Every minute, as they happen | CSV → zstd (level 19) |
+| **Hot data** | Potential / Urgent | Every minute, as they happen | CSV rows → zstd (level 19) with a shared dictionary |
 
 Normal readings can wait, so they are buffered for an hour and sent together. Potential and Urgent readings go out right away so the ground doctor sees them as soon as the light delay allows.
 
@@ -105,6 +105,17 @@ The files the simulator actually sent (`A_priority.bin`) were 127–155 B each, 
 
 For d, the 2 KB dictionary was trained on Nov 1–12 readings. Both Mars and Earth would hold it before the mission.
 
-A shared dictionary gives zstd the repeated parts (dates, biomarker names, number formats) before the first bundle, so even a one-row bundle compresses. It keeps the 21-minute delivery and cuts the hot lane by almost two-thirds. The dashboard still uses option a; switching to d is the next step if we want it.
+A shared dictionary gives zstd the repeated parts (dates, biomarker names, number formats) before the first bundle, so even a one-row bundle compresses. It keeps the 21-minute delivery and cuts the hot lane by almost two-thirds.
+
+**Adopted (option d).** The dashboard and the test bench now compress hot files with the shared dictionary in [`data/compression/hot.zdict`](data/compression/hot.zdict) (2 KB). It was trained on Nov 1–12 readings of all four crews in both file formats by [`data/compression/train_dict.py`](data/compression/train_dict.py), and checked on Nov 13, a day it never saw:
+
+| Crew A, 288 hot bundles | Raw | zstd | zstd + dictionary |
+| --- | ---: | ---: | ---: |
+| Dashboard format (rows only) | 14.1 KB | 15.8 KB | 9.6 KB |
+| Test bench format (header + rows) | 27.3 KB | 26.8 KB | 10.0 KB |
+
+In the dashboard a typical two-reading bundle goes from 87 B to about 42 B, and every bundle still decompresses back to the exact original (`✓ verified`).
+
+The dashboard uses zstd-wasm's `compressUsingDict` and `decompressUsingDict`. The frame-header trimming from option d2 isn't available through that API, so we stop at d.
 
 **Test bench:** [`test/`](test/) runs the ear-worn device and the compression simulator on our data, so these effects can be watched live. See [`test/README.md`](test/README.md).

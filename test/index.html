@@ -29,9 +29,12 @@
   .primary { background: #1f6feb; border-color: #1f6feb; color: #fff; font-weight: 600; min-width: 84px; }
   .primary:hover:not(:disabled) { background: #388bfd; border-color: #388bfd; }
   .spacer { flex: 1; }
-  .now { font: 600 30px/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .stamp { display: flex; align-items: center; justify-content: center; gap: 22px; padding: 44px 20px 4px; font-variant-numeric: tabular-nums; }
+  .stamp img { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; object-position: center 15%; border: 3px solid rgba(255,255,255,.25); }
+  .stamp span { font: 500 40px/1 var(--mono); color: var(--muted); letter-spacing: -.02em; }
+  .stamp b { font: 700 64px/1 var(--mono); letter-spacing: -.03em; }
+  @media (max-width: 700px) { .stamp { gap: 12px; } .stamp img { width: 48px; height: 48px; } .stamp span { font-size: 20px; } .stamp b { font-size: 34px; } }
   option { background: #07173F; }
-  .now small { color: var(--muted); font: 400 13px var(--font); margin-left: 12px; letter-spacing: 0; }
   .progress { height: 2px; background: var(--line); }
   .progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
 
@@ -77,10 +80,10 @@
     </select></label>
     <button id="btnStart" class="primary" type="button" disabled>Start</button>
     <button id="btnReset" type="button" disabled>Reset</button>
-    <span class="spacer"></span>
-    <span class="now" id="now">--:--<small id="nowSub"></small></span>
   </div>
   <div class="progress"><i id="progress"></i></div>
+
+  <div class="stamp"><img id="stampImg" src="../assets/image/web/A_profile.jpg" alt="Crew A"><span id="stampDate">2026-11-13</span><b id="stampTime">--:--</b></div>
 
   <main>
     <section class="card raw">
@@ -94,7 +97,7 @@
 
     <section class="card hot">
       <div class="head">
-        <div class="kind"><b>HOT</b><span>Potential / Urgent · zstd · every second</span></div>
+        <div class="kind"><b>HOT</b><span>Potential / Urgent · zstd + dictionary · every second</span></div>
         <div class="size" id="hotSize">0 B</div>
         <div class="meta" id="hotMeta">Nothing sent yet.</div>
       </div>
@@ -111,6 +114,6 @@
     </section>
   </main>
 
-<script type="module" src="app.js?v=8"></script>
+<script type="module" src="app.js?v=9"></script>
 </body>
 </html>

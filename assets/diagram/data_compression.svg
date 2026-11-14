@@ -37,7 +37,7 @@
   <!-- hot lane -->
   <rect x="680" y="195" width="400" height="110" rx="20" fill="#3A1E22" stroke="#FF8A65" stroke-width="2"/>
   <text x="710" y="240" fill="#FF8A65" class="n">HOT · Potential / Urgent</text>
-  <text x="710" y="274" class="w s">zstd  ·  sent every minute</text>
+  <text x="710" y="274" class="w s">zstd + shared dictionary  ·  sent every minute</text>
 
   <!-- cold lane -->
   <rect x="680" y="405" width="400" height="110" rx="20" fill="#13295E" stroke="#7FA8FF" stroke-width="2"/>
