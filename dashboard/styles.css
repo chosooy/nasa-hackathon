@@ -679,3 +679,35 @@ a.lib-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,
 .split-instr { height: 360px; }
 .split-instr .si { min-height: 0; overflow-y: auto; }
 @media (max-width: 1000px) { .crew-record, .split-instr { height: auto; } }
+
+/* ---------- Round 16: doctor Overview — Add instruction and Send on the same baseline ---------- */
+.g-doc > .card { display: flex; flex-direction: column; }
+.g-doc .doc-add, .g-doc .doc-compose { margin-top: auto; }
+.g-doc .doc-add { height: 42px; flex: none; }
+.g-doc .doc-compose { padding: 14px 0 0; border-top: 1px solid var(--navy-100); background: transparent; flex: none; }
+.g-doc .doc-compose input, .g-doc .doc-compose .btn { height: 42px; }
+.g-doc .lib { flex: none; margin-bottom: 16px; }
+
+/* ---------- Round 17: doctor library cards coloured by Crew A state ---------- */
+.lib-card .tags { margin-bottom: 8px; }
+.lib-card h3 .lib-cat { font-family: var(--body); font-size: 12px; font-weight: 400; color: var(--navy-400); margin-left: 4px; }
+.lib-card > .hint { display: none; }
+.lib-card.st-urgent { background: var(--crit-bg); }
+.lib-card.st-potential { background: var(--yellow-tint); }
+.lib-card.st-normal { background: var(--normal-bg); }
+.lib-card.st-urgent, .lib-card.st-urgent h3, .lib-card.st-urgent .lib-body,
+.lib-card.st-potential, .lib-card.st-potential h3, .lib-card.st-potential .lib-body { color: #000; }
+.lib-card.st-urgent .lib-ins, .lib-card.st-potential .lib-ins, .lib-card.st-normal .lib-ins { background: rgba(255,255,255,.65); }
+
+/* ---------- Round 18: doctor library as full-width rows (like astronaut Health Instruction) ---------- */
+.lib-row .tags { margin-bottom: 6px; }
+.lib-row .body { color: #000; }
+.lib-row .body p { font-size: 13px; margin-bottom: 10px; }
+.lib-row .body.st-urgent { background: var(--crit-bg); }
+.lib-row .body.st-potential { background: var(--yellow-tint); }
+.lib-row .body.st-normal { background: var(--normal-bg); }
+.lib-row .body.st-nodata { background: var(--navy-50); }
+.lib-ins-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lib-row .lib-ins { background: rgba(255,255,255,.75); font-size: 12.5px; color: #000; }
+.sev-h.nodata { color: var(--navy-400); }
+@media (max-width: 700px) { .lib-ins-row { grid-template-columns: 1fr; } }

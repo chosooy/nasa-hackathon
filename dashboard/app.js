@@ -727,19 +727,34 @@ function libraryList(states, limit) {
 /** Doctor › Health Instruction: the full instruction library, two columns, no status tags. */
 function doctorLibraryPage() {
   const q = state.libQuery.toLowerCase();
-  const mine = libExtra().map((x) => ({ b: x.title, category: 'Added instruction', summary: x.text, mine: true }));
-  const all = [...mine, ...Object.values(DB.info).map((i) => ({ b: i.biomarker, category: i.category, summary: i.summary, yi: i.yellow_instruction, ri: i.red_instruction }))]
+  const f = state.libAtt || 'all';
+  const byB = Object.fromEntries(allStates(state.date).map((x) => [x.b, x]));          // Crew A state per biomarker
+  const mine = libExtra().map((x) => ({ b: x.title, category: 'Added instruction', method: '', summary: x.text, mine: true, status: 'nodata' }));
+  const lib = [...mine, ...Object.values(DB.info).map((i) => ({ b: i.biomarker, category: i.category, method: i.method, summary: i.summary, yi: i.yellow_instruction, ri: i.red_instruction, status: byB[i.biomarker] ? byB[i.biomarker].status : 'nodata', s: byB[i.biomarker] }))]
     .filter((i) => !q || (i.b + i.category + i.summary + (i.yi || '') + (i.ri || '')).toLowerCase().includes(q));
+  const cnt = (k) => lib.filter((i) => i.status === k).length;
+  const chip = (k, l) => `<button class="chip ${f === k ? 'on' : ''}" data-la="${k}">${k !== 'all' ? `<i class="dot ${k}"></i>` : ''}${l}<span class="n">${k === 'all' ? lib.length : cnt(k)}</span></button>`;
+  const HEAD = { urgent: 'URGENT', potential: 'POTENTIAL', normal: 'NORMAL', nodata: 'NOT MEASURED' };
+  const card = (i) => {
+    const tag = i.mine ? 'article' : `a href="#/doctor/bio/${enc(i.b)}"`;
+    const crewTag = i.status === 'urgent' || i.status === 'potential' ? '<span class="badge match">Matches Crew A</span>' : i.status === 'normal' ? '<span class="badge normal">Crew A · Normal</span>' : '';
+    const val = i.s && i.s.r ? `<div class="v">${esc(fmtU(i.s.v, i.b))}<small style="color:var(--navy-400)">Crew A · ${dayLabel(i.s.r.date)} ${i.s.r.time} UTC</small></div>` : '';
+    return `<${tag} class="alert lib-row">
+      <div class="top"><div class="nm">${crewTag ? `<div class="tags">${crewTag}</div>` : ''}<h4>${esc(nice(i.b))}</h4><small>${esc(i.category)}${i.method ? ' · ' + esc(i.method) : ''}</small></div>${val}${i.mine ? '' : '<span class="chev">›</span>'}</div>
+      <div class="body st-${i.status}"><div class="k">SUMMARY</div><p>${esc(i.summary)}</p>
+        ${i.yi || i.ri ? `<div class="lib-ins-row">${i.yi ? `<div class="lib-ins potential"><b>If Potential</b>${esc(i.yi)}</div>` : ''}${i.ri ? `<div class="lib-ins urgent"><b>If Urgent</b>${esc(i.ri)}</div>` : ''}</div>` : ''}</div>
+    </${i.mine ? 'article' : 'a'}>`;
+  };
+  const sections = ['urgent', 'potential', 'normal', 'nodata'].filter((k) => f === 'all' || f === k).map((k) => {
+    const items = lib.filter((i) => i.status === k);
+    return items.length ? `<div class="sev-h ${k}">${HEAD[k]} · ${items.length}</div>${items.map(card).join('')}` : '';
+  }).join('');
   return `${topbar('doctor', 'instr')}<main class="page dark">
     <h1 class="page-title">Health Instruction</h1>
-    <p class="page-sub">The full instruction library from health_instruction.csv — ${all.length} entries.</p>
+    <p class="page-sub">The full instruction library, matched to Crew A's latest readings — most urgent first.</p>
     ${searchBar('libQuery', 'Search a biomarker, category or protocol…', true)}
-    <div class="lib-grid">${all.map((i) => `<${i.mine ? 'article' : `a href="#/doctor/bio/${enc(i.b)}"`} class="lib-card">
-      <h3>${esc(nice(i.b))}</h3><p class="hint">${esc(i.category)}</p>
-      <div class="lib-body"><p>${esc(i.summary)}</p>
-        ${i.yi ? `<div class="lib-ins potential"><b>If Potential</b>${esc(i.yi)}</div>` : ''}
-        ${i.ri ? `<div class="lib-ins urgent"><b>If Urgent</b>${esc(i.ri)}</div>` : ''}</div>
-    </${i.mine ? 'article' : 'a'}>`).join('') || '<div class="empty">Nothing matches your search.</div>'}</div>
+    <div class="chips">${chip('all', 'All')}${chip('urgent', 'Urgent')}${chip('potential', 'Potential')}${chip('normal', 'Normal')}</div>
+    ${sections || '<div class="empty">Nothing matches your search.</div>'}
   </main>`;
 }
 /** Biomarker carousel (#1 large chart, #2-#3 small), shared by the doctor Overview and the astronaut hazard board.
@@ -780,12 +795,12 @@ function doctorHome() {
     <div class="grid g-doc">
       <section class="card soft"><div class="card-head"><h3>Health Instruction</h3><a class="chev" href="#/doctor/instructions" aria-label="Open">›</a></div>
         ${libraryList(states, true)}
-        <button class="btn navy block" style="margin-top:16px" data-modal="library">+ &nbsp;Add instruction</button></section>
+        <button class="btn navy block doc-add" data-modal="library">+ &nbsp;Add instruction</button></section>
       <section class="card">
         <div class="card-head"><h3>Crew hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div>
         <div class="crew-tiles">${CREWS.map(tile).join('')}</div>
         ${biomarkerCarousel({ ranked, key: 'carousel', bioBase: '#/doctor/bio', title: `Biomarkers · Crew ${sel}`, emptyText: `No biomarker data for Crew ${sel} yet.` })}
-        <form class="compose" data-chat="doctor" style="padding:14px 0 0;border-top:1px solid var(--navy-100);margin-top:10px"><input name="m" placeholder="Write a message to Crew ${sel}…" autocomplete="off" ${sel === 'A' ? '' : 'disabled'}><button class="btn primary" type="submit" ${sel === 'A' ? '' : 'disabled'}>Send ${ICON.send}</button></form>
+        <form class="compose doc-compose" data-chat="doctor"><input name="m" placeholder="Write a message to Crew ${sel}…" autocomplete="off" ${sel === 'A' ? '' : 'disabled'}><button class="btn primary" type="submit" ${sel === 'A' ? '' : 'disabled'}>Send ${ICON.send}</button></form>
       </section>
     </div>
   </main>`;
@@ -894,6 +909,7 @@ document.addEventListener('click', (e) => {
   else if (d.if) { state.instrFilter = d.if; rerender(); }
   else if (d.af) { state.attFilter = d.af; rerender(); }
   else if (d.lf) { state.libFilter = d.lf; rerender(); }
+  else if (d.la) { state.libAtt = d.la; rerender(); }
   else if (d.cat) { state.bioCat = d.cat; rerender(); }
   else if (d.rec) { state.recCrew = (state.recCrew || 0) + +d.rec; rerender(); }
   else if (d.car) { const k = d.carKey || 'carousel'; state[k] = (state[k] || 0) + +d.car; rerender(); }
