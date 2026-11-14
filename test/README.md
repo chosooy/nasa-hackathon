@@ -1,10 +1,16 @@
 # KOOK test bench
 
-One page that joins the **ear-worn device simulator** and the **Mars → Earth compression simulator**
-(both from [minuncho/prep](https://github.com/minuncho/prep): `simulator/` and `space-sim/`), running on this repo's data.
+Replays one crew's day and shows what each transmission lane carries, side by side:
 
-- Open: `test/index.html` (Mars side only; the transmission log shows each file's Earth arrival time)
-- Shorter link delay for testing: `test/index.html?delay=0.5` (minutes; default 20)
+| Card | What it holds | How it is sent |
+| --- | --- | --- |
+| **RAW** | Every reading as CSV | Not sent as is; this is the baseline for the other two |
+| **HOT** | Potential / Urgent readings | Gathered every second, each file zstd-compressed |
+| **COLD** | Normal readings, summarised per biomarker (count, min, max, mean) | Compressed with CCSDS 121, sent hourly |
+
+Each card shows its size so far. HOT and COLD also show what share of their own raw rows they take on the wire.
+
+At the top, pick the crew (A–D), the day (Nov 1–30) and the playback speed. Each tick plays one 5-minute slot.
 
 Serve the repository root so the page can read `../data`:
 
@@ -14,17 +20,9 @@ python3 -m http.server 8765
 
 Then open http://localhost:8765/test/.
 
-## What happens
+## How it works
 
-1. **Device.** Replays one crew's day from `data/crew/{A,B,C,D}_hotdata.csv`, one 5-minute slot per tick. Each reading lights the part it comes from:
-   - PPG: heart rate, blood pressure
-   - IMU: sleep measures
-   - Wireless: everything else
-2. **Voice guidance.** When a biomarker turns Potential or Urgent, the device reads out the first sentence of its instruction from `data/health_instruction/health_instruction.csv`. Status follows `data/biomarker/biomarker.csv` (yellow = normal range, red = urgent).
-3. **Compression and link.** The same rows go into the Rust/WebAssembly simulator in `pkg/`, copied from `minuncho/prep/space-sim/web/pkg`:
-   - **hot:** the raw stream, zstd
-   - **cold:** a per-biomarker summary compressed with CCSDS 121, sent hourly
-   - **priority:** Potential/Urgent rows, zstd, sent every second
-   - The size table shows two things. The first is what each stream would be if compressed in one go, as a reference. The second is the files actually sent so far. In fast replay several anomalies share a second; in real time each priority file holds about one row (see the root README, "Size experiments").
-
-The simulator expects `Normal / Warning / Critical`, so Potential is passed as `Warning` and Urgent as `Critical`.
+- Readings come from `data/crew/{A,B,C,D}_hotdata.csv`. Status follows `data/biomarker/biomarker.csv`: yellow = normal range, red = urgent, otherwise potential.
+- The lanes run in the Rust/WebAssembly simulator in `pkg/`, copied from [minuncho/prep](https://github.com/minuncho/prep) `space-sim/web/pkg`. The page feeds it one row at a time. Its *priority* lane is our HOT lane.
+- The simulator expects `Normal / Warning / Critical`, so Potential is passed as `Warning` and Urgent as `Critical`.
+- In fast playback several anomalies share a second, so HOT files look efficient. In real time readings are 5 minutes apart and each HOT file holds about one row. See the root README, "Size experiments".
