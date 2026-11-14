@@ -1799,7 +1799,7 @@
 2026-11-02,12:45,Blood Pressure (DBP),84.0
 2026-11-02,12:45,Blood Pressure (SBP),180.3
 2026-11-02,12:45,Body temperature,37.54
-2026-11-02,12:45,Heart Rate,124.1
+2026-11-02,12:45,Heart Rate,99.8
 2026-11-02,12:50,Blood Pressure (DBP),92.8
 2026-11-02,12:50,Blood Pressure (SBP),180.3
 2026-11-02,12:50,Body temperature,37.3
@@ -3091,7 +3091,7 @@
 2026-11-03,15:20,Blood Pressure (DBP),90.3
 2026-11-03,15:20,Blood Pressure (SBP),180.4
 2026-11-03,15:20,Body temperature,37.61
-2026-11-03,15:20,Heart Rate,126.9
+2026-11-03,15:20,Heart Rate,76.1
 2026-11-03,15:25,Blood Pressure (DBP),84.0
 2026-11-03,15:25,Blood Pressure (SBP),180.4
 2026-11-03,15:25,Body temperature,37.6
@@ -3123,7 +3123,7 @@
 2026-11-03,16:00,Blood Pressure (DBP),89.4
 2026-11-03,16:00,Blood Pressure (SBP),180.4
 2026-11-03,16:00,Body temperature,37.43
-2026-11-03,16:00,Heart Rate,124.0
+2026-11-03,16:00,Heart Rate,76.1
 2026-11-03,16:05,Blood Pressure (DBP),80.8
 2026-11-03,16:05,Blood Pressure (SBP),180.4
 2026-11-03,16:05,Body temperature,37.89
@@ -3139,11 +3139,11 @@
 2026-11-03,16:20,Blood Pressure (DBP),81.1
 2026-11-03,16:20,Blood Pressure (SBP),180.4
 2026-11-03,16:20,Body temperature,37.61
-2026-11-03,16:20,Heart Rate,121.5
+2026-11-03,16:20,Heart Rate,76.1
 2026-11-03,16:25,Blood Pressure (DBP),86.3
 2026-11-03,16:25,Blood Pressure (SBP),180.4
 2026-11-03,16:25,Body temperature,37.54
-2026-11-03,16:25,Heart Rate,127.3
+2026-11-03,16:25,Heart Rate,76.1
 2026-11-03,16:30,Blood Pressure (DBP),78.5
 2026-11-03,16:30,Blood Pressure (SBP),180.4
 2026-11-03,16:30,Body temperature,37.68
@@ -5111,7 +5111,7 @@
 2026-11-05,08:45,Blood Pressure (DBP),93.3
 2026-11-05,08:45,Blood Pressure (SBP),180.7
 2026-11-05,08:45,Body temperature,37.15
-2026-11-05,08:45,Heart Rate,122.8
+2026-11-05,08:45,Heart Rate,89.9
 2026-11-05,08:50,Blood Pressure (DBP),95.2
 2026-11-05,08:50,Blood Pressure (SBP),180.7
 2026-11-05,08:50,Body temperature,37.5
@@ -5119,7 +5119,7 @@
 2026-11-05,08:55,Blood Pressure (DBP),100.0
 2026-11-05,08:55,Blood Pressure (SBP),180.7
 2026-11-05,08:55,Body temperature,37.13
-2026-11-05,08:55,Heart Rate,123.3
+2026-11-05,08:55,Heart Rate,89.9
 2026-11-05,09:00,Blood Pressure (DBP),85.4
 2026-11-05,09:00,Blood Pressure (SBP),180.7
 2026-11-05,09:00,Body temperature,37.01
@@ -5167,11 +5167,11 @@
 2026-11-05,09:55,Blood Pressure (DBP),90.3
 2026-11-05,09:55,Blood Pressure (SBP),180.7
 2026-11-05,09:55,Body temperature,37.1
-2026-11-05,09:55,Heart Rate,124.2
+2026-11-05,09:55,Heart Rate,89.9
 2026-11-05,10:00,Blood Pressure (DBP),90.3
 2026-11-05,10:00,Blood Pressure (SBP),180.7
 2026-11-05,10:00,Body temperature,37.51
-2026-11-05,10:00,Heart Rate,125.4
+2026-11-05,10:00,Heart Rate,89.9
 2026-11-05,10:05,Blood Pressure (DBP),88.6
 2026-11-05,10:05,Blood Pressure (SBP),180.7
 2026-11-05,10:05,Body temperature,37.47
@@ -5179,7 +5179,7 @@
 2026-11-05,10:10,Blood Pressure (DBP),97.0
 2026-11-05,10:10,Blood Pressure (SBP),180.7
 2026-11-05,10:10,Body temperature,37.42
-2026-11-05,10:10,Heart Rate,121.0
+2026-11-05,10:10,Heart Rate,89.9
 2026-11-05,10:15,Blood Pressure (DBP),87.0
 2026-11-05,10:15,Blood Pressure (SBP),180.7
 2026-11-05,10:15,Body temperature,37.47
@@ -5191,7 +5191,7 @@
 2026-11-05,10:25,Blood Pressure (DBP),91.5
 2026-11-05,10:25,Blood Pressure (SBP),180.7
 2026-11-05,10:25,Body temperature,37.38
-2026-11-05,10:25,Heart Rate,120.4
+2026-11-05,10:25,Heart Rate,89.9
 2026-11-05,10:30,Blood Pressure (DBP),97.2
 2026-11-05,10:30,Blood Pressure (SBP),180.7
 2026-11-05,10:30,Body temperature,37.24
@@ -5203,11 +5203,11 @@
 2026-11-05,10:40,Blood Pressure (DBP),98.7
 2026-11-05,10:40,Blood Pressure (SBP),180.7
 2026-11-05,10:40,Body temperature,37.25
-2026-11-05,10:40,Heart Rate,127.2
+2026-11-05,10:40,Heart Rate,89.9
 2026-11-05,10:45,Blood Pressure (DBP),90.2
 2026-11-05,10:45,Blood Pressure (SBP),180.7
 2026-11-05,10:45,Body temperature,37.23
-2026-11-05,10:45,Heart Rate,125.1
+2026-11-05,10:45,Heart Rate,89.9
 2026-11-05,10:50,Blood Pressure (DBP),89.1
 2026-11-05,10:50,Blood Pressure (SBP),180.7
 2026-11-05,10:50,Body temperature,37.25
@@ -5219,7 +5219,7 @@
 2026-11-05,11:00,Blood Pressure (DBP),95.1
 2026-11-05,11:00,Blood Pressure (SBP),180.7
 2026-11-05,11:00,Body temperature,37.5
-2026-11-05,11:00,Heart Rate,122.3
+2026-11-05,11:00,Heart Rate,89.9
 2026-11-05,11:05,Blood Pressure (DBP),99.5
 2026-11-05,11:05,Blood Pressure (SBP),180.7
 2026-11-05,11:05,Body temperature,37.2
@@ -5227,11 +5227,11 @@
 2026-11-05,11:10,Blood Pressure (DBP),92.4
 2026-11-05,11:10,Blood Pressure (SBP),180.7
 2026-11-05,11:10,Body temperature,37.8
-2026-11-05,11:10,Heart Rate,125.4
+2026-11-05,11:10,Heart Rate,89.9
 2026-11-05,11:15,Blood Pressure (DBP),96.4
 2026-11-05,11:15,Blood Pressure (SBP),180.7
 2026-11-05,11:15,Body temperature,37.68
-2026-11-05,11:15,Heart Rate,121.7
+2026-11-05,11:15,Heart Rate,89.9
 2026-11-05,11:20,Blood Pressure (DBP),96.3
 2026-11-05,11:20,Blood Pressure (SBP),180.7
 2026-11-05,11:20,Body temperature,37.2
@@ -5243,11 +5243,11 @@
 2026-11-05,11:30,Blood Pressure (DBP),97.4
 2026-11-05,11:30,Blood Pressure (SBP),180.7
 2026-11-05,11:30,Body temperature,37.33
-2026-11-05,11:30,Heart Rate,121.0
+2026-11-05,11:30,Heart Rate,89.9
 2026-11-05,11:35,Blood Pressure (DBP),95.1
 2026-11-05,11:35,Blood Pressure (SBP),180.7
 2026-11-05,11:35,Body temperature,37.47
-2026-11-05,11:35,Heart Rate,126.9
+2026-11-05,11:35,Heart Rate,89.9
 2026-11-05,11:40,Blood Pressure (DBP),97.5
 2026-11-05,11:40,Blood Pressure (SBP),180.7
 2026-11-05,11:40,Body temperature,37.74
@@ -5263,7 +5263,7 @@
 2026-11-05,11:55,Blood Pressure (DBP),92.1
 2026-11-05,11:55,Blood Pressure (SBP),180.7
 2026-11-05,11:55,Body temperature,37.43
-2026-11-05,11:55,Heart Rate,123.7
+2026-11-05,11:55,Heart Rate,89.9
 2026-11-05,12:00,Blood Pressure (DBP),91.7
 2026-11-05,12:00,Blood Pressure (SBP),180.8
 2026-11-05,12:00,Body temperature,37.46
@@ -5271,11 +5271,11 @@
 2026-11-05,12:05,Blood Pressure (DBP),87.2
 2026-11-05,12:05,Blood Pressure (SBP),180.8
 2026-11-05,12:05,Body temperature,37.44
-2026-11-05,12:05,Heart Rate,125.3
+2026-11-05,12:05,Heart Rate,89.9
 2026-11-05,12:10,Blood Pressure (DBP),88.3
 2026-11-05,12:10,Blood Pressure (SBP),180.8
 2026-11-05,12:10,Body temperature,37.64
-2026-11-05,12:10,Heart Rate,134.2
+2026-11-05,12:10,Heart Rate,89.9
 2026-11-05,12:15,Blood Pressure (DBP),88.0
 2026-11-05,12:15,Blood Pressure (SBP),180.8
 2026-11-05,12:15,Body temperature,37.8
@@ -5287,7 +5287,7 @@
 2026-11-05,12:25,Blood Pressure (DBP),97.2
 2026-11-05,12:25,Blood Pressure (SBP),180.8
 2026-11-05,12:25,Body temperature,37.75
-2026-11-05,12:25,Heart Rate,127.1
+2026-11-05,12:25,Heart Rate,89.9
 2026-11-05,12:30,Blood Pressure (DBP),96.5
 2026-11-05,12:30,Blood Pressure (SBP),180.8
 2026-11-05,12:30,Body temperature,37.5
@@ -5299,7 +5299,7 @@
 2026-11-05,12:40,Blood Pressure (DBP),86.6
 2026-11-05,12:40,Blood Pressure (SBP),180.8
 2026-11-05,12:40,Body temperature,37.73
-2026-11-05,12:40,Heart Rate,121.3
+2026-11-05,12:40,Heart Rate,89.9
 2026-11-05,12:45,Blood Pressure (DBP),87.3
 2026-11-05,12:45,Blood Pressure (SBP),180.8
 2026-11-05,12:45,Body temperature,37.7
@@ -5307,11 +5307,11 @@
 2026-11-05,12:50,Blood Pressure (DBP),98.1
 2026-11-05,12:50,Blood Pressure (SBP),180.8
 2026-11-05,12:50,Body temperature,37.41
-2026-11-05,12:50,Heart Rate,123.7
+2026-11-05,12:50,Heart Rate,89.9
 2026-11-05,12:55,Blood Pressure (DBP),101.7
 2026-11-05,12:55,Blood Pressure (SBP),180.8
 2026-11-05,12:55,Body temperature,37.34
-2026-11-05,12:55,Heart Rate,123.3
+2026-11-05,12:55,Heart Rate,89.9
 2026-11-05,13:00,Blood Pressure (DBP),98.6
 2026-11-05,13:00,Blood Pressure (SBP),180.8
 2026-11-05,13:00,Body temperature,37.3
@@ -5331,7 +5331,7 @@
 2026-11-05,13:20,Blood Pressure (DBP),99.2
 2026-11-05,13:20,Blood Pressure (SBP),180.8
 2026-11-05,13:20,Body temperature,37.36
-2026-11-05,13:20,Heart Rate,128.4
+2026-11-05,13:20,Heart Rate,89.9
 2026-11-05,13:25,Blood Pressure (DBP),89.6
 2026-11-05,13:25,Blood Pressure (SBP),180.8
 2026-11-05,13:25,Body temperature,37.43
@@ -5347,7 +5347,7 @@
 2026-11-05,13:40,Blood Pressure (DBP),98.6
 2026-11-05,13:40,Blood Pressure (SBP),180.8
 2026-11-05,13:40,Body temperature,37.6
-2026-11-05,13:40,Heart Rate,131.2
+2026-11-05,13:40,Heart Rate,89.9
 2026-11-05,13:45,Blood Pressure (DBP),91.7
 2026-11-05,13:45,Blood Pressure (SBP),180.8
 2026-11-05,13:45,Body temperature,37.44
@@ -5359,11 +5359,11 @@
 2026-11-05,13:55,Blood Pressure (DBP),93.3
 2026-11-05,13:55,Blood Pressure (SBP),180.8
 2026-11-05,13:55,Body temperature,37.62
-2026-11-05,13:55,Heart Rate,130.3
+2026-11-05,13:55,Heart Rate,89.9
 2026-11-05,14:00,Blood Pressure (DBP),93.9
 2026-11-05,14:00,Blood Pressure (SBP),180.8
 2026-11-05,14:00,Body temperature,37.68
-2026-11-05,14:00,Heart Rate,123.3
+2026-11-05,14:00,Heart Rate,89.9
 2026-11-05,14:05,Blood Pressure (DBP),101.3
 2026-11-05,14:05,Blood Pressure (SBP),180.8
 2026-11-05,14:05,Body temperature,37.48
@@ -5375,7 +5375,7 @@
 2026-11-05,14:15,Blood Pressure (DBP),91.7
 2026-11-05,14:15,Blood Pressure (SBP),180.8
 2026-11-05,14:15,Body temperature,37.88
-2026-11-05,14:15,Heart Rate,125.8
+2026-11-05,14:15,Heart Rate,89.9
 2026-11-05,14:20,Blood Pressure (DBP),90.9
 2026-11-05,14:20,Blood Pressure (SBP),180.8
 2026-11-05,14:20,Body temperature,37.6
@@ -5387,7 +5387,7 @@
 2026-11-05,14:30,Blood Pressure (DBP),95.8
 2026-11-05,14:30,Blood Pressure (SBP),180.8
 2026-11-05,14:30,Body temperature,37.48
-2026-11-05,14:30,Heart Rate,127.4
+2026-11-05,14:30,Heart Rate,89.9
 2026-11-05,14:35,Blood Pressure (DBP),95.5
 2026-11-05,14:35,Blood Pressure (SBP),180.8
 2026-11-05,14:35,Body temperature,37.33
@@ -5399,11 +5399,11 @@
 2026-11-05,14:45,Blood Pressure (DBP),93.7
 2026-11-05,14:45,Blood Pressure (SBP),180.8
 2026-11-05,14:45,Body temperature,37.64
-2026-11-05,14:45,Heart Rate,131.5
+2026-11-05,14:45,Heart Rate,89.9
 2026-11-05,14:50,Blood Pressure (DBP),102.3
 2026-11-05,14:50,Blood Pressure (SBP),180.8
 2026-11-05,14:50,Body temperature,37.38
-2026-11-05,14:50,Heart Rate,124.8
+2026-11-05,14:50,Heart Rate,89.9
 2026-11-05,14:55,Blood Pressure (DBP),97.2
 2026-11-05,14:55,Blood Pressure (SBP),180.8
 2026-11-05,14:55,Body temperature,37.61
@@ -5411,7 +5411,7 @@
 2026-11-05,15:00,Blood Pressure (DBP),103.3
 2026-11-05,15:00,Blood Pressure (SBP),180.8
 2026-11-05,15:00,Body temperature,37.31
-2026-11-05,15:00,Heart Rate,128.6
+2026-11-05,15:00,Heart Rate,89.9
 2026-11-05,15:05,Blood Pressure (DBP),82.2
 2026-11-05,15:05,Blood Pressure (SBP),180.8
 2026-11-05,15:05,Body temperature,37.04
@@ -6183,17 +6183,17 @@
 2026-11-06,07:00,Blood Pressure (SBP),180.9
 2026-11-06,07:00,Body temperature,36.49
 2026-11-06,07:00,Heart Rate,65.7
-2026-11-06,07:00,Sleep Efficiency,72.3
-2026-11-06,07:00,Sleep Latency,83.8
-2026-11-06,07:00,Sleep Onset/Offset,136.4
-2026-11-06,07:00,Total Sleep Time,5.51
-2026-11-06,07:00,Wake After Sleep Onset,80.0
+2026-11-06,07:00,Sleep Efficiency,88.6
+2026-11-06,07:00,Sleep Latency,12.6
+2026-11-06,07:00,Sleep Onset/Offset,21.8
+2026-11-06,07:00,Total Sleep Time,7.72
+2026-11-06,07:00,Wake After Sleep Onset,20.3
 2026-11-06,07:05,Blood Pressure (DBP),71.5
 2026-11-06,07:05,Blood Pressure (SBP),180.9
 2026-11-06,07:05,Body temperature,36.56
 2026-11-06,07:05,Heart Rate,64.6
-2026-11-06,07:05,Self-reported sleep duration,5.7
-2026-11-06,07:05,Self-reported sleep quality,3.0
+2026-11-06,07:05,Self-reported sleep duration,7.7
+2026-11-06,07:05,Self-reported sleep quality,7.0
 2026-11-06,07:10,Blood Pressure (DBP),69.2
 2026-11-06,07:10,Blood Pressure (SBP),180.9
 2026-11-06,07:10,Body temperature,36.57
@@ -6213,13 +6213,13 @@
 2026-11-06,07:30,ApoB,87.5
 2026-11-06,07:30,Blood Pressure (DBP),67.5
 2026-11-06,07:30,Blood Pressure (SBP),180.9
-2026-11-06,07:30,Blood Urea Nitrogen,42.5
+2026-11-06,07:30,Blood Urea Nitrogen,14.0
 2026-11-06,07:30,Body temperature,36.45
 2026-11-06,07:30,HbA1c,5.31
 2026-11-06,07:30,Heart Rate,66.4
 2026-11-06,07:30,LDL-cholesterol,78.0
-2026-11-06,07:30,RBC/HPF,3.0
-2026-11-06,07:30,UACR,315.0
+2026-11-06,07:30,RBC/HPF,1.0
+2026-11-06,07:30,UACR,24.8
 2026-11-06,07:35,Blood Pressure (DBP),71.1
 2026-11-06,07:35,Blood Pressure (SBP),180.9
 2026-11-06,07:35,Body temperature,36.52
@@ -6399,7 +6399,7 @@
 2026-11-06,11:15,Blood Pressure (DBP),84.8
 2026-11-06,11:15,Blood Pressure (SBP),180.9
 2026-11-06,11:15,Body temperature,37.46
-2026-11-06,11:15,Heart Rate,120.4
+2026-11-06,11:15,Heart Rate,73.5
 2026-11-06,11:20,Blood Pressure (DBP),78.6
 2026-11-06,11:20,Blood Pressure (SBP),180.9
 2026-11-06,11:20,Body temperature,37.49
@@ -6411,7 +6411,7 @@
 2026-11-06,11:30,Blood Pressure (DBP),80.6
 2026-11-06,11:30,Blood Pressure (SBP),180.9
 2026-11-06,11:30,Body temperature,37.4
-2026-11-06,11:30,Heart Rate,123.8
+2026-11-06,11:30,Heart Rate,73.5
 2026-11-06,11:35,Blood Pressure (DBP),81.2
 2026-11-06,11:35,Blood Pressure (SBP),180.9
 2026-11-06,11:35,Body temperature,37.4
@@ -6423,11 +6423,11 @@
 2026-11-06,11:45,Blood Pressure (DBP),81.6
 2026-11-06,11:45,Blood Pressure (SBP),180.9
 2026-11-06,11:45,Body temperature,37.54
-2026-11-06,11:45,Heart Rate,126.0
+2026-11-06,11:45,Heart Rate,73.5
 2026-11-06,11:50,Blood Pressure (DBP),86.8
 2026-11-06,11:50,Blood Pressure (SBP),180.9
 2026-11-06,11:50,Body temperature,37.34
-2026-11-06,11:50,Heart Rate,120.8
+2026-11-06,11:50,Heart Rate,73.5
 2026-11-06,11:55,Blood Pressure (DBP),83.1
 2026-11-06,11:55,Blood Pressure (SBP),180.9
 2026-11-06,11:55,Body temperature,37.3
@@ -6435,11 +6435,11 @@
 2026-11-06,12:00,Blood Pressure (DBP),84.4
 2026-11-06,12:00,Blood Pressure (SBP),180.9
 2026-11-06,12:00,Body temperature,37.3
-2026-11-06,12:00,Heart Rate,126.3
+2026-11-06,12:00,Heart Rate,73.5
 2026-11-06,12:05,Blood Pressure (DBP),81.2
 2026-11-06,12:05,Blood Pressure (SBP),180.9
 2026-11-06,12:05,Body temperature,37.31
-2026-11-06,12:05,Heart Rate,126.0
+2026-11-06,12:05,Heart Rate,73.5
 2026-11-06,12:10,Blood Pressure (DBP),84.4
 2026-11-06,12:10,Blood Pressure (SBP),180.9
 2026-11-06,12:10,Body temperature,37.57
@@ -7651,7 +7651,7 @@
 2026-11-07,13:00,Blood Pressure (DBP),78.6
 2026-11-07,13:00,Blood Pressure (SBP),181.1
 2026-11-07,13:00,Body temperature,37.61
-2026-11-07,13:00,Heart Rate,124.5
+2026-11-07,13:00,Heart Rate,78.2
 2026-11-07,13:05,Blood Pressure (DBP),83.2
 2026-11-07,13:05,Blood Pressure (SBP),181.1
 2026-11-07,13:05,Body temperature,37.35
@@ -7659,11 +7659,11 @@
 2026-11-07,13:10,Blood Pressure (DBP),83.8
 2026-11-07,13:10,Blood Pressure (SBP),181.1
 2026-11-07,13:10,Body temperature,37.44
-2026-11-07,13:10,Heart Rate,126.0
+2026-11-07,13:10,Heart Rate,78.2
 2026-11-07,13:15,Blood Pressure (DBP),83.7
 2026-11-07,13:15,Blood Pressure (SBP),181.1
 2026-11-07,13:15,Body temperature,37.59
-2026-11-07,13:15,Heart Rate,130.4
+2026-11-07,13:15,Heart Rate,78.2
 2026-11-07,13:20,Blood Pressure (DBP),81.1
 2026-11-07,13:20,Blood Pressure (SBP),181.1
 2026-11-07,13:20,Body temperature,37.7
@@ -7679,11 +7679,11 @@
 2026-11-07,13:35,Blood Pressure (DBP),86.2
 2026-11-07,13:35,Blood Pressure (SBP),181.1
 2026-11-07,13:35,Body temperature,37.27
-2026-11-07,13:35,Heart Rate,124.5
+2026-11-07,13:35,Heart Rate,78.2
 2026-11-07,13:40,Blood Pressure (DBP),85.0
 2026-11-07,13:40,Blood Pressure (SBP),181.1
 2026-11-07,13:40,Body temperature,37.47
-2026-11-07,13:40,Heart Rate,122.7
+2026-11-07,13:40,Heart Rate,78.2
 2026-11-07,13:45,Blood Pressure (DBP),83.3
 2026-11-07,13:45,Blood Pressure (SBP),181.1
 2026-11-07,13:45,Body temperature,37.66
@@ -7691,7 +7691,7 @@
 2026-11-07,13:50,Blood Pressure (DBP),86.7
 2026-11-07,13:50,Blood Pressure (SBP),181.1
 2026-11-07,13:50,Body temperature,37.7
-2026-11-07,13:50,Heart Rate,125.0
+2026-11-07,13:50,Heart Rate,78.2
 2026-11-07,13:55,Blood Pressure (DBP),84.6
 2026-11-07,13:55,Blood Pressure (SBP),181.1
 2026-11-07,13:55,Body temperature,37.7
@@ -9845,7 +9845,7 @@
 2026-11-09,10:00,Blood Pressure (DBP),77.2
 2026-11-09,10:00,Blood Pressure (SBP),181.4
 2026-11-09,10:00,Body temperature,37.37
-2026-11-09,10:00,Heart Rate,123.1
+2026-11-09,10:00,Heart Rate,77.9
 2026-11-09,10:05,Blood Pressure (DBP),82.3
 2026-11-09,10:05,Blood Pressure (SBP),181.4
 2026-11-09,10:05,Body temperature,37.13
@@ -9853,7 +9853,7 @@
 2026-11-09,10:10,Blood Pressure (DBP),81.3
 2026-11-09,10:10,Blood Pressure (SBP),181.4
 2026-11-09,10:10,Body temperature,37.39
-2026-11-09,10:10,Heart Rate,120.3
+2026-11-09,10:10,Heart Rate,77.9
 2026-11-09,10:15,Blood Pressure (DBP),85.6
 2026-11-09,10:15,Blood Pressure (SBP),181.4
 2026-11-09,10:15,Body temperature,37.36
@@ -9889,7 +9889,7 @@
 2026-11-09,10:55,Blood Pressure (DBP),81.8
 2026-11-09,10:55,Blood Pressure (SBP),181.4
 2026-11-09,10:55,Body temperature,37.5
-2026-11-09,10:55,Heart Rate,122.6
+2026-11-09,10:55,Heart Rate,77.9
 2026-11-09,11:00,Blood Pressure (DBP),80.8
 2026-11-09,11:00,Blood Pressure (SBP),181.4
 2026-11-09,11:00,Body temperature,37.33
@@ -11169,7 +11169,7 @@
 2026-11-10,13:15,Blood Pressure (DBP),94.4
 2026-11-10,13:15,Blood Pressure (SBP),181.6
 2026-11-10,13:15,Body temperature,37.28
-2026-11-10,13:15,Heart Rate,124.3
+2026-11-10,13:15,Heart Rate,76.2
 2026-11-10,13:20,Blood Pressure (DBP),92.8
 2026-11-10,13:20,Blood Pressure (SBP),181.6
 2026-11-10,13:20,Body temperature,37.58
@@ -12429,7 +12429,7 @@
 2026-11-11,15:10,Blood Pressure (DBP),90.3
 2026-11-11,15:10,Blood Pressure (SBP),181.8
 2026-11-11,15:10,Body temperature,37.51
-2026-11-11,15:10,Heart Rate,121.2
+2026-11-11,15:10,Heart Rate,67.7
 2026-11-11,15:15,Blood Pressure (DBP),90.5
 2026-11-11,15:15,Blood Pressure (SBP),181.8
 2026-11-11,15:15,Body temperature,37.52
@@ -12445,7 +12445,7 @@
 2026-11-11,15:30,Blood Pressure (DBP),89.7
 2026-11-11,15:30,Blood Pressure (SBP),181.8
 2026-11-11,15:30,Body temperature,37.74
-2026-11-11,15:30,Heart Rate,126.4
+2026-11-11,15:30,Heart Rate,67.7
 2026-11-11,15:35,Blood Pressure (DBP),94.7
 2026-11-11,15:35,Blood Pressure (SBP),181.8
 2026-11-11,15:35,Body temperature,37.6
@@ -12461,7 +12461,7 @@
 2026-11-11,15:50,Blood Pressure (DBP),96.4
 2026-11-11,15:50,Blood Pressure (SBP),181.8
 2026-11-11,15:50,Body temperature,37.8
-2026-11-11,15:50,Heart Rate,126.0
+2026-11-11,15:50,Heart Rate,67.7
 2026-11-11,15:55,Blood Pressure (DBP),86.9
 2026-11-11,15:55,Blood Pressure (SBP),181.8
 2026-11-11,15:55,Body temperature,37.49
@@ -13325,7 +13325,7 @@
 2026-11-12,09:30,Blood Pressure (DBP),84.5
 2026-11-12,09:30,Blood Pressure (SBP),181.9
 2026-11-12,09:30,Body temperature,37.44
-2026-11-12,09:30,Heart Rate,122.7
+2026-11-12,09:30,Heart Rate,70.3
 2026-11-12,09:35,Blood Pressure (DBP),80.5
 2026-11-12,09:35,Blood Pressure (SBP),181.9
 2026-11-12,09:35,Body temperature,37.1
@@ -13357,7 +13357,7 @@
 2026-11-12,10:10,Blood Pressure (DBP),81.0
 2026-11-12,10:10,Blood Pressure (SBP),181.9
 2026-11-12,10:10,Body temperature,37.5
-2026-11-12,10:10,Heart Rate,121.3
+2026-11-12,10:10,Heart Rate,97.7
 2026-11-12,10:15,Blood Pressure (DBP),72.7
 2026-11-12,10:15,Blood Pressure (SBP),181.9
 2026-11-12,10:15,Body temperature,36.73
@@ -14192,7 +14192,7 @@
 2026-11-13,03:30,Blood Pressure (DBP),71.8
 2026-11-13,03:30,Blood Pressure (SBP),182.0
 2026-11-13,03:30,Body temperature,36.42
-2026-11-13,03:30,Heart Rate,36.9
+2026-11-13,03:30,Heart Rate,44.0
 2026-11-13,03:35,Blood Pressure (DBP),72.2
 2026-11-13,03:35,Blood Pressure (SBP),182.0
 2026-11-13,03:35,Body temperature,36.52
@@ -14529,7 +14529,7 @@
 2026-11-13,10:15,Blood Pressure (DBP),93.9
 2026-11-13,10:15,Blood Pressure (SBP),182.1
 2026-11-13,10:15,Body temperature,37.38
-2026-11-13,10:15,Heart Rate,123.2
+2026-11-13,10:15,Heart Rate,81.9
 2026-11-13,10:20,Blood Pressure (DBP),90.0
 2026-11-13,10:20,Blood Pressure (SBP),182.1
 2026-11-13,10:20,Body temperature,37.14
@@ -15071,8 +15071,8 @@
 2026-11-13,21:30,Body temperature,36.75
 2026-11-13,21:30,Habitability,4.0
 2026-11-13,21:30,Heart Rate,67.1
-2026-11-13,21:30,Mood,3.0
-2026-11-13,21:30,Team cohesion,3.0
+2026-11-13,21:30,Mood,5.0
+2026-11-13,21:30,Team cohesion,5.0
 2026-11-13,21:35,Blood Pressure (DBP),71.2
 2026-11-13,21:35,Blood Pressure (SBP),182.2
 2026-11-13,21:35,Body temperature,36.83
@@ -15837,15 +15837,15 @@
 2026-11-14,13:10,Blood Pressure (DBP),92.5
 2026-11-14,13:10,Blood Pressure (SBP),182.3
 2026-11-14,13:10,Body temperature,37.7
-2026-11-14,13:10,Heart Rate,120.8
+2026-11-14,13:10,Heart Rate,73.4
 2026-11-14,13:15,Blood Pressure (DBP),85.0
 2026-11-14,13:15,Blood Pressure (SBP),182.3
 2026-11-14,13:15,Body temperature,37.61
-2026-11-14,13:15,Heart Rate,120.8
+2026-11-14,13:15,Heart Rate,73.4
 2026-11-14,13:20,Blood Pressure (DBP),91.6
 2026-11-14,13:20,Blood Pressure (SBP),182.3
 2026-11-14,13:20,Body temperature,37.55
-2026-11-14,13:20,Heart Rate,121.7
+2026-11-14,13:20,Heart Rate,73.4
 2026-11-14,13:25,Blood Pressure (DBP),90.7
 2026-11-14,13:25,Blood Pressure (SBP),182.3
 2026-11-14,13:25,Body temperature,37.48
@@ -15857,11 +15857,11 @@
 2026-11-14,13:35,Blood Pressure (DBP),83.9
 2026-11-14,13:35,Blood Pressure (SBP),182.3
 2026-11-14,13:35,Body temperature,37.53
-2026-11-14,13:35,Heart Rate,121.6
+2026-11-14,13:35,Heart Rate,73.4
 2026-11-14,13:40,Blood Pressure (DBP),91.9
 2026-11-14,13:40,Blood Pressure (SBP),182.3
 2026-11-14,13:40,Body temperature,37.21
-2026-11-14,13:40,Heart Rate,122.4
+2026-11-14,13:40,Heart Rate,73.4
 2026-11-14,13:45,Blood Pressure (DBP),87.6
 2026-11-14,13:45,Blood Pressure (SBP),182.3
 2026-11-14,13:45,Body temperature,37.5
@@ -16847,7 +16847,7 @@
 2026-11-15,09:50,Blood Pressure (DBP),88.6
 2026-11-15,09:50,Blood Pressure (SBP),182.4
 2026-11-15,09:50,Body temperature,37.37
-2026-11-15,09:50,Heart Rate,124.2
+2026-11-15,09:50,Heart Rate,70.8
 2026-11-15,09:55,Blood Pressure (DBP),82.4
 2026-11-15,09:55,Blood Pressure (SBP),182.4
 2026-11-15,09:55,Body temperature,37.32
@@ -17971,7 +17971,7 @@
 2026-11-16,08:55,Blood Pressure (DBP),86.3
 2026-11-16,08:55,Blood Pressure (SBP),182.6
 2026-11-16,08:55,Body temperature,37.51
-2026-11-16,08:55,Heart Rate,121.0
+2026-11-16,08:55,Heart Rate,97.0
 2026-11-16,09:00,Blood Pressure (DBP),86.0
 2026-11-16,09:00,Blood Pressure (SBP),182.6
 2026-11-16,09:00,Body temperature,37.27
@@ -19203,7 +19203,7 @@
 2026-11-17,10:05,Blood Pressure (DBP),85.9
 2026-11-17,10:05,Blood Pressure (SBP),182.7
 2026-11-17,10:05,Body temperature,37.11
-2026-11-17,10:05,Heart Rate,122.4
+2026-11-17,10:05,Heart Rate,98.8
 2026-11-17,10:10,Blood Pressure (DBP),82.2
 2026-11-17,10:10,Blood Pressure (SBP),182.7
 2026-11-17,10:10,Body temperature,37.3
@@ -19223,7 +19223,7 @@
 2026-11-17,10:30,Blood Pressure (DBP),86.5
 2026-11-17,10:30,Blood Pressure (SBP),182.7
 2026-11-17,10:30,Body temperature,37.3
-2026-11-17,10:30,Heart Rate,123.0
+2026-11-17,10:30,Heart Rate,98.8
 2026-11-17,10:35,Blood Pressure (DBP),84.2
 2026-11-17,10:35,Blood Pressure (SBP),182.7
 2026-11-17,10:35,Body temperature,37.39
@@ -20519,7 +20519,7 @@
 2026-11-18,13:10,Blood Pressure (DBP),84.4
 2026-11-18,13:10,Blood Pressure (SBP),182.9
 2026-11-18,13:10,Body temperature,37.5
-2026-11-18,13:10,Heart Rate,122.3
+2026-11-18,13:10,Heart Rate,73.0
 2026-11-18,13:15,Blood Pressure (DBP),92.2
 2026-11-18,13:15,Blood Pressure (SBP),182.9
 2026-11-18,13:15,Body temperature,37.44
@@ -20531,7 +20531,7 @@
 2026-11-18,13:25,Blood Pressure (DBP),88.8
 2026-11-18,13:25,Blood Pressure (SBP),182.9
 2026-11-18,13:25,Body temperature,37.36
-2026-11-18,13:25,Heart Rate,122.3
+2026-11-18,13:25,Heart Rate,73.0
 2026-11-18,13:30,Blood Pressure (DBP),86.1
 2026-11-18,13:30,Blood Pressure (SBP),182.9
 2026-11-18,13:30,Body temperature,37.92
@@ -20539,11 +20539,11 @@
 2026-11-18,13:35,Blood Pressure (DBP),90.1
 2026-11-18,13:35,Blood Pressure (SBP),182.9
 2026-11-18,13:35,Body temperature,37.59
-2026-11-18,13:35,Heart Rate,127.1
+2026-11-18,13:35,Heart Rate,73.0
 2026-11-18,13:40,Blood Pressure (DBP),92.4
 2026-11-18,13:40,Blood Pressure (SBP),182.9
 2026-11-18,13:40,Body temperature,37.53
-2026-11-18,13:40,Heart Rate,122.9
+2026-11-18,13:40,Heart Rate,73.0
 2026-11-18,13:45,Blood Pressure (DBP),80.9
 2026-11-18,13:45,Blood Pressure (SBP),182.9
 2026-11-18,13:45,Body temperature,37.59
@@ -20551,42 +20551,42 @@
 2026-11-18,13:50,Blood Pressure (DBP),83.9
 2026-11-18,13:50,Blood Pressure (SBP),182.9
 2026-11-18,13:50,Body temperature,37.56
-2026-11-18,13:50,Heart Rate,126.9
+2026-11-18,13:50,Heart Rate,73.0
 2026-11-18,13:55,Blood Pressure (DBP),85.9
 2026-11-18,13:55,Blood Pressure (SBP),182.9
 2026-11-18,13:55,Body temperature,37.96
-2026-11-18,13:55,Heart Rate,125.3
+2026-11-18,13:55,Heart Rate,73.0
 2026-11-18,14:00,Blood Pressure (DBP),85.1
 2026-11-18,14:00,Blood Pressure (SBP),182.9
-2026-11-18,14:00,Body temperature,38.5
-2026-11-18,14:00,Heart Rate,132.0
+2026-11-18,14:00,Body temperature,37.01
+2026-11-18,14:00,Heart Rate,73.0
 2026-11-18,14:05,Blood Pressure (DBP),85.2
 2026-11-18,14:05,Blood Pressure (SBP),182.9
-2026-11-18,14:05,Body temperature,38.31
-2026-11-18,14:05,Heart Rate,131.9
+2026-11-18,14:05,Body temperature,37.01
+2026-11-18,14:05,Heart Rate,73.0
 2026-11-18,14:10,Blood Pressure (DBP),88.4
 2026-11-18,14:10,Blood Pressure (SBP),182.9
-2026-11-18,14:10,Body temperature,38.5
-2026-11-18,14:10,Heart Rate,130.3
+2026-11-18,14:10,Body temperature,37.01
+2026-11-18,14:10,Heart Rate,73.0
 2026-11-18,14:15,Blood Pressure (DBP),70.3
 2026-11-18,14:15,Blood Pressure (SBP),182.9
 2026-11-18,14:15,Body temperature,37.75
 2026-11-18,14:15,Heart Rate,95.4
 2026-11-18,14:20,Blood Pressure (DBP),73.8
 2026-11-18,14:20,Blood Pressure (SBP),182.9
-2026-11-18,14:20,Body temperature,38.18
+2026-11-18,14:20,Body temperature,37.01
 2026-11-18,14:20,Heart Rate,88.1
 2026-11-18,14:25,Blood Pressure (DBP),71.5
 2026-11-18,14:25,Blood Pressure (SBP),182.9
-2026-11-18,14:25,Body temperature,38.15
+2026-11-18,14:25,Body temperature,37.01
 2026-11-18,14:25,Heart Rate,95.7
 2026-11-18,14:30,Blood Pressure (DBP),73.8
 2026-11-18,14:30,Blood Pressure (SBP),182.9
-2026-11-18,14:30,Body temperature,38.25
+2026-11-18,14:30,Body temperature,37.01
 2026-11-18,14:30,Heart Rate,95.2
 2026-11-18,14:35,Blood Pressure (DBP),74.7
 2026-11-18,14:35,Blood Pressure (SBP),182.9
-2026-11-18,14:35,Body temperature,38.0
+2026-11-18,14:35,Body temperature,37.01
 2026-11-18,14:35,Heart Rate,96.3
 2026-11-18,14:40,Blood Pressure (DBP),71.3
 2026-11-18,14:40,Blood Pressure (SBP),182.9
@@ -20598,7 +20598,7 @@
 2026-11-18,14:45,Heart Rate,94.3
 2026-11-18,14:50,Blood Pressure (DBP),74.0
 2026-11-18,14:50,Blood Pressure (SBP),182.9
-2026-11-18,14:50,Body temperature,38.1
+2026-11-18,14:50,Body temperature,37.01
 2026-11-18,14:50,Heart Rate,98.8
 2026-11-18,14:55,Blood Pressure (DBP),72.2
 2026-11-18,14:55,Blood Pressure (SBP),182.9
@@ -20606,27 +20606,27 @@
 2026-11-18,14:55,Heart Rate,91.7
 2026-11-18,15:00,Blood Pressure (DBP),74.0
 2026-11-18,15:00,Blood Pressure (SBP),182.9
-2026-11-18,15:00,Body temperature,38.03
+2026-11-18,15:00,Body temperature,37.01
 2026-11-18,15:00,Heart Rate,103.5
 2026-11-18,15:05,Blood Pressure (DBP),72.4
 2026-11-18,15:05,Blood Pressure (SBP),182.9
-2026-11-18,15:05,Body temperature,38.3
+2026-11-18,15:05,Body temperature,37.01
 2026-11-18,15:05,Heart Rate,94.8
 2026-11-18,15:10,Blood Pressure (DBP),75.5
 2026-11-18,15:10,Blood Pressure (SBP),182.9
-2026-11-18,15:10,Body temperature,38.27
+2026-11-18,15:10,Body temperature,37.01
 2026-11-18,15:10,Heart Rate,99.9
 2026-11-18,15:15,Blood Pressure (DBP),73.2
 2026-11-18,15:15,Blood Pressure (SBP),182.9
-2026-11-18,15:15,Body temperature,38.19
+2026-11-18,15:15,Body temperature,37.01
 2026-11-18,15:15,Heart Rate,87.5
 2026-11-18,15:20,Blood Pressure (DBP),72.6
 2026-11-18,15:20,Blood Pressure (SBP),182.9
-2026-11-18,15:20,Body temperature,38.23
+2026-11-18,15:20,Body temperature,37.01
 2026-11-18,15:20,Heart Rate,101.7
 2026-11-18,15:25,Blood Pressure (DBP),74.4
 2026-11-18,15:25,Blood Pressure (SBP),182.9
-2026-11-18,15:25,Body temperature,38.3
+2026-11-18,15:25,Body temperature,37.01
 2026-11-18,15:25,Heart Rate,103.9
 2026-11-18,15:30,Blood Pressure (DBP),75.6
 2026-11-18,15:30,Blood Pressure (SBP),182.9
@@ -20634,7 +20634,7 @@
 2026-11-18,15:30,Heart Rate,99.3
 2026-11-18,15:35,Blood Pressure (DBP),74.0
 2026-11-18,15:35,Blood Pressure (SBP),182.9
-2026-11-18,15:35,Body temperature,38.06
+2026-11-18,15:35,Body temperature,37.01
 2026-11-18,15:35,Heart Rate,103.6
 2026-11-18,15:40,Blood Pressure (DBP),75.8
 2026-11-18,15:40,Blood Pressure (SBP),182.9
@@ -20642,11 +20642,11 @@
 2026-11-18,15:40,Heart Rate,94.6
 2026-11-18,15:45,Blood Pressure (DBP),74.1
 2026-11-18,15:45,Blood Pressure (SBP),182.9
-2026-11-18,15:45,Body temperature,38.23
+2026-11-18,15:45,Body temperature,37.01
 2026-11-18,15:45,Heart Rate,94.1
 2026-11-18,15:50,Blood Pressure (DBP),73.9
 2026-11-18,15:50,Blood Pressure (SBP),182.9
-2026-11-18,15:50,Body temperature,38.06
+2026-11-18,15:50,Body temperature,37.01
 2026-11-18,15:50,Heart Rate,96.2
 2026-11-18,15:55,Blood Pressure (DBP),70.8
 2026-11-18,15:55,Blood Pressure (SBP),182.9
@@ -20654,11 +20654,11 @@
 2026-11-18,15:55,Heart Rate,95.6
 2026-11-18,16:00,Blood Pressure (DBP),71.7
 2026-11-18,16:00,Blood Pressure (SBP),182.9
-2026-11-18,16:00,Body temperature,38.07
+2026-11-18,16:00,Body temperature,37.01
 2026-11-18,16:00,Heart Rate,103.7
 2026-11-18,16:05,Blood Pressure (DBP),73.2
 2026-11-18,16:05,Blood Pressure (SBP),182.9
-2026-11-18,16:05,Body temperature,38.1
+2026-11-18,16:05,Body temperature,37.01
 2026-11-18,16:05,Heart Rate,96.9
 2026-11-18,16:10,Blood Pressure (DBP),74.3
 2026-11-18,16:10,Blood Pressure (SBP),182.9
@@ -20666,15 +20666,15 @@
 2026-11-18,16:10,Heart Rate,101.6
 2026-11-18,16:15,Blood Pressure (DBP),70.5
 2026-11-18,16:15,Blood Pressure (SBP),182.9
-2026-11-18,16:15,Body temperature,38.15
+2026-11-18,16:15,Body temperature,37.01
 2026-11-18,16:15,Heart Rate,97.1
 2026-11-18,16:20,Blood Pressure (DBP),71.5
 2026-11-18,16:20,Blood Pressure (SBP),182.9
-2026-11-18,16:20,Body temperature,38.39
+2026-11-18,16:20,Body temperature,37.01
 2026-11-18,16:20,Heart Rate,99.5
 2026-11-18,16:25,Blood Pressure (DBP),72.6
 2026-11-18,16:25,Blood Pressure (SBP),182.9
-2026-11-18,16:25,Body temperature,38.32
+2026-11-18,16:25,Body temperature,37.01
 2026-11-18,16:25,Heart Rate,101.1
 2026-11-18,16:30,Blood Pressure (DBP),67.6
 2026-11-18,16:30,Blood Pressure (SBP),182.9
@@ -20682,11 +20682,11 @@
 2026-11-18,16:30,Heart Rate,93.5
 2026-11-18,16:35,Blood Pressure (DBP),72.2
 2026-11-18,16:35,Blood Pressure (SBP),182.9
-2026-11-18,16:35,Body temperature,38.23
+2026-11-18,16:35,Body temperature,37.01
 2026-11-18,16:35,Heart Rate,99.3
 2026-11-18,16:40,Blood Pressure (DBP),70.2
 2026-11-18,16:40,Blood Pressure (SBP),182.9
-2026-11-18,16:40,Body temperature,38.17
+2026-11-18,16:40,Body temperature,37.01
 2026-11-18,16:40,Heart Rate,98.6
 2026-11-18,16:45,Blood Pressure (DBP),77.3
 2026-11-18,16:45,Blood Pressure (SBP),182.9
@@ -20698,15 +20698,15 @@
 2026-11-18,16:50,Heart Rate,93.8
 2026-11-18,16:55,Blood Pressure (DBP),74.2
 2026-11-18,16:55,Blood Pressure (SBP),183.0
-2026-11-18,16:55,Body temperature,38.33
+2026-11-18,16:55,Body temperature,37.01
 2026-11-18,16:55,Heart Rate,94.0
 2026-11-18,17:00,Blood Pressure (DBP),69.5
 2026-11-18,17:00,Blood Pressure (SBP),183.0
-2026-11-18,17:00,Body temperature,38.28
+2026-11-18,17:00,Body temperature,37.01
 2026-11-18,17:00,Heart Rate,104.0
 2026-11-18,17:05,Blood Pressure (DBP),73.4
 2026-11-18,17:05,Blood Pressure (SBP),183.0
-2026-11-18,17:05,Body temperature,38.01
+2026-11-18,17:05,Body temperature,37.01
 2026-11-18,17:05,Heart Rate,95.8
 2026-11-18,17:10,Blood Pressure (DBP),71.0
 2026-11-18,17:10,Blood Pressure (SBP),183.0
@@ -21379,17 +21379,17 @@
 2026-11-19,07:00,Blood Pressure (SBP),183.0
 2026-11-19,07:00,Body temperature,36.8
 2026-11-19,07:00,Heart Rate,64.1
-2026-11-19,07:00,Sleep Efficiency,69.1
-2026-11-19,07:00,Sleep Latency,67.7
-2026-11-19,07:00,Sleep Onset/Offset,142.8
-2026-11-19,07:00,Total Sleep Time,5.67
-2026-11-19,07:00,Wake After Sleep Onset,71.3
+2026-11-19,07:00,Sleep Efficiency,90.6
+2026-11-19,07:00,Sleep Latency,21.9
+2026-11-19,07:00,Sleep Onset/Offset,19.7
+2026-11-19,07:00,Total Sleep Time,7.59
+2026-11-19,07:00,Wake After Sleep Onset,11.6
 2026-11-19,07:05,Blood Pressure (DBP),69.2
 2026-11-19,07:05,Blood Pressure (SBP),183.0
 2026-11-19,07:05,Body temperature,36.67
 2026-11-19,07:05,Heart Rate,65.1
-2026-11-19,07:05,Self-reported sleep duration,5.7
-2026-11-19,07:05,Self-reported sleep quality,3.0
+2026-11-19,07:05,Self-reported sleep duration,7.8
+2026-11-19,07:05,Self-reported sleep quality,9.0
 2026-11-19,07:10,Blood Pressure (DBP),74.9
 2026-11-19,07:10,Blood Pressure (SBP),183.1
 2026-11-19,07:10,Body temperature,36.67
@@ -21787,27 +21787,27 @@
 2026-11-19,15:15,Blood Pressure (DBP),89.0
 2026-11-19,15:15,Blood Pressure (SBP),183.1
 2026-11-19,15:15,Body temperature,37.54
-2026-11-19,15:15,Heart Rate,125.2
+2026-11-19,15:15,Heart Rate,85.4
 2026-11-19,15:20,Blood Pressure (DBP),89.2
 2026-11-19,15:20,Blood Pressure (SBP),183.1
 2026-11-19,15:20,Body temperature,37.7
-2026-11-19,15:20,Heart Rate,123.8
+2026-11-19,15:20,Heart Rate,85.4
 2026-11-19,15:25,Blood Pressure (DBP),89.9
 2026-11-19,15:25,Blood Pressure (SBP),183.1
 2026-11-19,15:25,Body temperature,37.78
-2026-11-19,15:25,Heart Rate,128.8
+2026-11-19,15:25,Heart Rate,85.4
 2026-11-19,15:30,Blood Pressure (DBP),86.6
 2026-11-19,15:30,Blood Pressure (SBP),183.1
 2026-11-19,15:30,Body temperature,37.65
-2026-11-19,15:30,Heart Rate,121.8
+2026-11-19,15:30,Heart Rate,85.4
 2026-11-19,15:35,Blood Pressure (DBP),85.9
 2026-11-19,15:35,Blood Pressure (SBP),183.1
 2026-11-19,15:35,Body temperature,37.79
-2026-11-19,15:35,Heart Rate,121.0
+2026-11-19,15:35,Heart Rate,85.4
 2026-11-19,15:40,Blood Pressure (DBP),91.9
 2026-11-19,15:40,Blood Pressure (SBP),183.1
 2026-11-19,15:40,Body temperature,37.56
-2026-11-19,15:40,Heart Rate,133.7
+2026-11-19,15:40,Heart Rate,85.4
 2026-11-19,15:45,Blood Pressure (DBP),89.1
 2026-11-19,15:45,Blood Pressure (SBP),183.1
 2026-11-19,15:45,Body temperature,37.95
@@ -21819,7 +21819,7 @@
 2026-11-19,15:55,Blood Pressure (DBP),91.1
 2026-11-19,15:55,Blood Pressure (SBP),183.1
 2026-11-19,15:55,Body temperature,37.73
-2026-11-19,15:55,Heart Rate,122.4
+2026-11-19,15:55,Heart Rate,85.4
 2026-11-19,16:00,Blood Pressure (DBP),89.8
 2026-11-19,16:00,Blood Pressure (SBP),183.1
 2026-11-19,16:00,Body temperature,37.48
@@ -21827,11 +21827,11 @@
 2026-11-19,16:05,Blood Pressure (DBP),88.5
 2026-11-19,16:05,Blood Pressure (SBP),183.1
 2026-11-19,16:05,Body temperature,37.73
-2026-11-19,16:05,Heart Rate,123.8
+2026-11-19,16:05,Heart Rate,85.4
 2026-11-19,16:10,Blood Pressure (DBP),81.4
 2026-11-19,16:10,Blood Pressure (SBP),183.1
 2026-11-19,16:10,Body temperature,37.86
-2026-11-19,16:10,Heart Rate,120.6
+2026-11-19,16:10,Heart Rate,85.4
 2026-11-19,16:15,Blood Pressure (DBP),91.9
 2026-11-19,16:15,Blood Pressure (SBP),183.1
 2026-11-19,16:15,Body temperature,37.64
@@ -21851,11 +21851,11 @@
 2026-11-19,16:35,Blood Pressure (DBP),84.5
 2026-11-19,16:35,Blood Pressure (SBP),183.1
 2026-11-19,16:35,Body temperature,37.95
-2026-11-19,16:35,Heart Rate,124.8
+2026-11-19,16:35,Heart Rate,85.4
 2026-11-19,16:40,Blood Pressure (DBP),87.0
 2026-11-19,16:40,Blood Pressure (SBP),183.1
 2026-11-19,16:40,Body temperature,37.79
-2026-11-19,16:40,Heart Rate,126.2
+2026-11-19,16:40,Heart Rate,85.4
 2026-11-19,16:45,Blood Pressure (DBP),72.5
 2026-11-19,16:45,Blood Pressure (SBP),183.1
 2026-11-19,16:45,Body temperature,37.07
@@ -22675,7 +22675,7 @@
 2026-11-20,09:25,Blood Pressure (DBP),85.4
 2026-11-20,09:25,Blood Pressure (SBP),183.2
 2026-11-20,09:25,Body temperature,37.01
-2026-11-20,09:25,Heart Rate,124.9
+2026-11-20,09:25,Heart Rate,72.2
 2026-11-20,09:30,Blood Pressure (DBP),81.7
 2026-11-20,09:30,Blood Pressure (SBP),183.2
 2026-11-20,09:30,Body temperature,37.18
@@ -24023,7 +24023,7 @@
 2026-11-21,13:10,Blood Pressure (DBP),85.3
 2026-11-21,13:10,Blood Pressure (SBP),183.4
 2026-11-21,13:10,Body temperature,37.76
-2026-11-21,13:10,Heart Rate,125.1
+2026-11-21,13:10,Heart Rate,77.3
 2026-11-21,13:15,Blood Pressure (DBP),90.7
 2026-11-21,13:15,Blood Pressure (SBP),183.4
 2026-11-21,13:15,Body temperature,37.43
@@ -24035,7 +24035,7 @@
 2026-11-21,13:25,Blood Pressure (DBP),84.1
 2026-11-21,13:25,Blood Pressure (SBP),183.4
 2026-11-21,13:25,Body temperature,37.62
-2026-11-21,13:25,Heart Rate,127.2
+2026-11-21,13:25,Heart Rate,77.3
 2026-11-21,13:30,Blood Pressure (DBP),84.0
 2026-11-21,13:30,Blood Pressure (SBP),183.4
 2026-11-21,13:30,Body temperature,37.56
@@ -24043,7 +24043,7 @@
 2026-11-21,13:35,Blood Pressure (DBP),93.2
 2026-11-21,13:35,Blood Pressure (SBP),183.4
 2026-11-21,13:35,Body temperature,37.56
-2026-11-21,13:35,Heart Rate,125.3
+2026-11-21,13:35,Heart Rate,77.3
 2026-11-21,13:40,Blood Pressure (DBP),93.0
 2026-11-21,13:40,Blood Pressure (SBP),183.4
 2026-11-21,13:40,Body temperature,37.49
@@ -24063,11 +24063,11 @@
 2026-11-21,14:00,Blood Pressure (DBP),83.1
 2026-11-21,14:00,Blood Pressure (SBP),183.4
 2026-11-21,14:00,Body temperature,37.77
-2026-11-21,14:00,Heart Rate,120.3
+2026-11-21,14:00,Heart Rate,77.3
 2026-11-21,14:05,Blood Pressure (DBP),92.0
 2026-11-21,14:05,Blood Pressure (SBP),183.4
 2026-11-21,14:05,Body temperature,37.43
-2026-11-21,14:05,Heart Rate,122.0
+2026-11-21,14:05,Heart Rate,77.3
 2026-11-21,14:10,Blood Pressure (DBP),90.6
 2026-11-21,14:10,Blood Pressure (SBP),183.4
 2026-11-21,14:10,Body temperature,37.65
@@ -24148,7 +24148,7 @@
 2026-11-21,15:45,Blood Pressure (SBP),183.4
 2026-11-21,15:45,Body temperature,36.96
 2026-11-21,15:45,Heart Rate,112.9
-2026-11-21,15:50,Blood Pressure (DBP),121.6
+2026-11-21,15:50,Blood Pressure (DBP),76.9
 2026-11-21,15:50,Blood Pressure (SBP),183.4
 2026-11-21,15:50,Body temperature,37.15
 2026-11-21,15:50,Heart Rate,103.1
@@ -24910,14 +24910,14 @@
 2026-11-22,07:25,Blood Pressure (SBP),183.6
 2026-11-22,07:25,Body temperature,36.53
 2026-11-22,07:25,Heart Rate,61.5
-2026-11-22,07:30,ApoB,134.0
+2026-11-22,07:30,ApoB,74.9
 2026-11-22,07:30,Blood Pressure (DBP),71.0
 2026-11-22,07:30,Blood Pressure (SBP),183.6
 2026-11-22,07:30,Blood Urea Nitrogen,15.1
 2026-11-22,07:30,Body temperature,36.33
 2026-11-22,07:30,HbA1c,5.35
 2026-11-22,07:30,Heart Rate,57.9
-2026-11-22,07:30,LDL-cholesterol,194.0
+2026-11-22,07:30,LDL-cholesterol,90.3
 2026-11-22,07:30,RBC/HPF,0.0
 2026-11-22,07:30,UACR,15.5
 2026-11-22,07:35,Blood Pressure (DBP),70.5
@@ -24944,7 +24944,7 @@
 2026-11-22,08:00,Blood Pressure (SBP),183.6
 2026-11-22,08:00,Body temperature,36.47
 2026-11-22,08:00,Heart Rate,55.1
-2026-11-22,08:00,MDA,108.0
+2026-11-22,08:00,MDA,4.1
 2026-11-22,08:00,Platelets,185.0
 2026-11-22,08:05,Blood Pressure (DBP),70.3
 2026-11-22,08:05,Blood Pressure (SBP),183.6
@@ -26481,7 +26481,7 @@
 2026-11-23,15:40,Blood Pressure (DBP),93.3
 2026-11-23,15:40,Blood Pressure (SBP),183.8
 2026-11-23,15:40,Body temperature,37.65
-2026-11-23,15:40,Heart Rate,126.1
+2026-11-23,15:40,Heart Rate,69.2
 2026-11-23,15:45,Blood Pressure (DBP),92.1
 2026-11-23,15:45,Blood Pressure (SBP),183.8
 2026-11-23,15:45,Body temperature,37.63
@@ -26493,7 +26493,7 @@
 2026-11-23,15:55,Blood Pressure (DBP),84.3
 2026-11-23,15:55,Blood Pressure (SBP),183.8
 2026-11-23,15:55,Body temperature,37.64
-2026-11-23,15:55,Heart Rate,122.7
+2026-11-23,15:55,Heart Rate,69.2
 2026-11-23,16:00,Blood Pressure (DBP),83.6
 2026-11-23,16:00,Blood Pressure (SBP),183.8
 2026-11-23,16:00,Body temperature,37.4
@@ -27291,7 +27291,7 @@
 2026-11-24,08:10,Blood Pressure (DBP),80.5
 2026-11-24,08:10,Blood Pressure (SBP),183.9
 2026-11-24,08:10,Body temperature,37.09
-2026-11-24,08:10,Heart Rate,120.9
+2026-11-24,08:10,Heart Rate,98.6
 2026-11-24,08:15,Blood Pressure (DBP),84.8
 2026-11-24,08:15,Blood Pressure (SBP),183.9
 2026-11-24,08:15,Body temperature,37.31
@@ -27933,7 +27933,7 @@
 2026-11-24,21:30,Body temperature,36.6
 2026-11-24,21:30,Habitability,4.0
 2026-11-24,21:30,Heart Rate,68.3
-2026-11-24,21:30,Mood,3.0
+2026-11-24,21:30,Mood,4.0
 2026-11-24,21:30,Team cohesion,4.0
 2026-11-24,21:35,Blood Pressure (DBP),73.0
 2026-11-24,21:35,Blood Pressure (SBP),184.0
@@ -28423,7 +28423,7 @@
 2026-11-25,07:30,Blood Pressure (SBP),184.1
 2026-11-25,07:30,Blood Urea Nitrogen,16.2
 2026-11-25,07:30,Body temperature,36.43
-2026-11-25,07:30,HbA1c,6.6
+2026-11-25,07:30,HbA1c,5.37
 2026-11-25,07:30,Heart Rate,64.3
 2026-11-25,07:30,LDL-cholesterol,79.9
 2026-11-25,07:30,RBC/HPF,0.0
@@ -29791,7 +29791,7 @@
 2026-11-26,11:35,Blood Pressure (DBP),88.0
 2026-11-26,11:35,Blood Pressure (SBP),184.2
 2026-11-26,11:35,Body temperature,37.51
-2026-11-26,11:35,Heart Rate,121.2
+2026-11-26,11:35,Heart Rate,69.5
 2026-11-26,11:40,Blood Pressure (DBP),87.4
 2026-11-26,11:40,Blood Pressure (SBP),184.2
 2026-11-26,11:40,Body temperature,37.43
@@ -29839,7 +29839,7 @@
 2026-11-26,12:35,Blood Pressure (DBP),87.3
 2026-11-26,12:35,Blood Pressure (SBP),184.3
 2026-11-26,12:35,Body temperature,37.5
-2026-11-26,12:35,Heart Rate,124.0
+2026-11-26,12:35,Heart Rate,69.5
 2026-11-26,12:40,Blood Pressure (DBP),87.5
 2026-11-26,12:40,Blood Pressure (SBP),184.3
 2026-11-26,12:40,Body temperature,37.16
@@ -29847,7 +29847,7 @@
 2026-11-26,12:45,Blood Pressure (DBP),84.2
 2026-11-26,12:45,Blood Pressure (SBP),184.3
 2026-11-26,12:45,Body temperature,37.27
-2026-11-26,12:45,Heart Rate,125.2
+2026-11-26,12:45,Heart Rate,69.5
 2026-11-26,12:50,Blood Pressure (DBP),97.6
 2026-11-26,12:50,Blood Pressure (SBP),184.3
 2026-11-26,12:50,Body temperature,37.28
@@ -32199,11 +32199,11 @@
 2026-11-28,13:05,Blood Pressure (DBP),79.3
 2026-11-28,13:05,Blood Pressure (SBP),184.6
 2026-11-28,13:05,Body temperature,37.38
-2026-11-28,13:05,Heart Rate,121.8
+2026-11-28,13:05,Heart Rate,71.6
 2026-11-28,13:10,Blood Pressure (DBP),93.4
 2026-11-28,13:10,Blood Pressure (SBP),184.6
 2026-11-28,13:10,Body temperature,37.69
-2026-11-28,13:10,Heart Rate,127.0
+2026-11-28,13:10,Heart Rate,71.6
 2026-11-28,13:15,Blood Pressure (DBP),82.0
 2026-11-28,13:15,Blood Pressure (SBP),184.6
 2026-11-28,13:15,Body temperature,37.25
@@ -32211,7 +32211,7 @@
 2026-11-28,13:20,Blood Pressure (DBP),79.9
 2026-11-28,13:20,Blood Pressure (SBP),184.6
 2026-11-28,13:20,Body temperature,37.25
-2026-11-28,13:20,Heart Rate,121.7
+2026-11-28,13:20,Heart Rate,71.6
 2026-11-28,13:25,Blood Pressure (DBP),90.5
 2026-11-28,13:25,Blood Pressure (SBP),184.6
 2026-11-28,13:25,Body temperature,37.35
@@ -32219,19 +32219,19 @@
 2026-11-28,13:30,Blood Pressure (DBP),87.9
 2026-11-28,13:30,Blood Pressure (SBP),184.6
 2026-11-28,13:30,Body temperature,37.42
-2026-11-28,13:30,Heart Rate,127.4
+2026-11-28,13:30,Heart Rate,71.6
 2026-11-28,13:35,Blood Pressure (DBP),91.1
 2026-11-28,13:35,Blood Pressure (SBP),184.6
 2026-11-28,13:35,Body temperature,37.47
-2026-11-28,13:35,Heart Rate,121.7
+2026-11-28,13:35,Heart Rate,71.6
 2026-11-28,13:40,Blood Pressure (DBP),87.8
 2026-11-28,13:40,Blood Pressure (SBP),184.6
 2026-11-28,13:40,Body temperature,37.36
-2026-11-28,13:40,Heart Rate,126.2
+2026-11-28,13:40,Heart Rate,71.6
 2026-11-28,13:45,Blood Pressure (DBP),84.5
 2026-11-28,13:45,Blood Pressure (SBP),184.6
 2026-11-28,13:45,Body temperature,37.6
-2026-11-28,13:45,Heart Rate,128.1
+2026-11-28,13:45,Heart Rate,71.6
 2026-11-28,13:50,Blood Pressure (DBP),83.8
 2026-11-28,13:50,Blood Pressure (SBP),184.6
 2026-11-28,13:50,Body temperature,37.22
@@ -33205,7 +33205,7 @@
 2026-11-29,09:40,Blood Pressure (DBP),90.3
 2026-11-29,09:40,Blood Pressure (SBP),184.7
 2026-11-29,09:40,Body temperature,37.38
-2026-11-29,09:40,Heart Rate,120.9
+2026-11-29,09:40,Heart Rate,68.6
 2026-11-29,09:45,Blood Pressure (DBP),94.3
 2026-11-29,09:45,Blood Pressure (SBP),184.7
 2026-11-29,09:45,Body temperature,37.35
@@ -34477,7 +34477,7 @@
 2026-11-30,11:50,Blood Pressure (DBP),85.0
 2026-11-30,11:50,Blood Pressure (SBP),184.9
 2026-11-30,11:50,Body temperature,37.46
-2026-11-30,11:50,Heart Rate,122.3
+2026-11-30,11:50,Heart Rate,97.3
 2026-11-30,11:55,Blood Pressure (DBP),91.2
 2026-11-30,11:55,Blood Pressure (SBP),184.9
 2026-11-30,11:55,Body temperature,37.57
@@ -34493,7 +34493,7 @@
 2026-11-30,12:10,Blood Pressure (DBP),89.2
 2026-11-30,12:10,Blood Pressure (SBP),184.9
 2026-11-30,12:10,Body temperature,37.65
-2026-11-30,12:10,Heart Rate,120.6
+2026-11-30,12:10,Heart Rate,97.3
 2026-11-30,12:15,Blood Pressure (DBP),80.3
 2026-11-30,12:15,Blood Pressure (SBP),184.9
 2026-11-30,12:15,Body temperature,37.48
@@ -34517,7 +34517,7 @@
 2026-11-30,12:40,Blood Pressure (DBP),90.7
 2026-11-30,12:40,Blood Pressure (SBP),184.9
 2026-11-30,12:40,Body temperature,37.57
-2026-11-30,12:40,Heart Rate,121.7
+2026-11-30,12:40,Heart Rate,97.3
 2026-11-30,12:45,Blood Pressure (DBP),75.7
 2026-11-30,12:45,Blood Pressure (SBP),184.9
 2026-11-30,12:45,Body temperature,36.84
