@@ -72,6 +72,16 @@
   .empty { color: var(--faint); padding: 18px 20px; font: 13px var(--font); }
 
   @media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); gap: 8px; } .hop { margin: 0; flex-direction: row; } .hop i { transform: rotate(90deg); } .list { max-height: 320px; } }
+
+  /* one screen, no page scroll: the three cards share the height left under the header; lists scroll inside */
+  html, body { height: 100%; overflow: hidden; }
+  .stamp { padding-top: 26px; }
+  main { flex: 1; min-height: 0; align-items: stretch; padding: 20px 20px 24px; }
+  .card { min-height: 0; }
+  .meta { min-height: 3em; }
+  .list { flex: 1; min-height: 0; height: auto; }
+  .hop { margin-top: 40px; }
+  @media (max-width: 1000px) { html, body { height: auto; overflow: auto; } main { flex: none; } .list { flex: none; height: 320px; } }
 </style>
 </head>
 <body>
@@ -125,6 +135,6 @@
     </section>
   </main>
 
-<script type="module" src="app.js?v=15"></script>
+<script type="module" src="app.js?v=16"></script>
 </body>
 </html>
