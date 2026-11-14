@@ -29,7 +29,7 @@ On GitHub Pages (deploy from `main` / root) it lives at `https://<user>.github.i
 ## Data
 
 - `data/calendar/events.csv` → calendars (event hazard `hostile` is shown as **Habitat**)
-- `data/crew/A_hotdata.csv` → Crew A readings; continuous vitals use the daily mean, with flagged-reading counts
+- `data/crew/A_hotdata_hazard_mix.csv` → Crew A readings used by the dashboard (status = latest reading up to the dashboard clock). Derived from `A_hotdata_all_SBP_urgent.csv` so the hazard board shows Distance = Urgent (RBC/HPF ≥3), Gravity = Potential (SBP 140–145), Radiation / Isolation / Habitat = Normal
 - `data/biomarker/biomarker.csv` → `yellow` column = **Potential** boundary (neon yellow): outside it → Potential; `red` column = **Urgent** condition (red): matching it → Urgent; otherwise Normal
 - `data/health_instruction/health_instruction.csv` → summaries, hazards, yellow/red instructions, library
 - `data/biomarker/raw biomarker.csv` → detail page "Earth vs space" (`earth_space_comparison`) and "Measure period" (`Numeric_criteria_or_limitation`, `Recommended_timing`)

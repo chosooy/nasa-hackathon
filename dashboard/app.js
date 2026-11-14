@@ -8,7 +8,7 @@
 const ROOT = '..';
 const PATHS = {
   events: `${ROOT}/data/calendar/events.csv`,
-  crewA: `${ROOT}/data/crew/A_hotdata_all_SBP_urgent.csv`,
+  crewA: `${ROOT}/data/crew/A_hotdata_hazard_mix.csv`,
   rules: `${ROOT}/data/biomarker/biomarker.csv`,
   raw: `${ROOT}/data/biomarker/raw%20biomarker.csv`,
   instr: `${ROOT}/data/health_instruction/health_instruction.csv`,
