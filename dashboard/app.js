@@ -430,12 +430,12 @@ function topbar(role, active) {
     <span class="spacer"></span>
     <span class="meta live-clock">UTC ${simStamp()}</span>
     <span class="meta live-sol">SOL ${pad3(missionDay(TODAY))}</span>
-    <a class="role-pill" href="${role === 'crew' ? '#/doctor' : '#/crew'}" title="Switch workspace">${role === 'crew' ? 'SPACE / Astronaut' : 'EARTH / Doctor'}</a>
     <a class="profile-link" href="${base}/profile">Profile</a>
   </header>`;
 }
 function fab(role) {
-  if (role === 'doctor' && ['instructions', 'bio'].includes(route().parts[1])) { $('#fab-root').innerHTML = ''; return; }
+  // Conversation button only on the Overview page (both workspaces).
+  if (route().parts[1]) { $('#fab-root').innerHTML = ''; return; }
   $('#fab-root').innerHTML = role === 'crew'
     ? `<a class="fab" href="#/crew/chat">${ICON.chat}Ground Doctor</a>`
     : `<a class="fab" href="#/doctor/chat">${ICON.chat}Crew conversation</a>`;
