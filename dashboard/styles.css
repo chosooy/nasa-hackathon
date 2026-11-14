@@ -507,3 +507,17 @@ p { margin: 0; }
 .role-pill { width: 160px; justify-content: center; padding: 7px 0; }
 .topbar .profile-link { width: 52px; text-align: right; }
 @media (max-width: 700px) { .topbar nav a { width: auto; } .role-pill { width: 140px; } }
+
+/* ---------- Round 7: long titles shorten with "…", values and badges always stay visible ---------- */
+.bio-big > div:first-child { display: flex; }
+.bio-big > div:first-child > div:first-child { flex: 1; min-width: 0; }
+.bio-big > div:first-child > div:last-child { flex: none; }
+.bio-big h4, .bio-small h4 { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bio-small > div:first-child { display: flex; align-items: baseline; }
+.bio-small > div:first-child > h4 { flex: 1; }
+.bio-small .num, .bio-small .badge { flex: none; }
+.bio-card .h > div:first-child { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bio-card .h > .num, .bio-card .h > .badge { flex: none; }
+.bio-card .h > small { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nrow .nm b, .row .nm b, .alert h4 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nrow .v, .row .val, .row .badge, .alert .v, .alert .chev { flex: none; }

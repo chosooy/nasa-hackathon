@@ -344,7 +344,8 @@ function donutSvg(hz, size, centerSvg) {
   const C = size / 2, R = size * 0.34, T = size * 0.105;
   const col = { urgent: '#E43700', potential: '#EAFE07', normal: '#A8C8FF' };
   const pt = (a, r) => [C + r * Math.cos((a * Math.PI) / 180), C + r * Math.sin((a * Math.PI) / 180)];
-  let g = `<circle cx="${C}" cy="${C}" r="${R + T * 0.95}" fill="none" stroke="#C9D3E6" stroke-dasharray="1.5 3.5"/>`;
+  // Dashed outer ring only on the large hazard board, not on the small crew-hazard circles.
+  let g = size > 120 ? `<circle cx="${C}" cy="${C}" r="${R + T * 0.95}" fill="none" stroke="#C9D3E6" stroke-dasharray="1.5 3.5"/>` : "";
   hz.forEach((h, i) => {
     const a0 = -90 + i * 72 + 3, a1 = a0 + 66;
     const [x0, y0] = pt(a0, R), [x1, y1] = pt(a1, R);
@@ -809,6 +810,8 @@ function render() {
   $('#app').innerHTML = html;
   if (r) fab(r); else $('#fab-root').innerHTML = '';
   const log = $('#chatlog'); if (log) log.scrollTop = log.scrollHeight;
+  // Full name on hover for any title that had to be shortened with an ellipsis.
+  document.querySelectorAll('.bio-big h4, .bio-small h4, .bio-card .h > div:first-child, .tile small, .nrow .nm b, .row .nm b, .alert h4').forEach((el) => { el.title = el.textContent.trim(); });
   const att = qs.get('attach');
   if (att && sub === 'chat') { const inp = $('.compose input'); if (inp) { inp.value = 'Could you check this record?'; inp.dataset.attach = att; inp.focus(); } }
   document.title = r === 'crew' ? 'KOOK · Crew A' : r === 'doctor' ? 'KOOK · Ground Doctor' : 'KOOK Dashboard';
