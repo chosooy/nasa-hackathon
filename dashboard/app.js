@@ -1,4 +1,4 @@
-/* KOOK dashboard — Crew A, November 2026. Layout follows Figma "최종" frames.
+/* KOOK dashboard — Crews A–D, November 2026. Layout follows Figma "최종" frames.
  * Data: ../data/calendar/events.csv, ../data/crew/{A,B,C,D}_hotdata.csv, ../data/biomarker/biomarker.csv,
  *       ../data/biomarker/raw biomarker.csv, ../data/health_instruction/health_instruction.csv
  */
@@ -255,21 +255,22 @@ const metaLine = (s) => (s.r ? `${dayLabel(s.r.date)} ${s.r.time} · ${s.categor
 
 /* ---------------- chat + notes (localStorage) ---------------- */
 function seedChat() {
-  const tst = valueAt('Total Sleep Time', '2026-11-13');
+  const tst = withCrew('A', () => valueAt('Total Sleep Time', '2026-11-13'));
   return [
     { from: 'crew', date: '2026-11-13', time: '12:13', text: `I slept ${tst ? fmt(tst.v, 'Total Sleep Time') : '7.4'} hours last night and still feel tired. Could you check my sleep record?`, attach: `sleep check · ${dayLabel('2026-11-13')}` },
     { from: 'doctor', date: '2026-11-13', time: '12:25', text: "Thanks for sharing your record. I've received it. Please tell me how you're feeling now." },
     { from: 'crew', date: '2026-11-13', time: '12:30', text: "I'm still feeling tired. I've opened the saved sleep guidance." },
   ];
 }
-const chat = () => store.get('chatA', null) || seedChat();
-function sendChat(from, text, attach) {
+// One conversation and one notes list per crew; default = the crew currently rendered (DB.cur).
+const chat = (c = DB.cur) => store.get('chat' + c, null) || (c === 'A' ? seedChat() : []);
+function sendChat(from, text, attach, c = DB.cur) {
   text = text.trim(); if (!text) return;
-  const msgs = chat();
+  const msgs = chat(c);
   msgs.push({ from, date: state.date, time: new Date().toISOString().slice(11, 16), text, attach: attach || undefined });
-  store.set('chatA', msgs);
+  store.set('chat' + c, msgs);
 }
-const notes = () => store.get('notesA', []);
+const notes = (c = DB.cur) => store.get('notes' + c, []);
 /** Doctor edits to summaries / instructions (kept in localStorage) layered over health_instruction.csv. */
 function applyEdits() {
   Object.entries(store.get('edits', {})).forEach(([b, e]) => { if (DB.info[b]) Object.assign(DB.info[b], e); });
@@ -391,8 +392,8 @@ function donutSvg(hz, size, centerSvg) {
 function hazardBoard(states) {
   const size = 260;
   const hz = hazardStatus(states);
-  // Centre of the ring: Crew A's profile photo.
-  const inner = donutSvg(hz, size, (C, r) => `<clipPath id="hzface"><circle cx="${C}" cy="${C}" r="${r}"/></clipPath><image href="${IMG.A}" x="${C - r}" y="${C - r}" width="${r * 2}" height="${r * 2 * 1.33}" preserveAspectRatio="xMidYMin slice" clip-path="url(#hzface)"/>`);
+  // Centre of the ring: the crew member's profile photo.
+  const inner = donutSvg(hz, size, (C, r) => `<clipPath id="hzface"><circle cx="${C}" cy="${C}" r="${r}"/></clipPath><image href="${IMG[DB.cur]}" x="${C - r}" y="${C - r}" width="${r * 2}" height="${r * 2 * 1.33}" preserveAspectRatio="xMidYMin slice" clip-path="url(#hzface)"/>`);
   return `<svg class="donut" viewBox="0 0 ${size} ${size}" width="100%" style="max-width:${size}px" role="img" aria-label="Hazard board">${inner}</svg>`;
 }
 function miniDonut(states, c) {
@@ -407,7 +408,7 @@ function todayArt() {
 }
 
 /* ---------------- state + routing ---------------- */
-const state = { date: TODAY, week: weekStart(TODAY), hazardFilter: 'all', instrFilter: 'all', attFilter: 'all', query: '', libFilter: 'all', libQuery: '', bioCat: 'All', carousel: 0, docCrew: 'A', calStart: TODAY };
+const state = { date: TODAY, week: weekStart(TODAY), hazardFilter: 'all', instrFilter: 'all', attFilter: 'all', query: '', libFilter: 'all', libQuery: '', bioCat: 'All', carousel: 0, docCrew: 'A', calStart: TODAY, me: CREWS.includes(store.get('me', 'A')) ? store.get('me', 'A') : 'A' };
 const setDate = (d) => { state.date = clampData(d); state.week = weekStart(state.date); state.calStart = state.date; };
 function route() {
   const [path, qs] = location.hash.replace(/^#\/?/, '').split('?');
@@ -472,7 +473,7 @@ function chatLog(role, mini) {
     const me = m.from === role;
     let sep = '';
     if (!mini && m.date !== lastDate) { sep = `<div class="daysep">${weekday(m.date)}, ${shortDate(m.date)} · ${m.date === '2026-11-13' ? 'Demo conversation' : dayLabel(m.date)}</div>`; lastDate = m.date; }
-    const who = me ? (role === 'crew' ? 'You' : 'You — Ground doctor') : (role === 'crew' ? 'Ground doctor' : 'Crew A');
+    const who = me ? (role === 'crew' ? 'You' : 'You — Ground doctor') : (role === 'crew' ? 'Ground doctor' : `Crew ${DB.cur}`);
     // Figma: doctor messages are bubbles (blue for the doctor's own view, white for crew); crew messages are plain text in the full chat.
     let cls = '';
     if (mini) cls = me ? 'bubble blue' : 'bubble';
@@ -485,11 +486,11 @@ function chatCard(role, mini) {
   const crewSide = role === 'crew';
   const head = crewSide
     ? `<div><b>Ground doctor</b><small>Flight care team · 1:1 chat</small></div>`
-    : `<img class="avatar" src="${IMG.A}" alt="Crew A" style="width:40px;height:40px"><div><b>Crew A</b><small>Crew A · 1:1 conversation</small></div>`;
+    : `<img class="avatar" src="${IMG[DB.cur]}" alt="Crew ${DB.cur}" style="width:40px;height:40px"><div><b>Crew ${DB.cur}</b><small>Crew ${DB.cur} · 1:1 conversation</small></div>`;
   return `<section class="card chat ${mini ? 'mini' : ''}">
     <div class="chat-head">${head}${mini ? '' : '<span class="dots">···</span>'}</div>
     <div class="log" id="chatlog">${mini ? '' : `<div class="note">Messages may take time to reach ${crewSide ? 'Earth' : 'the crew'}. We'll show you when they arrive.</div>`}${chatLog(role, mini)}</div>
-    <form class="compose" data-chat="${role}"><button type="button" class="plus" data-attach-note aria-label="Attach a file">+</button><input name="m" placeholder="Write a message to ${crewSide ? 'your doctor' : 'Crew A'}…" autocomplete="off"><button class="btn primary" type="submit">Send${mini ? '' : ' ' + ICON.send}</button></form>
+    <form class="compose" data-chat="${role}" data-crew="${DB.cur}"><button type="button" class="plus" data-attach-note aria-label="Attach a file">+</button><input name="m" placeholder="Write a message to ${crewSide ? 'your doctor' : `Crew ${DB.cur}`}…" autocomplete="off"><button class="btn primary" type="submit">Send${mini ? '' : ' ' + ICON.send}</button></form>
   </section>`;
 }
 const statusRow = (s, href) => `<a class="row" href="${href}" title="${esc(s.info.summary || '')}"><div class="nm"><b>${esc(s.name)}</b><small>${esc(metaLine(s))}</small></div><span class="val">${esc(fmt(s.v, s.b))}${unitOf(s.b) ? `<small>${esc(unitOf(s.b))}</small>` : ''}</span><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></a>`;
@@ -523,11 +524,11 @@ function crewHome() {
   return `${topbar('crew', 'home')}<main class="page">
     <section class="hero-crew"><div class="planet"></div>
       <span class="chip-day"><i>${ICON.planet}</i>${dayLabel(d)} · MARS</span>
-      <h1 class="hero-title">Welcome back, <b>Crew A</b></h1>
+      <h1 class="hero-title">Welcome back, <b>Crew ${DB.cur}</b></h1>
       <p class="hero-sub">${weekday(d)}, ${shortDate(d)}<span class="bar">|</span>${n} thing${n === 1 ? '' : 's'} to check in your health today</p>
     </section>
     <section class="card" style="margin-bottom:16px;padding:20px">
-      ${weekCalendar('A', (x) => `#/crew/day/${x}`)}
+      ${weekCalendar(DB.cur, (x) => `#/crew/day/${x}`)}
     </section>
     <div class="grid g-home">
       <section class="card home-instr">
@@ -688,11 +689,11 @@ function chatPage(role) {
         <a class="btn primary block" href="#/crew/day/${shared.length ? shared[shared.length - 1].date : state.date}">${ICON.open}View shared record</a>
         <p class="hint" style="margin-top:12px">Your messages stay saved here while the connection is delayed.</p></section>`
     : `<section class="card side-card" style="align-self:start"><h3 class="ico-title" style="font-size:17px">${ICON.chat.replace('<svg', '<svg style="width:16px;height:16px;color:var(--electric)"')}Conversations</h3><p class="hint" style="margin:2px 0 14px">4 assigned astronauts</p>
-        <div class="items">${CREWS.map((c) => { const last = c === 'A' ? chat()[chat().length - 1] : null; return `<div class="item convo ${c === 'A' ? 'on' : ''}"><div style="font-size:13px">Crew ${c}</div><div class="hint" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${last ? esc(last.text) : 'No messages yet'}</div><div style="font-size:11px;margin-top:4px">${last ? `${last.time} UTC · Latest message` : 'Open 1:1 conversation'}</div></div>`; }).join('')}</div>
+        <div class="items">${CREWS.map((c) => { const msgs = chat(c), last = msgs[msgs.length - 1]; return `<button type="button" class="item convo ${c === DB.cur ? 'on' : ''}" data-crew="${c}" aria-pressed="${c === DB.cur}"><div style="font-size:13px">Crew ${c}</div><div class="hint" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${last ? esc(last.text) : 'No messages yet'}</div><div style="font-size:11px;margin-top:4px">${last ? `${last.time} UTC · Latest message` : 'Open 1:1 conversation'}</div></button>`; }).join('')}</div>
         <p class="hint" style="margin-top:14px">Select a crew to open the conversation.</p></section>`;
   return `${topbar(role, 'home')}<main class="page">
     <a class="back" data-back href="${crewSide ? '#/crew' : '#/doctor'}" aria-label="Back" title="Back">←</a>
-    <h1 class="page-title" style="margin-bottom:24px">${crewSide ? 'A conversation with your doctor.' : 'A conversation with Crew A.'}</h1>
+    <h1 class="page-title" style="margin-bottom:24px">${crewSide ? 'A conversation with your doctor.' : `A conversation with Crew ${DB.cur}.`}</h1>
     <div class="grid g-side">${left}${chatCard(role, false)}</div>
   </main>`;
 }
@@ -703,7 +704,7 @@ function profilePage(role) {
     <h1 class="page-title">My profile</h1>${crewSide ? '<div style="height:16px"></div>' : '<p class="page-sub">Manage your personal information and care-team records.</p>'}
     <div class="grid g-profile">
       <section class="card" style="align-self:start">
-        ${crewSide ? `<div style="display:flex;gap:12px;align-items:center;margin-bottom:18px"><img class="avatar" src="${IMG.A}" alt="Crew A profile photo" style="width:36px;height:36px"><h3>Crew A</h3></div><b style="font-size:13px">My health information</b><p class="hint" style="margin-top:12px">Medical history: Not added</p><p class="hint" style="margin-top:10px">Allergies: Not added</p><p class="hint" style="margin-top:10px">Medication: Not added</p>`
+        ${crewSide ? `<div style="display:flex;gap:12px;align-items:center;margin-bottom:18px"><img class="avatar" src="${IMG[DB.cur]}" alt="Crew ${DB.cur} profile photo" style="width:36px;height:36px"><h3>Crew ${DB.cur}</h3></div><b style="font-size:13px">My health information</b><p class="hint" style="margin-top:12px">Medical history: Not added</p><p class="hint" style="margin-top:10px">Allergies: Not added</p><p class="hint" style="margin-top:10px">Medication: Not added</p>`
           : `<h3 style="margin-bottom:16px">Ground doctor</h3><b style="font-size:13px">Professional information</b><p class="hint" style="margin-top:12px">Specialty: Not added</p><p class="hint" style="margin-top:10px">Organization: Not added</p><p class="hint" style="margin-top:10px">Assigned crew: A, B, C, D</p>`}
         <button class="btn primary block" style="margin:20px 0">${ICON.user}Update my details</button>
         <b style="font-size:13px">Doctor's notes</b>
@@ -712,7 +713,7 @@ function profilePage(role) {
       </section>
       <div class="stack">
         <section class="card"><h3 class="ico-title">${ICON.user}Personal information</h3><p class="hint" style="margin:6px 0 20px">${crewSide ? 'Your profile details for this mission.' : 'Your care-team profile for this mission.'}</p>
-          <dl class="kv"><dt>Name</dt><dd>${crewSide ? 'Crew A' : 'Not added'}</dd><dt>Email</dt><dd>Not added</dd><dt>Mission start date</dt><dd>October 1, 2026</dd><dt>${crewSide ? 'Mission time' : 'Mission reference'}</dt><dd>${crewSide ? dayLabel(state.date) : 'SOL ' + pad3(missionDay(state.date))}</dd></dl></section>
+          <dl class="kv"><dt>Name</dt><dd>${crewSide ? `Crew ${DB.cur}` : 'Not added'}</dd><dt>Email</dt><dd>Not added</dd><dt>Mission start date</dt><dd>October 1, 2026</dd><dt>${crewSide ? 'Mission time' : 'Mission reference'}</dt><dd>${crewSide ? dayLabel(state.date) : 'SOL ' + pad3(missionDay(state.date))}</dd></dl></section>
         <section class="card"><h3 class="ico-title" style="margin-bottom:18px">${ICON.doc}${crewSide ? 'My records' : 'Care records'}</h3>
           <a class="rec-link" href="${crewSide ? '#/crew/attention' : '#/doctor/crew/A'}"><b>${crewSide ? 'Health history' : 'Crew health history'} ›</b><small>Medical history, allergies and medication</small></a>
           <a class="rec-link" href="${crewSide ? '#/crew' : '#/doctor'}/instructions"><b>${crewSide ? "Doctor's notes" : 'My consultation notes'} ›</b><small>Your saved assessments and consultations</small></a>
@@ -824,7 +825,7 @@ function doctorHome() {
         <div class="card-head"><h3>Crew hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div>
         <div class="crew-tiles">${CREWS.map(tile).join('')}</div>
         ${biomarkerCarousel({ ranked, key: 'carousel', bioBase: '#/doctor/bio', title: `Biomarkers · Crew ${sel}`, emptyText: `No biomarker data for Crew ${sel} yet.` })}
-        <form class="compose doc-compose" data-chat="doctor"><input name="m" placeholder="Write a message to Crew ${sel}…" autocomplete="off" ${sel === 'A' ? '' : 'disabled'}><button class="btn primary" type="submit" ${sel === 'A' ? '' : 'disabled'}>Send ${ICON.send}</button></form>
+        <form class="compose doc-compose" data-chat="doctor" data-crew="${sel}"><input name="m" placeholder="Write a message to Crew ${sel}…" autocomplete="off"><button class="btn primary" type="submit">Send ${ICON.send}</button></form>
       </section>
     </div>
   </main>`;
@@ -842,7 +843,7 @@ function doctorCrew(c) {
     <a class="back" data-back href="#/doctor" aria-label="Back" title="Back">←</a>
     <div class="crew-head">${head}<div><div class="lbl">ASTRONAUT · MARS MISSION</div><h1>Crew ${c}</h1><small>${dayLabel(state.date)} &nbsp; Mission start Oct 1</small></div>
       <div class="right">
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn outline" href="${hasData ? `#/doctor/day/${c}/${state.date}` : '#/doctor/crew/' + c}">Daily records</a><button class="btn outline" data-modal="instruction" ${c === 'A' ? '' : 'disabled'} title="${c === 'A' ? '' : 'Instructions can be sent to Crew A in this demo'}">Send instruction</button><a class="btn primary" href="#/doctor/chat">${ICON.chat}Message</a></div></div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn outline" href="${hasData ? `#/doctor/day/${c}/${state.date}` : '#/doctor/crew/' + c}">Daily records</a><button class="btn outline" data-modal="instruction">Send instruction</button><a class="btn primary" href="#/doctor/chat">${ICON.chat}Message</a></div></div></div>
     <section class="card" style="padding:20px">${weekCalendar(c, (x) => (hasData ? `#/doctor/day/${c}/${x}` : `#/doctor/crew/${c}`))}</section>
     ${hasData ? `<div class="tiles">${tiles}</div>
     <section class="card"><h3 style="margin-bottom:12px">Biomarkers</h3>
@@ -852,13 +853,24 @@ function doctorCrew(c) {
   </main>`;
 }
 
+/* ---------------- onboarding: which crew member are you? ---------------- */
+function crewSelect() {
+  return `<main class="landing"><div class="inner">
+    <img class="logo" src="${IMG.logo}" alt="KOOK — Kinetic Observation &amp; Optimal Keel">
+    <h1>Who's checking in?</h1>
+    <div class="crew-choose">${CREWS.map((c) => `<button type="button" class="crew-choice ${c === state.me ? 'last' : ''}" data-me="${c}">
+      <img src="${IMG[c]}" alt=""><b>Crew ${c}</b><span>Mars mission · Space workspace</span></button>`).join('')}</div>
+    <a class="test" href="#/">← Back</a>
+  </div></main>`;
+}
+
 /* ---------------- landing (Figma onboarding(1)) ---------------- */
 function landing() {
   return `<main class="landing"><div class="inner">
     <img class="logo" src="${IMG.logo}" alt="KOOK — Kinetic Observation &amp; Optimal Keel">
     <h1>One mission. Connected care.</h1>
     <div class="roles">
-      <a class="role-card space" href="#/crew"><span class="ws">SPACE WORKSPACE</span><span class="orb"></span><h2>I'm an astronaut</h2><p>View your schedule, health instructions and conversations with your ground doctor.</p></a>
+      <a class="role-card space" href="#/select"><span class="ws">SPACE WORKSPACE</span><span class="orb"></span><h2>I'm an astronaut</h2><p>View your schedule, health instructions and conversations with your ground doctor.</p></a>
       <a class="role-card earth" href="#/doctor"><span class="ws">EARTH WORKSPACE</span><span class="orb"></span><h2>I'm a doctor</h2><p>Review crew schedules, health instructions and conversations with astronauts.</p></a>
     </div>
     <a class="test" href="#/crew">Test without Account</a>
@@ -879,10 +891,10 @@ function openModal(kind, bio) {
     return;
   }
   $('#modal-root').innerHTML = kind === 'instruction'
-    ? `<div class="modal-bg"><form class="modal" data-form="instruction"><h3>Send instruction to Crew A</h3>
+    ? `<div class="modal-bg"><form class="modal" data-form="instruction"><h3>Send instruction to Crew ${state.docCrew}</h3>
         <label>Related biomarker</label><select name="bio"><option value="">General</option>${opts}</select>
         <label>Title</label><input name="title" required placeholder="e.g. Reduce sugar intake today">
-        <label>Instruction</label><textarea name="text" required placeholder="What should Crew A do?"></textarea>
+        <label>Instruction</label><textarea name="text" required placeholder="What should Crew ${state.docCrew} do?"></textarea>
         <div class="actions"><button type="button" class="btn cancel" data-close>Cancel</button><button class="btn primary">Send to crew</button></div></form></div>`
     : `<div class="modal-bg"><form class="modal" data-form="library"><h3>Add instruction</h3>
         <label>Biomarker or protocol</label><input name="title" required placeholder="e.g. Post-EVA hydration protocol">
@@ -906,20 +918,25 @@ function render() {
   let html, r = null;
   if (role === 'crew') {
     r = 'crew';
-    if (sub === 'day') { setDate(a1 || state.date); html = dayPage('crew', state.date); }
-    else if (sub === 'instructions' || sub === 'attention') html = attentionPage('crew');
-    else if (sub === 'bio') html = bioPage('crew', a1);
-    else if (sub === 'chat') html = chatPage('crew');
-    else if (sub === 'profile') html = profilePage('crew');
-    else html = crewHome();
+    if (sub === 'day') setDate(a1 || state.date);
+    html = withCrew(state.me, () => {
+      if (sub === 'day') return dayPage('crew', state.date, state.me);
+      if (sub === 'instructions' || sub === 'attention') return attentionPage('crew');
+      if (sub === 'bio') return bioPage('crew', a1);
+      if (sub === 'chat') return chatPage('crew');
+      if (sub === 'profile') return profilePage('crew');
+      return crewHome();
+    });
+  } else if (role === 'select') {
+    html = crewSelect();
   } else if (role === 'doctor') {
     r = 'doctor';
-    if (sub === 'crew') html = doctorCrew(CREWS.includes(a1) ? a1 : 'A');
+    if (sub === 'crew') { const c = CREWS.includes(a1) ? a1 : 'A'; state.docCrew = c; html = doctorCrew(c); }
     else if (sub === 'day') { setDate(a2 || state.date); const c = CREWS.includes(a1) ? a1 : 'A'; html = withCrew(c, () => dayPage('doctor', state.date, c)); }
     else if (sub === 'instructions') html = doctorLibraryPage();
     else if (sub === 'attention') html = withCrew(state.docCrew, () => attentionPage('doctor'));
     else if (sub === 'bio') { if (state.recBio !== a1) { state.recBio = a1; state.recCrew = 0; } html = bioPage('doctor', a1); }
-    else if (sub === 'chat') html = chatPage('doctor');
+    else if (sub === 'chat') html = withCrew(state.docCrew, () => chatPage('doctor'));
     else if (sub === 'profile') html = profilePage('doctor');
     else html = doctorHome();
   } else html = landing();
@@ -930,7 +947,7 @@ function render() {
   document.querySelectorAll('.bio-big h4, .bio-small h4, .bio-card .h > div:first-child, .tile small, .nrow .nm b, .row .nm b, .alert h4').forEach((el) => { el.title = el.textContent.trim(); });
   const att = qs.get('attach');
   if (att && sub === 'chat') { const inp = $('.compose input'); if (inp) { inp.value = 'Could you check this record?'; inp.dataset.attach = att; inp.focus(); } }
-  document.title = r === 'crew' ? 'KOOK · Crew A' : r === 'doctor' ? 'KOOK · Ground Doctor' : 'KOOK Dashboard';
+  document.title = r === 'crew' ? `KOOK · Crew ${state.me}` : r === 'doctor' ? 'KOOK · Ground Doctor' : 'KOOK Dashboard';
 }
 const rerender = () => { const y = window.scrollY; render(); window.scrollTo(0, y); };
 function refocus(key) { const inp = document.querySelector(`form[data-search="${key}"] input`); if (inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); } }
@@ -948,6 +965,7 @@ document.addEventListener('click', (e) => {
   else if (d.rec) { state.recCrew = (state.recCrew || 0) + +d.rec; rerender(); }
   else if (d.car) { const k = d.carKey || 'carousel'; state[k] = (state[k] || 0) + +d.car; rerender(); }
   else if (d.attachNote !== undefined) toast('File attachments are not available yet. They will be added in a later version.');
+  else if (d.me) { state.me = d.me; store.set('me', d.me); state.crewCarousel = 0; location.hash = '#/crew'; }
   else if (d.crew) { state.docCrew = d.crew; state.carousel = 0; rerender(); }
   else if (d.modal) openModal(d.modal, d.bio);
   else if (d.close !== undefined) closeModal();
@@ -956,17 +974,17 @@ $('#modal-root').addEventListener('click', (e) => { if (e.target.classList.conta
 document.addEventListener('submit', (e) => {
   const f = e.target; e.preventDefault();
   if (f.dataset.chat) {
-    const inp = f.querySelector('input'); sendChat(f.dataset.chat, inp.value, inp.dataset.attach);
+    const inp = f.querySelector('input'); sendChat(f.dataset.chat, inp.value, inp.dataset.attach, f.dataset.crew || (f.dataset.chat === 'crew' ? state.me : state.docCrew));
     if (location.hash.includes('?')) location.hash = location.hash.split('?')[0]; else rerender();
   } else if (f.dataset.goto) {
     state.query = f.q.value; state.attFilter = 'all'; location.hash = f.dataset.goto;
   } else if (f.dataset.search) {
     state[f.dataset.search] = f.q.value; rerender(); refocus(f.dataset.search);
   } else if (f.dataset.form === 'instruction') {
-    const n = notes();
+    const c = state.docCrew, n = notes(c);
     n.push({ bio: f.bio.value, title: f.title.value.trim(), text: f.text.value.trim(), date: state.date, time: new Date().toISOString().slice(11, 16) });
-    store.set('notesA', n);
-    sendChat('doctor', `New instruction: ${f.title.value.trim()} — see Health Instruction › Doctor's notes.`);
+    store.set('notes' + c, n);
+    sendChat('doctor', `New instruction: ${f.title.value.trim()} — see Health Instruction › Doctor's notes.`, undefined, c);
     closeModal(); rerender();
   } else if (f.dataset.form === 'edit') {
     const b = f.dataset.bio, edits = store.get('edits', {});

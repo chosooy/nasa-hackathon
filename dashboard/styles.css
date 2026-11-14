@@ -734,3 +734,14 @@ a.lib-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,
 .crew-pick button { display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px 4px 4px; border-radius: 999px; background: rgba(255,255,255,.1); color: var(--navy-200); font-size: 12.5px; font-weight: 600; border: 2px solid transparent; }
 .crew-pick button img { width: 26px; height: 26px; }
 .crew-pick button.on { background: #fff; color: var(--navy-900); border-color: var(--yellow); }
+
+/* ---------- Round 22: onboarding crew picker ---------- */
+.crew-choose { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.crew-choice { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 26px 14px 22px; border-radius: 24px; background: var(--navy-900); color: #fff; border: 2px solid rgba(255,255,255,.12); cursor: pointer; transition: transform .15s, border-color .15s; }
+.crew-choice:hover { transform: translateY(-3px); border-color: var(--yellow); }
+.crew-choice.last { border-color: rgba(234,254,7,.55); }
+.crew-choice img { width: 112px; height: 112px; border-radius: 50%; object-fit: cover; object-position: center 15%; border: 3px solid var(--yellow); }
+.crew-choice b { font-family: var(--display); font-size: 22px; font-weight: 600; }
+.crew-choice span { font-size: 12px; color: var(--navy-300); }
+.item.convo { width: 100%; text-align: left; font: inherit; cursor: pointer; }
+@media (max-width: 700px) { .crew-choose { grid-template-columns: 1fr 1fr; } .crew-choice img { width: 84px; height: 84px; } }
