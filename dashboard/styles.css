@@ -786,3 +786,10 @@ a.lib-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,
 .ob-actions .yellow-cta { margin-top: 0; }
 .ob-back { font-size: 15px; color: var(--navy-200); text-decoration: underline; }
 .ob-back:hover { color: #fff; }
+
+/* ---------- Round 26: Back / Continue on the "Who's checking in?" row ---------- */
+.ob-title { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; margin: 26px 0 26px; }
+.ob-title h1 { margin: 0; }
+.ob-title .ob-back { justify-self: start; }
+.ob-title .yellow-cta { justify-self: end; margin: 0; }
+@media (max-width: 900px) { .ob-title { grid-template-columns: 1fr 1fr; } .ob-title h1 { grid-column: 1 / -1; grid-row: 1; } }

@@ -876,7 +876,7 @@ function crewSelect() {
   const sel = state.pick || state.me;
   return `<main class="landing onboard"><div class="inner wide">
     <img class="logo" src="${IMG.logo}" alt="KOOK — Kinetic Observation &amp; Optimal Keel">
-    <h1>Who's checking in?</h1>
+    <div class="ob-title"><a class="ob-back" href="#/">← Back</a><h1>Who's checking in?</h1><button type="button" class="btn yellow-cta" data-me="${sel}">Continue as Crew ${sel} →</button></div>
     <div class="crew-choose">${CREWS.map((c) => `<button type="button" class="crew-choice ${c === sel ? 'on' : ''}" data-pick="${c}" aria-pressed="${c === sel}">
       <img src="${IMG[c]}" alt=""><b>Crew ${c}</b></button>`).join('')}</div>
     <section class="baseline">
@@ -893,7 +893,6 @@ function crewSelect() {
         <button type="button" class="bl-btn primary" data-upload-done>${ICON.upload}Upload baseline records (.csv)</button>
       </div>
     </section>
-    <div class="ob-actions"><a class="ob-back" href="#/">← Back</a><button type="button" class="btn yellow-cta" data-me="${sel}">Continue as Crew ${sel} →</button></div>
   </div></main>`;
 }
 
