@@ -12,11 +12,6 @@
 - [ ] Use of AI 
 - [ ] Nasa Data + Other Data Resources 밝히기
 
-- [ ] 프로필 창 수정
-- [ ] 컨버세이션 창 수정
-- [ ] BCD 데이터 제작
-
-
 
 ## Compressed transmission
 
