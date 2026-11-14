@@ -1149,7 +1149,7 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 .hero-loc.loc-ship { background-position: center 45%; }
 
 /* landing: logo bigger, everything lower, role icon above the heading */
-.landing:not(.onboard) { align-items: start; padding-top: max(110px, 26vh); }
+.landing:not(.onboard) { align-items: start; padding-top: max(24px, calc(26vh - 140px)); }
 .landing:not(.onboard) .logo { height: 140px; }
 .role-card .orb { display: none; }
 .role-ico { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 18px; }
