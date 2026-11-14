@@ -2,6 +2,18 @@
   <img src="assets/logo/banner.png" width="100%" alt="KOOK banner">
 </p>
 
+<div align="center">
+
+<table>
+<tr>
+<td align="center" width="33%"><img src="assets/image/team/sooyeon.jpg" width="110" alt="Sooyeon Cho"><br><b>Sooyeon Cho</b><br>Development</td>
+<td align="center" width="33%"><img src="assets/image/team/haejun.jpg" width="110" alt="Haejun Paik"><br><b>Haejun Paik</b><br>Design</td>
+<td align="center" width="33%"><img src="assets/image/team/dahyun.jpg" width="110" alt="Dahyun Lee"><br><b>Dahyun Lee</b><br>Biology</td>
+</tr>
+</table>
+
+</div>
+
 # KOOK — Kinetic Observation & Optimal Keel
 
 **A health monitoring dashboard that helps astronauts manage their own health on long-duration space missions.**
@@ -136,14 +148,6 @@ We believe technology should not make health management more complicated. It sho
 ## Team
 
 Our team's greatest strength is the way we bring together different perspectives and skills. With backgrounds in biology, programming and design, each of us approaches problems differently, but we share the same goal: making space health management more accessible and practical for astronauts.
-
-<table>
-<tr>
-<td align="center" width="33%"><img src="assets/image/team/sooyeon.jpg" width="110" alt="Sooyeon Cho"><br><b>Sooyeon Cho</b><br>Development</td>
-<td align="center" width="33%"><img src="assets/image/team/haejun.jpg" width="110" alt="Haejun Paik"><br><b>Haejun Paik</b><br>Design</td>
-<td align="center" width="33%"><img src="assets/image/team/dahyun.jpg" width="110" alt="Dahyun Lee"><br><b>Dahyun Lee</b><br>Biology</td>
-</tr>
-</table>
 
 **Sooyeon Cho** — Development
 
