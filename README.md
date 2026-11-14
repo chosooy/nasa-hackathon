@@ -139,12 +139,8 @@ Our team's greatest strength is the way we bring together different perspectives
 
 **Sooyeon Cho** — Development
 
-- Built the KOOK dashboard in HTML, CSS and JavaScript from the Figma designs: onboarding, the crew and ground doctor views, the Health Instruction Library, biomarker details, the calendar and one-on-one chat.
-- Connected the dashboard to the crew data and the biomarker rules, so every reading is classified as Normal, Potential or Urgent.
-- Designed the Mars–Earth data flow.
-  - Readings are buffered on Mars and sent when a biomarker newly turns Potential or Urgent, or every 6 hours.
-  - Files are packed as columns + deltas and compressed with zstd, then arrive 20 minutes later.
-  - Built the test bench that replays it, with voice guidance.
+- Built the KOOK dashboard (crew and ground doctor views) in HTML, CSS and JavaScript from the Figma designs.
+- Designed the Mars–Earth data flow: buffered sending, compression and the 20-minute delay, plus a test bench that replays it with voice guidance.
 - Deployed the project on GitHub Pages and wrote the documentation.
 
 **Haejun Paik** — Design
