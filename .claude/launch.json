@@ -1,6 +1,0 @@
-{
-  "version": "0.0.1",
-  "configurations": [
-    { "name": "kook", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "8765", "--directory", "/Users/sooyeoncho/Desktop/NASA/kook"], "cwd": "/Users/sooyeoncho/Desktop/NASA/kook", "port": 8765 }
-  ]
-}
