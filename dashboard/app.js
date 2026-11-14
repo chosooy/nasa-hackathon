@@ -944,7 +944,7 @@ function biomarkerCarousel({ ranked, bioBase, title, emptyText }) {
       <div style="margin:12px 0 8px">${areaChart(big.b, p14(big), { w: 400, h: 230 })}</div>
       <div style="display:flex;justify-content:space-between;gap:10px;font-size:11px"><span class="hint" style="font-size:11px">${esc(crit(big))} · ${p14(big).filter((p) => statusOf(big.b, p.v) !== 'normal').length} of ${p14(big).length} readings flagged in 14 days</span><span style="color:var(--electric);white-space:nowrap">Open records ›</span></div></a>` : '';
   const small = rest.map((s, i) => `<a class="bio-small" href="${bioBase}/${enc(s.b)}"><div style="display:flex;justify-content:space-between;gap:6px"><h4><span class="rk">#${i + 2}</span>${esc(s.name)}</h4><span class="num ${s.status}">${esc(fmtU(s.v, s.b))}</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><small class="hint" style="font-size:11px">${esc(s.category)}</small><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></div>${areaChart(s.b, p14(s), { w: 220, h: 110, axis: false })}</a>`).join('');
-  return `<div class="card-head"><h3>${title}</h3><span class="hint">${ranked.length} biomarkers</span></div>
+  return `<div class="card-head"><h3>${title}</h3></div>
     <div class="bio-strip">${ranked.length ? bigCard + small : `<div class="bio-big bio-empty">${emptyText}</div>`}</div>`;
 }
 function doctorHome() {
