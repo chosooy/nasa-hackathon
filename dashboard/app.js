@@ -676,9 +676,9 @@ function crewHome() {
   const states = allStates(d);
   const n = states.filter((s) => s.status === 'urgent' || s.status === 'potential').length;
   return `${topbar('crew', 'home')}<main class="page">
-    <section class="hero-crew"><div class="planet"></div>
+    <section class="hero-doc hero-loc loc-${myLoc().k}" style="background-image:url('${locBg(myLoc().k)}')">
       <img class="hero-face" src="${IMG[DB.cur]}" alt="Crew ${DB.cur} profile photo">
-      <div class="hero-text"><span class="chip-day"><i>${ICON.planet}</i>${dayLabel(d)} · MARS</span>
+      <div class="hero-text"><span class="chip-day"><i>${ICON.planet}</i>${dayLabel(d)} · ${myLoc().chip}</span>
       <h1 class="hero-title">Welcome back, <b>Crew ${DB.cur}</b></h1>
       <p class="hero-sub">${weekday(d)}, ${shortDate(d)}<span class="bar">|</span>${n} thing${n === 1 ? '' : 's'} to check in your health today</p></div>
     </section>
@@ -1000,11 +1000,14 @@ function doctorCrew(c) {
 
 /* ---------------- onboarding: which crew member are you? ---------------- */
 const LOCATIONS = [
-  { k: 'mars', name: 'Mars base', sub: 'Surface habitat' },
-  { k: 'moon', name: 'Moon', sub: 'Lunar surface' },
-  { k: 'ship', name: 'Spaceship', sub: 'In transit' },
-  { k: 'station', name: 'Space station', sub: 'In orbit' },
+  { k: 'mars', name: 'Mars base', sub: 'Surface habitat', chip: 'MARS' },
+  { k: 'moon', name: 'Moon', sub: 'Lunar surface', chip: 'MOON' },
+  { k: 'ship', name: 'Spaceship', sub: 'In transit', chip: 'SPACESHIP' },
+  { k: 'station', name: 'Space station', sub: 'In orbit', chip: 'SPACE STATION' },
 ];
+const locIcon = (k) => `${ROOT}/assets/image/location/${k}.png`;
+const locBg = (k) => `${ROOT}/assets/background/web/${k}.webp`;
+const myLoc = () => LOCATIONS.find((l) => l.k === (state.loc || store.get('loc', 'mars'))) || LOCATIONS[0];
 function crewSelect() {
   const sel = state.pick || state.me;
   const loc = state.loc || store.get('loc', 'mars');
@@ -1023,7 +1026,7 @@ function crewSelect() {
           <div class="ob-kicker">STEP 2 · LOCATION</div>
           <h2>Where are you on this mission?</h2>
           <div class="loc-grid" role="radiogroup" aria-label="Mission location">${LOCATIONS.map((l) => `<button type="button" class="loc ${l.k === loc ? 'on' : ''}" data-loc="${l.k}" role="radio" aria-checked="${l.k === loc}">
-            <span class="loc-ico" aria-hidden="true"></span><span class="loc-tx"><b>${l.name}</b><small>${l.sub}</small></span><span class="loc-check" aria-hidden="true">✓</span></button>`).join('')}</div>
+            <span class="loc-ico" aria-hidden="true"><img src="${locIcon(l.k)}" alt=""></span><span class="loc-tx"><b>${l.name}</b><small>${l.sub}</small></span><span class="loc-check" aria-hidden="true">✓</span></button>`).join('')}</div>
         </section>
       </div>
       <section class="baseline ob-base">
@@ -1048,8 +1051,8 @@ function landing() {
     <img class="logo" src="${IMG.logo}" alt="KOOK — Kinetic Observation &amp; Optimal Keel">
     <h1>One mission. Connected care.</h1>
     <div class="roles">
-      <a class="role-card space" href="#/select"><span class="ws">SPACE WORKSPACE</span><span class="orb"></span><h2>I'm an astronaut</h2><p>View your schedule, health instructions and conversations with your ground doctor.</p></a>
-      <a class="role-card earth" href="#/doctor"><span class="ws">EARTH WORKSPACE</span><span class="orb"></span><h2>I'm a doctor</h2><p>Review crew schedules, health instructions and conversations with astronauts.</p></a>
+      <a class="role-card space" href="#/select"><span class="ws">SPACE WORKSPACE</span><span class="role-ico" aria-hidden="true">${ICON.astro}</span><h2>I'm an astronaut</h2><p>View your schedule, health instructions and conversations with your ground doctor.</p></a>
+      <a class="role-card earth" href="#/doctor"><span class="ws">EARTH WORKSPACE</span><span class="role-ico" aria-hidden="true">${ICON.steth('currentColor')}</span><h2>I'm a doctor</h2><p>Review crew schedules, health instructions and conversations with astronauts.</p></a>
     </div>
   </div></main>`;
 }

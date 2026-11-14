@@ -1133,6 +1133,27 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
      --glass-3: rgba(255,255,255,.14); --glass-line: rgba(255,255,255,.14);
    --------------------------------------------------------------------- */
 :root { --glass: rgba(255,255,255,.1); --glass-2: rgba(255,255,255,.07); --glass-3: rgba(255,255,255,.14); --glass-line: rgba(255,255,255,.14); }
-.card:not(.dark-chat), .card.soft, .alert, .nrow, .sleep-sum, .lib-card, .baseline:not(.ob-base), .crew-tile:not(.on), .crew-tile, .lib .item:not(.care), .dark-chat, .tx-slot, .ob-card {
-  backdrop-filter: none; -webkit-backdrop-filter: none;
-}
+/* blur restored 2026-11-14 at the user's request (v1 look) — the no-blur override was removed */
+
+/* =====================================================================
+   Round 32: location icons, location-based Overview hero, landing icons
+   ===================================================================== */
+.loc-ico { overflow: hidden; background: transparent; }
+.loc-ico img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* crew Overview hero: full-bleed photo like the doctor's, chosen by location */
+.hero-loc { background-size: cover; background-repeat: no-repeat; background-position: center 55%; }
+.hero-loc.loc-mars { background-position: center 40%; }
+.hero-loc.loc-station { background-position: center 48%; }
+.hero-loc.loc-moon { background-position: center 40%; }
+.hero-loc.loc-ship { background-position: center 45%; }
+
+/* landing: logo bigger, everything lower, role icon above the heading */
+.landing:not(.onboard) { align-items: start; padding-top: max(110px, 26vh); }
+.landing:not(.onboard) .logo { height: 140px; }
+.role-card .orb { display: none; }
+.role-ico { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; margin-bottom: 18px; }
+.role-ico svg { width: 32px; height: 32px; }
+.role-card.space .role-ico { background: rgba(234,254,7,.12); color: var(--yellow); }
+.role-card.earth .role-ico { background: var(--navy-100); color: var(--navy-900); }
+@media (max-width: 900px) { .landing:not(.onboard) { padding-top: 8vh; } .landing:not(.onboard) .logo { height: 96px; } }
