@@ -414,6 +414,154 @@ function todayArt() {
     <circle cx="58" cy="46" r="7" fill="none" stroke="#07173F" stroke-width="2"/><circle cx="104" cy="30" r="5" fill="none" stroke="#07173F" stroke-width="2"/><circle cx="128" cy="56" r="4" fill="none" stroke="#07173F" stroke-width="2"/>    <path d="M25 112c14-4 22 6 36 2s20-10 34-6 18 10 30 6" fill="none" stroke="#07173F" stroke-width="2.2" stroke-linecap="round"/></svg>`;
 }
 
+/* ---------------- Mars → Earth transmission: zstd + CCSDS ----------------
+ * Hot data = the crew's own readings. Every clock hour the Normal readings are batched into
+ * "cold data": serialized as CSV, zstd-compressed, then split into CCSDS Space Packets
+ * (6-byte primary header + 6-byte CUC time + data + CRC-16). Potential/Urgent readings skip the
+ * batch: each one is zstd-compressed and sent the moment it is recorded.
+ * One-way light time Mars → Earth is fixed at 20 minutes. Compression runs for real in the browser. */
+const LIGHT_MS = 20 * 60 * 1000;
+const HOUR_MS = 3600 * 1000;
+const ZSTD_LEVEL = 19;
+const ZSTD_PKG = 'https://cdn.jsdelivr.net/npm/@bokuweb/zstd-wasm@0.0.22';
+const CCSDS_MAX_DATA = 1018;                  // payload bytes per packet → packets ≤ 1032 bytes
+const APID = { A: 0x101, B: 0x102, C: 0x103, D: 0x104 };
+const MISSION_EPOCH = Date.UTC(2026, 9, 1);   // CUC coarse time counts seconds from Oct 1, 2026
+const TX = { zstd: null, loading: null, error: null, cache: new Map() };
+
+function loadZstd() {
+  if (TX.zstd || TX.error) return Promise.resolve();
+  if (!TX.loading) {
+    TX.loading = import(`${ZSTD_PKG}/+esm`)
+      .then(async (m) => { await m.init(`${ZSTD_PKG}/dist/web/zstd.wasm`); TX.zstd = m; })
+      .catch((e) => { TX.error = e && e.message ? e.message : 'zstd failed to load'; })
+      .finally(() => { if (route().parts[1] === 'chat' && route().parts[0] === 'crew') rerender(); });
+  }
+  return TX.loading;
+}
+const utf8 = new TextEncoder();
+const unutf8 = new TextDecoder();
+function crc16(bytes, end) {                    // CRC-16/CCITT-FALSE, as used for the CCSDS packet error control
+  let c = 0xffff;
+  for (let i = 0; i < end; i++) { c ^= bytes[i] << 8; for (let k = 0; k < 8; k++) c = c & 0x8000 ? ((c << 1) ^ 0x1021) & 0xffff : (c << 1) & 0xffff; }
+  return c;
+}
+/** Split a payload into CCSDS Space Packets (telemetry, secondary header = CUC time). */
+function ccsdsPacketize(payload, apid, seq0, timeMs) {
+  const chunks = [];
+  for (let i = 0; i < payload.length; i += CCSDS_MAX_DATA) chunks.push(payload.subarray(i, i + CCSDS_MAX_DATA));
+  if (!chunks.length) chunks.push(new Uint8Array(0));
+  const secs = Math.max(0, Math.floor((timeMs - MISSION_EPOCH) / 1000));
+  const packets = chunks.map((chunk, i) => {
+    const flags = chunks.length === 1 ? 0b11 : i === 0 ? 0b01 : i === chunks.length - 1 ? 0b10 : 0b00;
+    const dataLen = 6 + chunk.length + 2;               // secondary header + user data + CRC
+    const pkt = new Uint8Array(6 + dataLen);
+    const seq = (seq0 + i) & 0x3fff;
+    pkt[0] = (0 << 5) | (0 << 4) | (1 << 3) | ((apid >> 8) & 0x07);   // version 0, TM, sec. header present
+    pkt[1] = apid & 0xff;
+    pkt[2] = (flags << 6) | (seq >> 8);
+    pkt[3] = seq & 0xff;
+    pkt[4] = ((dataLen - 1) >> 8) & 0xff;
+    pkt[5] = (dataLen - 1) & 0xff;
+    pkt[6] = (secs >>> 24) & 0xff; pkt[7] = (secs >>> 16) & 0xff; pkt[8] = (secs >>> 8) & 0xff; pkt[9] = secs & 0xff;
+    pkt[10] = 0; pkt[11] = 0;                            // fine time (1/65536 s)
+    pkt.set(chunk, 12);
+    const crc = crc16(pkt, pkt.length - 2);
+    pkt[pkt.length - 2] = crc >> 8; pkt[pkt.length - 1] = crc & 0xff;
+    return pkt;
+  });
+  const file = new Uint8Array(packets.reduce((n, p) => n + p.length, 0));
+  let o = 0; packets.forEach((p) => { file.set(p, o); o += p.length; });
+  return { file, packets: packets.length };
+}
+/** Reassemble packets, check every CRC, return the payload (ground-side check). */
+function ccsdsUnpack(file) {
+  const parts = []; let o = 0, crcOk = true;
+  while (o + 6 <= file.length) {
+    const len = ((file[o + 4] << 8) | file[o + 5]) + 1, total = 6 + len, pkt = file.subarray(o, o + total);
+    if (crc16(pkt, total - 2) !== ((pkt[total - 2] << 8) | pkt[total - 1])) crcOk = false;
+    parts.push(pkt.subarray(12, total - 2)); o += total;
+  }
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0)); let k = 0; parts.forEach((p) => { out.set(p, k); k += p.length; });
+  return { payload: out, crcOk };
+}
+const fmtBytes = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`);
+const hhmm = (ms) => new Date(ms).toISOString().slice(11, 16);
+const toCsv = (rows) => 'date,time,biomarker,figure\n' + rows.map((r) => `${r.date},${r.time},${r.b},${r.v}`).join('\n') + '\n';
+
+/** Everything transmitted (or buffering) for crew c on the dashboard's current day, up to the dashboard clock. */
+function transmissionLog(c) {
+  const now = simNow().getTime(), day = TODAY;
+  const d0 = Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10));
+  const rows = withCrew(c, () => Object.entries(DB.series).flatMap(([b, arr]) => arr.filter((p) => p.date === day)
+    .map((p) => ({ b, date: p.date, time: p.time, v: p.v, ts: Date.parse(`${p.date}T${p.time}:00Z`), st: statusOf(b, p.v) }))))
+    .filter((r) => r.ts <= now).sort((a, z) => a.ts - z.ts);
+  const z = TX.zstd;
+  const entries = [];
+  // cold data: one batch per completed hour of Normal readings
+  let seq = 0;
+  const curHour = Math.floor((now - d0) / HOUR_MS);
+  for (let h = 0; h < curHour; h++) {
+    const batch = rows.filter((r) => r.st === 'normal' && r.ts >= d0 + h * HOUR_MS && r.ts < d0 + (h + 1) * HOUR_MS);
+    if (!batch.length) continue;
+    const sentAt = d0 + (h + 1) * HOUR_MS, key = `${c}|${day}|cold|${h}`;
+    let e = TX.cache.get(key);
+    if (!e && z) {
+      const raw = utf8.encode(toCsv(batch));
+      const packed = z.compress(raw, ZSTD_LEVEL);
+      const { file, packets } = ccsdsPacketize(packed, APID[c], seq, sentAt);
+      const back = ccsdsUnpack(file);
+      const ok = back.crcOk && unutf8.decode(z.decompress(back.payload)) === unutf8.decode(raw);
+      e = { kind: 'cold', name: `cold_data_${c}_${day}T${String(h).padStart(2, '0')}.zst.ccsds`, readings: batch.length, raw: raw.length, zst: packed.length, wire: file.length, packets, ok, sentAt };
+      TX.cache.set(key, e);
+    }
+    if (e) { entries.push(e); seq += e.packets; }
+  }
+  // hot data: every Potential / Urgent reading, compressed and sent at once
+  rows.filter((r) => r.st === 'potential' || r.st === 'urgent').forEach((r) => {
+    const key = `${c}|${day}|hot|${r.b}|${r.ts}`;
+    let e = TX.cache.get(key);
+    if (!e && z) {
+      const raw = utf8.encode(toCsv([r]));
+      const packed = z.compress(raw, ZSTD_LEVEL);
+      const ok = unutf8.decode(z.decompress(packed)) === unutf8.decode(raw);
+      e = { kind: 'hot', st: r.st, name: `hot_${c}_${r.b.replace(/[^A-Za-z0-9]+/g, '-').replace(/-+$/, '')}_${r.time.replace(':', '')}.zst`, label: `${nice(r.b)} ${fmtU(r.v, r.b)}`, raw: raw.length, zst: packed.length, wire: packed.length, ok, sentAt: r.ts };
+      TX.cache.set(key, e);
+    }
+    if (e) entries.push(e);
+  });
+  const buffer = rows.filter((r) => r.st === 'normal' && r.ts >= d0 + curHour * HOUR_MS);
+  return { entries: entries.sort((a, z2) => z2.sentAt - a.sentAt), buffer, nextAt: d0 + (curHour + 1) * HOUR_MS, now };
+}
+function countdown(ms) { const s = Math.max(0, Math.round(ms / 1000)); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
+function txPanel(c) {
+  loadZstd();
+  const head = `<div class="tx-head">${ICON.upload}<b>Compressed transmission</b></div>
+    <div class="tx-link"><span class="tx-dot"></span>Mars → Earth · ${LIGHT_MS / 60000} min one-way</div>`;
+  if (TX.error) return `<section class="tx-slot">${head}<p class="tx-note">The zstd encoder could not load (${esc(TX.error)}). Check the connection and reload.</p></section>`;
+  if (!TX.zstd) return `<section class="tx-slot">${head}<p class="tx-note">Loading zstd encoder…</p></section>`;
+  const { entries, buffer, nextAt, now } = transmissionLog(c);
+  const cold = entries.filter((e) => e.kind === 'cold'), hot = entries.filter((e) => e.kind === 'hot');
+  const sum = (list, k) => list.reduce((n, e) => n + e[k], 0);
+  const coldRaw = sum(cold, 'raw'), coldWire = sum(cold, 'wire'), hotRaw = sum(hot, 'raw'), hotWire = sum(hot, 'wire');
+  const status = (e) => { const arrive = e.sentAt + LIGHT_MS; return `<span class="tx-st ${now >= arrive ? 'done' : 'transit'}" data-arrive="${arrive}">${now >= arrive ? 'Delivered' : 'In transit'}</span>`; };
+  const row = (e) => `<li class="tx-row ${e.kind} ${e.st || ''}">
+      <div class="tx-r1"><span class="tx-tag ${e.kind} ${e.st || ''}">${e.kind === 'cold' ? 'COLD' : e.st === 'urgent' ? 'URGENT' : 'POTENTIAL'}</span><span class="tx-name">${esc(e.name)}</span></div>
+      <div class="tx-r2">${e.kind === 'cold' ? `${e.readings} readings · ${fmtBytes(e.raw)} → ${fmtBytes(e.wire)} · ${e.packets} pkt${e.packets > 1 ? 's' : ''}` : `${esc(e.label)} · ${fmtBytes(e.raw)} → ${fmtBytes(e.wire)}`}${e.ok ? ' · ✓ verified' : ' · ✕ check failed'}</div>
+      <div class="tx-r3">Sent ${hhmm(e.sentAt)} · Earth ${hhmm(e.sentAt + LIGHT_MS)} UTC ${status(e)}</div></li>`;
+  return `<section class="tx-slot">${head}
+    <div class="tx-next"><div><small>Next cold batch</small><b class="tx-count" data-next="${nextAt}">${countdown(nextAt - now)}</b></div>
+      <div class="tx-buf">${buffer.length} Normal readings buffered<br><small>${fmtBytes(utf8.encode(toCsv(buffer)).length)} raw · sends ${hhmm(nextAt)} UTC</small></div></div>
+    <div class="tx-rules"><span><i class="dot normal"></i>Normal → zstd + CCSDS · hourly</span><span><i class="dot urgent"></i>Potential / Urgent → zstd · instantly</span></div>
+    <div class="tx-stats">
+      <div><small>Cold data today</small><b>${cold.length} batches</b><span>${fmtBytes(coldRaw)} → ${fmtBytes(coldWire)}${coldRaw ? ` (${Math.round((coldWire / coldRaw) * 100)}%)` : ''}</span></div>
+      <div><small>Hot data today</small><b>${hot.length} alerts</b><span>${fmtBytes(hotRaw)} → ${fmtBytes(hotWire)}</span></div>
+    </div>
+    <ul class="tx-log">${entries.slice(0, 40).map(row).join('') || '<li class="tx-note">Nothing sent yet today.</li>'}</ul>
+    <p class="tx-foot">zstd level ${ZSTD_LEVEL} · CCSDS Space Packet, APID 0x${APID[c].toString(16)}, CUC time, CRC-16</p>
+  </section>`;
+}
+
 /* ---------------- state + routing ---------------- */
 const state = { date: TODAY, week: weekStart(TODAY), hazardFilter: 'all', instrFilter: 'all', attFilter: 'all', query: '', libFilter: 'all', libQuery: '', bioCat: 'All', carousel: 0, docCrew: 'A', calStart: TODAY, me: CREWS.includes(store.get('me', 'A')) ? store.get('me', 'A') : 'A' };
 const setDate = (d) => { state.date = clampData(d); state.week = weekStart(state.date); state.calStart = state.date; };
@@ -687,7 +835,7 @@ function chatPage(role) {
   const crewSide = role === 'crew';
   // Astronaut: [compressed transmission panel — coming soon][chat]. Doctor: [crew conversations][chat].
   const left = crewSide
-    ? `<section class="tx-slot" aria-label="Compressed transmission (coming soon)"><div class="tx-head">${ICON.upload}<b>Compressed transmission</b></div><p>Coming soon</p></section>`
+    ? txPanel(DB.cur)
     : `<section class="card side-card" style="align-self:start"><h3 class="ico-title" style="font-size:17px">${ICON.chat.replace('<svg', '<svg style="width:16px;height:16px;color:var(--electric)"')}Conversations</h3><p class="hint" style="margin:2px 0 14px">4 assigned astronauts</p>
         <div class="items">${CREWS.map((c) => { const msgs = chat(c), last = msgs[msgs.length - 1]; return `<button type="button" class="item convo ${c === DB.cur ? 'on' : ''}" data-crew="${c}" aria-pressed="${c === DB.cur}"><div style="font-size:13px">Crew ${c}</div><div class="hint" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${last ? esc(last.text) : 'No messages yet'}</div><div style="font-size:11px;margin-top:4px">${last ? `${last.time} UTC · Latest message` : 'Open 1:1 conversation'}</div></button>`; }).join('')}</div>
         <p class="hint" style="margin-top:14px">Select a crew to open the conversation.</p></section>`;
@@ -1033,6 +1181,9 @@ window.addEventListener('storage', (e) => { if (e.key && e.key.startsWith('kook.
 let lastSlot = Math.floor(simNow().getTime() / 300000);
 setInterval(() => {
   document.querySelectorAll('.live-clock').forEach((c) => { c.textContent = `UTC ${simStamp()}`; });
+  const nowMs = simNow().getTime();
+  document.querySelectorAll('.tx-count[data-next]').forEach((el) => { el.textContent = countdown(+el.dataset.next - nowMs); });
+  document.querySelectorAll('.tx-st[data-arrive]').forEach((el) => { const done = nowMs >= +el.dataset.arrive; el.textContent = done ? 'Delivered' : 'In transit'; el.classList.toggle('done', done); el.classList.toggle('transit', !done); });
   // A new 5-minute reading becomes "latest": refresh today's view unless the viewer is typing or in a dialog.
   const slot = Math.floor(simNow().getTime() / 300000);
   if (slot !== lastSlot) {
