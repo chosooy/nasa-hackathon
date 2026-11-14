@@ -971,7 +971,7 @@ function doctorHome() {
       <section class="card">
         <div class="card-head"><h3>Crew hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div>
         <div class="crew-tiles">${CREWS.map(tile).join('')}</div>
-        ${biomarkerCarousel({ ranked, bioBase: '#/doctor/bio', title: `Biomarkers · Crew ${sel}`, emptyText: `No biomarker data for Crew ${sel} yet.` })}
+        <div class="crew-bio">${biomarkerCarousel({ ranked, bioBase: '#/doctor/bio', title: `Biomarkers · Crew ${sel}`, emptyText: `No biomarker data for Crew ${sel} yet.` })}</div>
         <form class="compose doc-compose" data-chat="doctor" data-crew="${sel}"><input name="m" placeholder="Write a message to Crew ${sel}…" autocomplete="off"><button class="btn primary" type="submit">Send ${ICON.send}</button></form>
       </section>
     </div>
