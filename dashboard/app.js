@@ -893,8 +893,7 @@ function crewSelect() {
         <button type="button" class="bl-btn primary" data-upload-done>${ICON.upload}Upload baseline records (.csv)</button>
       </div>
     </section>
-    <button type="button" class="btn yellow-cta" data-me="${sel}">Continue as Crew ${sel} →</button>
-    <a class="test" href="#/">← Back</a>
+    <div class="ob-actions"><a class="ob-back" href="#/">← Back</a><button type="button" class="btn yellow-cta" data-me="${sel}">Continue as Crew ${sel} →</button></div>
   </div></main>`;
 }
 
