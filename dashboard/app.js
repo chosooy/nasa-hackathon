@@ -426,6 +426,7 @@ const ZSTD_LEVEL = 19;
 const ZSTD_PKG = 'https://cdn.jsdelivr.net/npm/@bokuweb/zstd-wasm@0.0.22';
 const CCSDS_MAX_DATA = 1018;                  // payload bytes per packet → packets ≤ 1032 bytes
 const APID = { A: 0x101, B: 0x102, C: 0x103, D: 0x104 };
+const TX_DOC = 'https://github.com/chosooy/nasa-hackathon#compressed-transmission';
 const MISSION_EPOCH = Date.UTC(2026, 9, 1);   // CUC coarse time counts seconds from Oct 1, 2026
 const TX = { zstd: null, loading: null, error: null, cache: new Map() };
 
@@ -548,28 +549,17 @@ function countdown(ms) { const s = Math.max(0, Math.round(ms / 1000)); return `$
 function txPanel(c) {
   loadZstd();
   const head = `<div class="tx-head">${ICON.upload}<b>Compressed transmission</b></div>
-    <div class="tx-link"><span class="tx-dot"></span>Mars → Earth · ${LIGHT_MS / 60000} min one-way</div>`;
+    <div class="tx-link"><span class="tx-dot"></span>Mars → Earth · ${LIGHT_MS / 60000} min one-way<a class="tx-how" href="${TX_DOC}" target="_blank" rel="noopener">How it works ↗</a></div>`;
   if (TX.error) return `<section class="tx-slot">${head}<p class="tx-note">The zstd encoder could not load (${esc(TX.error)}). Check the connection and reload.</p></section>`;
   if (!TX.zstd) return `<section class="tx-slot">${head}<p class="tx-note">Loading zstd encoder…</p></section>`;
-  const { entries, buffer, nextAt, now } = transmissionLog(c);
-  const cold = entries.filter((e) => e.kind === 'cold'), hot = entries.filter((e) => e.kind === 'hot');
-  const sum = (list, k) => list.reduce((n, e) => n + e[k], 0);
-  const coldRaw = sum(cold, 'raw'), coldWire = sum(cold, 'wire'), hotRaw = sum(hot, 'raw'), hotWire = sum(hot, 'wire');
+  const { entries, now } = transmissionLog(c);
   const status = (e) => { const arrive = e.sentAt + LIGHT_MS; return `<span class="tx-st ${now >= arrive ? 'done' : 'transit'}" data-arrive="${arrive}">${now >= arrive ? 'Delivered' : 'In transit'}</span>`; };
   const row = (e) => `<li class="tx-row ${e.kind} ${e.st || ''}">
       <div class="tx-r1"><span class="tx-tag ${e.kind} ${e.st || ''}">${e.kind === 'cold' ? 'COLD' : e.st === 'urgent' ? 'URGENT' : 'POTENTIAL'}</span><span class="tx-name">${esc(e.name)}</span></div>
       <div class="tx-r2">${e.kind === 'cold' ? `${e.readings} readings · ${fmtBytes(e.raw)} → ${fmtBytes(e.wire)} · ${e.packets} pkt${e.packets > 1 ? 's' : ''}` : `${esc(e.label)} · ${fmtBytes(e.raw)} → ${fmtBytes(e.wire)}`}${e.ok ? ' · ✓ verified' : ' · ✕ check failed'}</div>
       <div class="tx-r3">Sent ${hhmm(e.sentAt)} · Earth ${hhmm(e.sentAt + LIGHT_MS)} UTC ${status(e)}</div></li>`;
   return `<section class="tx-slot">${head}
-    <div class="tx-next"><div><small>Next cold batch</small><b class="tx-count" data-next="${nextAt}">${countdown(nextAt - now)}</b></div>
-      <div class="tx-buf">${buffer.length} Normal readings buffered<br><small>${fmtBytes(utf8.encode(toCsv(buffer)).length)} raw · sends ${hhmm(nextAt)} UTC</small></div></div>
-    <div class="tx-rules"><span><i class="dot normal"></i>Normal → zstd + CCSDS · hourly</span><span><i class="dot urgent"></i>Potential / Urgent → zstd · every minute</span></div>
-    <div class="tx-stats">
-      <div><small>Cold data today</small><b>${cold.length} batches</b><span>${fmtBytes(coldRaw)} → ${fmtBytes(coldWire)}${coldRaw ? ` (${Math.round((coldWire / coldRaw) * 100)}%)` : ''}</span></div>
-      <div><small>Hot data today</small><b>${hot.length} bundles</b><span>${fmtBytes(hotRaw)} → ${fmtBytes(hotWire)}</span></div>
-    </div>
-    <ul class="tx-log">${entries.slice(0, 40).map(row).join('') || '<li class="tx-note">Nothing sent yet today.</li>'}</ul>
-    <p class="tx-foot">zstd level ${ZSTD_LEVEL} · CCSDS Space Packet, APID 0x${APID[c].toString(16)}, CUC time, CRC-16</p>
+    <ul class="tx-log">${entries.slice(0, 60).map(row).join('') || '<li class="tx-note">Nothing sent yet today.</li>'}</ul>
   </section>`;
 }
 
@@ -600,7 +590,7 @@ function fab(role) {
     ? `<a class="fab" href="#/crew/chat">${ICON.chat}Ground Doctor</a>`
     : `<a class="fab" href="#/doctor/chat">${ICON.chat}Crew conversation</a>`;
 }
-const searchBar = (key, placeholder, button) => `<form class="search" data-search="${key}"><label class="field">${ICON.search}<input name="q" value="${esc(state[key])}" placeholder="${esc(placeholder)}"></label>${button ? `<button class="go" type="submit">${ICON.search}Search</button>` : ''}</form>`;
+const searchBar = (key, placeholder, button) => `<form class="search" data-search="${key}"><label class="field">${ICON.search}<input name="q" value="${esc(state[key])}" placeholder="${esc(placeholder)}"></label>${button ? `<button class="go" type="submit">Search</button>` : ''}</form>`;
 
 /* ---------------- shared widgets ---------------- */
 function weekCalendar(crew, dayHref) {
@@ -710,7 +700,7 @@ function crewInstructions() {
   const states = allStates(state.date);
   return `${topbar('crew', 'instr')}<main class="page dark">
     <h1 class="page-title" style="margin-bottom:20px">Health Instruction</h1>
-    <form class="search" data-goto="#/crew/attention"><label class="field">${ICON.search}<input name="q" value="${esc(state.query)}" placeholder="Search a symptom, a health check or a doctor's note…"></label><button class="go" type="submit">${ICON.search}Search</button></form>
+    <form class="search" data-goto="#/crew/attention"><label class="field">${ICON.search}<input name="q" value="${esc(state.query)}" placeholder="Search a symptom, a health check or a doctor's note…"></label><button class="go" type="submit">Search</button></form>
     <section class="card" style="margin-top:20px"><h3 style="margin-bottom:16px">Helpful for you right now</h3><div class="items">${allInstr(states)}</div></section>
   </main>`;
 }
@@ -1009,26 +999,46 @@ function doctorCrew(c) {
 }
 
 /* ---------------- onboarding: which crew member are you? ---------------- */
+const LOCATIONS = [
+  { k: 'mars', name: 'Mars base', sub: 'Surface habitat' },
+  { k: 'moon', name: 'Moon', sub: 'Lunar surface' },
+  { k: 'ship', name: 'Spaceship', sub: 'In transit' },
+  { k: 'station', name: 'Space station', sub: 'In orbit' },
+];
 function crewSelect() {
   const sel = state.pick || state.me;
-  return `<main class="landing onboard"><div class="inner wide">
+  const loc = state.loc || store.get('loc', 'mars');
+  return `<main class="landing onboard ob2"><div class="inner wide">
     <img class="logo" src="${IMG.logo}" alt="KOOK — Kinetic Observation &amp; Optimal Keel">
-    <div class="ob-title"><a class="btn ob-back" href="#/">← Back</a><h1>Who's checking in?</h1><button type="button" class="btn yellow-cta" data-me="${sel}">Continue as Crew ${sel} →</button></div>
-    <div class="crew-choose">${CREWS.map((c) => `<button type="button" class="crew-choice ${c === sel ? 'on' : ''}" data-pick="${c}" aria-pressed="${c === sel}">
-      <img src="${IMG[c]}" alt=""><b>Crew ${c}</b></button>`).join('')}</div>
-    <section class="baseline">
-      <div class="bl-left">
-        <div class="bl-kicker">${ICON.globe}EARTH BASELINE</div>
-        <h2>Bring your health data from Earth.</h2>
-        <p>To support your care throughout the mission, we collect your health data on Earth as your baseline. The same biomarkers are measured again in space and compared with it, so your care team can see what has changed for you.</p>
+    <div class="ob-title"><a class="btn ob-back" href="#/">← Back</a><h1>Who's checking in?</h1><button type="button" class="btn ob-back ob-next" data-me="${sel}">Continue →</button></div>
+    <div class="ob-grid">
+      <div class="ob-col">
+        <section class="ob-card">
+          <div class="ob-kicker">STEP 1 · CREW</div>
+          <h2>Choose your profile</h2>
+          <div class="crew-scroll" role="radiogroup" aria-label="Crew profile">${CREWS.map((c) => `<button type="button" class="crew-choice ${c === sel ? 'on' : ''}" data-pick="${c}" role="radio" aria-checked="${c === sel}">
+            <img src="${IMG[c]}" alt=""><b>Crew ${c}</b></button>`).join('')}</div>
+        </section>
+        <section class="ob-card">
+          <div class="ob-kicker">STEP 2 · LOCATION</div>
+          <h2>Where are you on this mission?</h2>
+          <div class="loc-grid" role="radiogroup" aria-label="Mission location">${LOCATIONS.map((l) => `<button type="button" class="loc ${l.k === loc ? 'on' : ''}" data-loc="${l.k}" role="radio" aria-checked="${l.k === loc}">
+            <span class="loc-ico" aria-hidden="true"></span><span class="loc-tx"><b>${l.name}</b><small>${l.sub}</small></span><span class="loc-check" aria-hidden="true">✓</span></button>`).join('')}</div>
+        </section>
       </div>
-      <div class="bl-right">
+      <section class="baseline ob-base">
+        <div class="bl-kicker">EARTH BASELINE</div>
+        <h2>Bring your health data from Earth.</h2>
+        <p class="bl-lead">To support your care throughout the mission, we collect your health data on Earth as your baseline. The same biomarkers are measured again in space and compared with it, so your care team can see what has changed for you.</p>
+        <div class="bl-chips"><span><b>77</b> biomarkers</span><span>${ICON.tube}Samples</span><span>${ICON.monitor}Cognitive tests</span></div>
+        <hr>
         <div class="bl-step"><i>1</i><p>Download the template to see which biomarkers to prepare and how to measure each one.</p></div>
         <a class="bl-btn light" href="${ROOT}/ui/baseline_template.csv" download="baseline_template.csv">${ICON.download}Download baseline template (.csv)</a>
         <div class="bl-step"><i>2</i><p>Fill in your Earth results and upload the file.</p></div>
         <button type="button" class="bl-btn primary" data-upload-done>${ICON.upload}Upload baseline records (.csv)</button>
-      </div>
-    </section>
+        <div class="bl-drop">${ICON.doc}<div><b>No file uploaded yet</b><small>Drop your completed CSV here.</small></div></div>
+      </section>
+    </div>
   </div></main>`;
 }
 
@@ -1132,7 +1142,17 @@ document.addEventListener('click', (e) => {
   else if (d.rec) { state.recCrew = (state.recCrew || 0) + +d.rec; rerender(); }
   else if (d.car) { const k = d.carKey || 'carousel'; state[k] = (state[k] || 0) + +d.car; rerender(); }
   else if (d.attachNote !== undefined) toast('File attachments are not available yet. They will be added in a later version.');
-  else if (d.pick) { state.pick = d.pick; rerender(); }
+  else if (d.pick) {
+    // update in place so the horizontal crew strip keeps its scroll position
+    state.pick = d.pick;
+    document.querySelectorAll('[data-pick]').forEach((b) => { const on = b.dataset.pick === d.pick; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+    const next = document.querySelector('.ob-next'); if (next) next.dataset.me = d.pick;
+    t.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+  else if (d.loc) {
+    state.loc = d.loc; store.set('loc', d.loc);
+    document.querySelectorAll('[data-loc]').forEach((b) => { const on = b.dataset.loc === d.loc; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+  }
   else if (d.uploadDone !== undefined) toast(`Crew ${state.pick || state.me}'s Earth baseline records were already submitted. You can't upload them again.`);
   else if (d.me) { state.me = d.me; store.set('me', d.me); state.crewCarousel = 0; location.hash = '#/crew'; }
   else if (d.crew) { state.docCrew = d.crew; state.carousel = 0; rerender(); }

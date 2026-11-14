@@ -1066,3 +1066,73 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 .tx-name { font-size: 12px; }
 .crew-tile:not(.on) { background-color: var(--glass); }
 .chat .chat-head small, .chat .daysep { font-size: 12px; }
+
+/* =====================================================================
+   Round 31
+   ===================================================================== */
+/* Search button: text only, centered */
+.search .go { justify-content: center; text-align: center; gap: 0; }
+
+/* transmission panel: log only, explanation lives in the GitHub README */
+.tx-how { margin-left: auto; color: var(--yellow); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.tx-how:hover { text-decoration: underline; }
+.tx-slot .tx-log { flex: 1; min-height: 0; overflow-y: auto; }
+
+/* onboarding v2: [crew + location] | [Earth baseline] */
+.ob2 .ob-title .ob-next { justify-self: end; }
+.ob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; text-align: left; }
+.ob-col { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.ob-card { background-color: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(14px) saturate(1.15); -webkit-backdrop-filter: blur(14px) saturate(1.15); border-radius: 24px; padding: 22px 24px; color: #fff; min-width: 0; }
+.ob-kicker { color: var(--yellow); font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+.ob-card h2 { font-family: var(--display); font-size: 22px; font-weight: 600; margin: 6px 0 14px; color: #fff; }
+.crew-scroll { display: flex; align-items: center; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 8px 4px 10px; margin: 0 -4px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.25) transparent; }
+.ob2 .crew-scroll .crew-choice { flex: 0 0 150px; scroll-snap-align: center; padding: 18px 10px 16px; background: rgba(255,255,255,.05); border: 2px solid transparent; transition: flex-basis .2s, border-color .15s, transform .15s; }
+.ob2 .crew-scroll .crew-choice img { width: 84px; height: 84px; border: 0; }
+.ob2 .crew-scroll .crew-choice b { font-size: 18px; color: var(--navy-200); }
+.ob2 .crew-scroll .crew-choice.on { flex-basis: 190px; padding: 26px 12px 22px; background: rgba(255,255,255,.1); border-color: var(--yellow); box-shadow: none; }
+.ob2 .crew-scroll .crew-choice.on img { width: 116px; height: 116px; }
+.ob2 .crew-scroll .crew-choice.on b { font-size: 22px; color: #fff; }
+.loc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.loc { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,.06); border: 2px solid rgba(255,255,255,.1); color: #fff; text-align: left; cursor: pointer; transition: border-color .15s, transform .15s; }
+.loc:hover { transform: translateY(-2px); }
+.loc.on { border-color: var(--yellow); background: rgba(255,255,255,.1); }
+.loc-ico { flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--navy-900); display: grid; place-items: center; color: var(--yellow); }
+.loc-tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.loc-tx b { font-family: var(--display); font-size: 17px; font-weight: 600; }
+.loc-tx small { font-size: 13px; color: var(--navy-200); }
+.loc-check { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--yellow); color: var(--navy-900); font-size: 13px; font-weight: 800; display: none; place-items: center; }
+.loc.on .loc-check { display: grid; }
+
+/* right: white Earth baseline card */
+.onboard .baseline.ob-base { display: flex; flex-direction: column; gap: 14px; margin: 0; padding: 26px 30px; background: #fff; border: 0; backdrop-filter: none; -webkit-backdrop-filter: none; color: var(--navy-900);
+  --navy-400: #4F5B75; --navy-500: #4A5670; --navy-600: #24407F; --muted: #4F5B75; }
+.ob-base .bl-kicker { color: var(--electric); }
+.onboard .ob-base h2 { color: var(--navy-900); font-size: 28px; margin: 0; }
+.ob-base .bl-lead { color: var(--navy-500); font-size: 15px; line-height: 1.6; margin: 0; }
+.ob-base .bl-chips { margin: 0; }
+.ob-base hr { border: 0; border-top: 1px solid var(--navy-100); margin: 4px 0; }
+.ob-base .bl-step p { color: var(--navy-900); }
+.ob-base .bl-btn.light { background: var(--navy-100); color: var(--navy-900); border: 1px solid var(--navy-200); }
+.ob-base .bl-btn.light:hover { background: var(--navy-200); }
+.bl-drop { display: flex; align-items: center; gap: 16px; padding: 18px 22px; border: 1.5px dashed var(--navy-200); border-radius: 16px; background: #FAFBFE; }
+.bl-drop svg { flex: none; width: 46px; height: 46px; padding: 12px; border-radius: 12px; background: var(--navy-100); color: var(--electric); }
+.bl-drop b { display: block; font-size: 15px; color: var(--navy-900); }
+.bl-drop small { font-size: 13px; color: var(--navy-500); }
+@media (max-width: 900px) {
+  .ob-grid { grid-template-columns: 1fr; }
+  .loc-grid { grid-template-columns: 1fr; }
+  .onboard .baseline.ob-base { padding: 22px; }
+}
+
+/* ---------------------------------------------------------------------
+   Glass, round 2: matched to the filter-chip pill ("Urgent 1") — white 10%
+   with NO backdrop blur, so the starfield shows through as it is.
+   Previous look (Round 30, to roll back): same tokens below, plus on
+   cards/panels  backdrop-filter: blur(14px) saturate(1.15);
+     --glass: rgba(255,255,255,.1); --glass-2: rgba(255,255,255,.07);
+     --glass-3: rgba(255,255,255,.14); --glass-line: rgba(255,255,255,.14);
+   --------------------------------------------------------------------- */
+:root { --glass: rgba(255,255,255,.1); --glass-2: rgba(255,255,255,.07); --glass-3: rgba(255,255,255,.14); --glass-line: rgba(255,255,255,.14); }
+.card:not(.dark-chat), .card.soft, .alert, .nrow, .sleep-sum, .lib-card, .baseline:not(.ob-base), .crew-tile:not(.on), .crew-tile, .lib .item:not(.care), .dark-chat, .tx-slot, .ob-card {
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
