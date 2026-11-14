@@ -711,3 +711,14 @@ a.lib-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,
 .lib-row .lib-ins { background: rgba(255,255,255,.75); font-size: 12.5px; color: #000; }
 .sev-h.nodata { color: var(--navy-400); }
 @media (max-width: 700px) { .lib-ins-row { grid-template-columns: 1fr; } }
+
+/* ---------- Round 19 ---------- */
+/* larger floating button */
+.fab { padding: 18px 30px; font-size: 16px; gap: 12px; }
+.fab svg { width: 20px; height: 20px; }
+/* upcoming day cards no longer carry a button */
+.week.six .dayc { gap: 5px; }
+/* pencil edit button next to titles */
+.edit-btn { width: 40px; height: 40px; border-radius: 50%; display: inline-grid; place-items: center; background: rgba(255,255,255,.12); color: #fff; flex: none; }
+.edit-btn:hover { background: var(--yellow); color: var(--navy-900); }
+.edit-btn svg { width: 18px; height: 18px; }

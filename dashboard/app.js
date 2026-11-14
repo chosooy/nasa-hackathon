@@ -62,6 +62,7 @@ const ICON = {
   user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>',
   doc: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V2.5h6V4M9 10h6M9 14h6"/></svg>',
   open: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 17 17 7M8 7h9v9"/></svg>',
+  pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
   steth: (c = '#EAFE07') => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="2.2" stroke-linecap="round"><path d="M6 3v6a4 4 0 0 0 8 0V3"/><path d="M10 13v3a5 5 0 0 0 10 0v-3"/><circle cx="20" cy="11" r="2"/></svg>`,
   astro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="9" r="6"/><ellipse cx="12" cy="9" rx="3.4" ry="2.4"/><path d="M6 22c0-3 2.7-5 6-5s6 2 6 5" stroke-linecap="round"/></svg>',
   planet: '<svg viewBox="0 0 24 24" fill="#07173F"><circle cx="12" cy="12" r="6"/></svg>',
@@ -253,6 +254,10 @@ function sendChat(from, text, attach) {
   store.set('chatA', msgs);
 }
 const notes = () => store.get('notesA', []);
+/** Doctor edits to summaries / instructions (kept in localStorage) layered over health_instruction.csv. */
+function applyEdits() {
+  Object.entries(store.get('edits', {})).forEach(([b, e]) => { if (DB.info[b]) Object.assign(DB.info[b], e); });
+}
 const libExtra = () => store.get('library', []);
 
 /* ---------------- charts ---------------- */
@@ -407,10 +412,7 @@ function topbar(role, active) {
   </header>`;
 }
 function fab(role) {
-  if (role === 'doctor' && route().parts[1] === 'instructions') {
-    $('#fab-root').innerHTML = `<button class="fab fab-plus" type="button" data-modal="library" aria-label="Add instruction" title="Add instruction">+</button>`;
-    return;
-  }
+  if (role === 'doctor' && ['instructions', 'bio'].includes(route().parts[1])) { $('#fab-root').innerHTML = ''; return; }
   $('#fab-root').innerHTML = role === 'crew'
     ? `<a class="fab" href="#/crew/chat">${ICON.chat}Ground Doctor</a>`
     : `<a class="fab" href="#/doctor/chat">${ICON.chat}Crew conversation</a>`;
@@ -443,7 +445,7 @@ function weekCalendar(crew, dayHref) {
     </div>`;
   const cols = days.map((d) => {
     const evs = eventsFor(crew, d);
-    return `<div class="dayc"><div class="dn">${WD[toD(d).getUTCDay()]} ${String(toD(d).getUTCDate()).padStart(2, '0')}</div><div class="dd">${dayLabel(d)}</div><div class="dc-list">${evList(evs)}</div><a class="page-btn" href="${dayHref(d)}">View page ›</a></div>`;
+    return `<div class="dayc"><div class="dn">${WD[toD(d).getUTCDay()]} ${String(toD(d).getUTCDate()).padStart(2, '0')}</div><div class="dd">${dayLabel(d)}</div><div class="dc-list">${evList(evs)}</div></div>`;
   }).join('');
   return `<div class="strip">${big}<div class="strip-right"><div class="chips cal-tags">${chips}</div><div class="week six">${cols}</div></div></div>`;
 }
@@ -544,7 +546,7 @@ function attentionPage(role) {
     }
     const raw = (s) => (DB.raw[s.b] || {}).numeric;
     return `<div class="sev-h ${k}">${k.toUpperCase()} · ${ss.length}</div>${ss.map((s) => `<a class="alert" href="${base}/bio/${enc(s.b)}">
-      <div class="top"><div class="nm"><div class="lbl ${k}"><i class="dot ${k}"></i>${k.toUpperCase()}</div><h4>${esc(s.name)}</h4><small>${esc(s.category)} · ${esc(s.method)}</small></div><div class="v">${esc(fmtU(s.v, s.b))}<small style="color:var(--navy-400)">${dayLabel(s.r.date)} · ${s.r.time} UTC</small></div><span class="chev">›</span></div>
+      <div class="top"><div class="nm"><h4>${esc(s.name)}</h4><small>${esc(s.category)} · ${esc(s.method)}</small></div><div class="v">${esc(fmtU(s.v, s.b))}<small style="color:var(--navy-400)">${dayLabel(s.r.date)} · ${s.r.time} UTC</small></div><span class="chev">›</span></div>
       <div class="body ${k}"><div class="k">${k === 'urgent' ? 'DO THIS NOW' : 'WHAT TO DO'}</div>${esc(instructionFor(s))}${k === 'urgent' && raw(s) ? `<div class="rec"><b>${esc(raw(s))}</b><span class="hint">General recommendation</span></div>` : ''}</div></a>`).join('')}`;
   }).join('');
   const chip = (k, l) => `<button class="chip ${state.attFilter === k ? 'on' : ''}" data-af="${k}"><i class="dot ${k}"></i>${l}<span class="n">${cnt(k)}</span></button>`;
@@ -640,7 +642,7 @@ function doctorBioPage(b) {
     : `<div class="empty rec-empty">No ${esc(nice(b))} records for Crew ${crew} yet.</div>`;
   return `${topbar('doctor', 'instr')}<main class="page">
     <a class="back" data-back href="#/doctor/instructions" aria-label="Back" title="Back">←</a>
-    <div class="title-row"><h1 class="page-title" style="margin:0">${esc(s.name)}</h1></div>
+    <div class="title-row"><h1 class="page-title" style="margin:0">${esc(s.name)}</h1><button class="edit-btn" type="button" data-modal="edit" data-bio="${esc(b)}" aria-label="Edit instructions" title="Edit instructions">${ICON.pencil}</button></div>
     <div style="height:20px"></div>
     ${summaryCard(s)}
     <div class="detail-row">
@@ -747,11 +749,13 @@ function doctorLibraryPage() {
   };
   const sections = ['urgent', 'potential', 'normal', 'nodata'].filter((k) => f === 'all' || f === k).map((k) => {
     const items = lib.filter((i) => i.status === k);
-    return items.length ? `<div class="sev-h ${k}">${HEAD[k]} · ${items.length}</div>${items.map(card).join('')}` : '';
+    if (!items.length) return '';
+    if (k === 'normal') return `<div class="sev-h normal">${HEAD[k]} · ${items.length}</div><div class="normal-grid">${items.map((i) => `<a class="nrow" href="#/doctor/bio/${enc(i.b)}"><div class="nm"><b>${esc(nice(i.b))}</b><small>${esc(i.category)} · ${esc(i.method)}</small></div><div class="v">${esc(fmtU(i.s.v, i.b))}<small>Crew A · ${dayLabel(i.s.r.date)} ${i.s.r.time} UTC</small></div><span class="chev">›</span></a>`).join('')}</div>`;
+    return `<div class="sev-h ${k}">${HEAD[k]} · ${items.length}</div>${items.map(card).join('')}`;
   }).join('');
   return `${topbar('doctor', 'instr')}<main class="page dark">
-    <h1 class="page-title">Health Instruction</h1>
-    <p class="page-sub">The full instruction library, matched to Crew A's latest readings — most urgent first.</p>
+    <div class="title-row"><h1 class="page-title" style="margin:0">Health Instruction</h1><button class="edit-btn" type="button" data-modal="library" aria-label="Add instruction" title="Add instruction">${ICON.pencil}</button></div>
+    <p class="page-sub" style="margin-top:8px">The full instruction library, matched to Crew A's latest readings — most urgent first.</p>
     ${searchBar('libQuery', 'Search a biomarker, category or protocol…', true)}
     <div class="chips">${chip('all', 'All')}${chip('urgent', 'Urgent')}${chip('potential', 'Potential')}${chip('normal', 'Normal')}</div>
     ${sections || '<div class="empty">Nothing matches your search.</div>'}
@@ -844,6 +848,16 @@ function landing() {
 /* ---------------- modals ---------------- */
 function openModal(kind, bio) {
   const opts = DB.bios.map((b) => `<option value="${esc(b)}" ${b === bio ? 'selected' : ''}>${esc(nice(b))}</option>`).join('');
+  if (kind === 'edit') {
+    const i = DB.info[bio] || {};
+    $('#modal-root').innerHTML = `<div class="modal-bg"><form class="modal" data-form="edit" data-bio="${esc(bio)}"><h3>Edit ${esc(nice(bio))}</h3>
+      <label>Summary</label><textarea name="summary">${esc(i.summary || '')}</textarea>
+      <label>If Potential</label><textarea name="yi">${esc(i.yellow_instruction || '')}</textarea>
+      <label>If Urgent</label><textarea name="ri">${esc(i.red_instruction || '')}</textarea>
+      <div class="actions"><button type="button" class="btn cancel" data-close>Cancel</button><button class="btn primary">Save</button></div></form></div>`;
+    $('#modal-root textarea').focus();
+    return;
+  }
   $('#modal-root').innerHTML = kind === 'instruction'
     ? `<div class="modal-bg"><form class="modal" data-form="instruction"><h3>Send instruction to Crew A</h3>
         <label>Related biomarker</label><select name="bio"><option value="">General</option>${opts}</select>
@@ -934,6 +948,10 @@ document.addEventListener('submit', (e) => {
     store.set('notesA', n);
     sendChat('doctor', `New instruction: ${f.title.value.trim()} — see Health Instruction › Doctor's notes.`);
     closeModal(); rerender();
+  } else if (f.dataset.form === 'edit') {
+    const b = f.dataset.bio, edits = store.get('edits', {});
+    edits[b] = { summary: f.summary.value.trim(), yellow_instruction: f.yi.value.trim(), red_instruction: f.ri.value.trim() };
+    store.set('edits', edits); applyEdits(); closeModal(); rerender(); toast('Instructions saved.');
   } else if (f.dataset.form === 'library') {
     const l = libExtra(); l.push({ title: f.title.value.trim(), text: f.text.value.trim() }); store.set('library', l); closeModal(); rerender();
   }
@@ -984,6 +1002,6 @@ setInterval(() => {
 }, 1000);
 
 Promise.all(Object.entries(PATHS).map(([k, p]) => fetch(p).then((r) => { if (!r.ok) throw new Error(`${decodeURIComponent(p)} → ${r.status}`); return r.text(); }).then((t) => [k, parseCSV(t)])))
-  .then((pairs) => { buildModel(Object.fromEntries(pairs)); render(); })
+  .then((pairs) => { buildModel(Object.fromEntries(pairs)); applyEdits(); render(); })
   .catch((err) => { $('#app').innerHTML = `<div class="loading">Could not load data: ${esc(err.message)}<br><small>Serve the repository root over HTTP and open /dashboard/.</small></div>`; console.error(err); });
 })();
