@@ -1193,3 +1193,9 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 .loc.on .loc-check { visibility: visible; }
 .loc-tx b, .loc-tx small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .crew-scroll { height: 226px; }
+
+/* doctor conversation list: crew photo on the left */
+.item.convo { display: flex; align-items: center; gap: 14px; }
+.convo-av { flex: none; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; object-position: center 15%; border: 2px solid rgba(255,255,255,.2); }
+.convo.on .convo-av { border-color: var(--yellow); }
+.convo-tx { display: block; min-width: 0; flex: 1; }
