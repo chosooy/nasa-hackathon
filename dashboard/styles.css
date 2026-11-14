@@ -1179,3 +1179,10 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 .bl-done b { display: block; font-size: 15px; color: #fff; margin-bottom: 2px; }
 .bl-done small { font-size: 13.5px; line-height: 1.5; color: #E3E8F1; }
 .bl-actions { margin-top: auto; display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }
+
+/* landing role cards: glass like the rest (the white doctor card was too bright) */
+.role-card.space, .role-card.earth { background-color: var(--glass); border: 1px solid var(--glass-line); backdrop-filter: blur(14px) saturate(1.15); -webkit-backdrop-filter: blur(14px) saturate(1.15); color: #fff; }
+.role-card.space:hover, .role-card.earth:hover { background-color: rgba(255,255,255,.14); }
+.role-card.earth .ws { color: #8AB4FF; }
+.role-card p { opacity: 1; color: #E3E8F1; }
+.role-card.earth .role-ico { background: rgba(138,180,255,.16); color: #8AB4FF; }
