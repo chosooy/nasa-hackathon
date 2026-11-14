@@ -884,3 +884,51 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 .hero-face { width: 128px; height: 128px; border-radius: 50%; object-fit: cover; object-position: center 15%; border: 3px solid var(--yellow); flex: none; position: relative; z-index: 1; }
 .hero-text { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; position: relative; z-index: 1; }
 @media (max-width: 700px) { .hero-face { width: 72px; height: 72px; } .hero-crew, .hero-doc { gap: 16px; } }
+
+/* ---------- Round 29 ---------- */
+/* filter tags: selected = white pill for every tag (no neon yellow on Urgent/Normal) */
+.dark .chip.on, .dark .chip.light { background: #fff; color: var(--navy-900); }
+.dark .chip.on .n, .dark .chip.light .n { background: var(--navy-900); color: #fff; }
+
+/* astronaut profile: photo + personal information */
+.profile-simple { grid-template-columns: 300px 1fr; align-items: stretch; }
+.profile-photo { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; }
+.profile-photo img { width: 168px; height: 168px; border-radius: 50%; object-fit: cover; object-position: center 15%; border: 4px solid var(--yellow); }
+.profile-photo h3 { font-size: 22px; }
+
+/* chat: [compressed transmission slot][dark chat window] */
+.chat-layout { grid-template-columns: 300px 1fr; align-items: stretch; }
+.tx-slot { border: 2px dashed rgba(255,255,255,.22); border-radius: 20px; padding: 22px; color: var(--navy-200); display: flex; flex-direction: column; gap: 10px; min-height: 420px; }
+.tx-head { display: flex; align-items: center; gap: 10px; color: #fff; }
+.tx-head svg { width: 18px; height: 18px; }
+.tx-slot p { color: var(--navy-300); font-size: 13px; }
+.dark-chat { background: var(--navy-900); color: #fff; border: 1px solid rgba(255,255,255,.08); }
+.dark-chat .chat-head b { color: #fff; }
+.dark-chat .chat-head small, .dark-chat .chat-head .dots { color: var(--navy-300); }
+.dark-chat .log { background: #050E2A; }
+.dark-chat .note, .dark-chat .daysep { color: var(--navy-300); }
+.msg-row { display: flex; align-items: flex-end; gap: 10px; max-width: 78%; }
+.msg-row.me { align-self: flex-end; flex-direction: row-reverse; }
+.msg-av { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; object-position: center 15%; flex: none; border: 2px solid rgba(255,255,255,.2); }
+.msg-row .msg { max-width: none; }
+.msg.bubble.theirs { background: var(--navy-700); color: #fff; border-bottom-left-radius: 4px; }
+.msg.bubble.mine { background: var(--electric); color: #fff; border-bottom-right-radius: 4px; }
+.msg.bubble.theirs .who, .msg.bubble.theirs .meta, .msg.bubble.mine .who, .msg.bubble.mine .meta { color: var(--sky); }
+.msg-attach { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 10px; border-radius: 10px; background: rgba(255,255,255,.12); font-size: 12px; }
+.msg-attach svg { width: 14px; height: 14px; }
+.dark-chat .compose { background: var(--navy-900); border-top: 1px solid rgba(255,255,255,.08); }
+.dark-chat .compose input { background: var(--navy-800); color: #fff; }
+.dark-chat .compose input::placeholder { color: var(--navy-300); }
+.dark-chat .compose .plus { color: var(--navy-200); }
+.dark-chat .compose .plus:hover { background: rgba(255,255,255,.1); }
+@media (max-width: 1000px) { .profile-simple, .chat-layout { grid-template-columns: 1fr; } .tx-slot { min-height: 120px; } .msg-row { max-width: 92%; } }
+
+/* chat pages fit one screen (astronaut + doctor): fixed-height row, messages scroll inside */
+.chat-layout { height: clamp(420px, calc(100vh - 290px), 760px); }
+.chat-layout > * { min-height: 0; height: 100%; }
+.chat-layout .chat { display: flex; flex-direction: column; }
+.chat-layout .chat .log { flex: 1; min-height: 0; max-height: none; overflow-y: auto; }
+.chat-layout .side-card { align-self: stretch !important; overflow-y: auto; }
+.chat-layout .tx-slot { min-height: 0; }
+@media (max-width: 1000px) { .chat-layout { height: auto; } .chat-layout > * { height: auto; } .chat-layout .chat { height: 70vh; } }
+.page:has(.chat-layout) { padding-bottom: 28px; }

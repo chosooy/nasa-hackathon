@@ -480,21 +480,19 @@ function chatLog(role, mini) {
     const me = m.from === role;
     let sep = '';
     if (!mini && m.date !== lastDate) { sep = `<div class="daysep">${weekday(m.date)}, ${shortDate(m.date)} · ${m.date === '2026-11-13' ? 'Demo conversation' : dayLabel(m.date)}</div>`; lastDate = m.date; }
-    const who = me ? (role === 'crew' ? 'You' : 'You — Ground doctor') : (role === 'crew' ? 'Ground doctor' : `Crew ${DB.cur}`);
-    // Figma: doctor messages are bubbles (blue for the doctor's own view, white for crew); crew messages are plain text in the full chat.
-    let cls = '';
-    if (mini) cls = me ? 'bubble blue' : 'bubble';
-    else if (m.from === 'doctor') cls = role === 'doctor' ? 'bubble blue' : 'bubble';
-    const status = me ? 'Delivered' : (m.from === 'doctor' ? 'Example physician reply' : 'Delivered');
-    return `${sep}<div class="msg ${cls} ${me ? 'right' : ''}"><div class="who">${who}</div>${esc(m.text)}<div class="meta">${dayLabel(m.date)} ${m.time} · ${status}</div></div>${m.attach && !mini ? `<div class="attach" style="align-self:${me ? 'flex-end' : 'flex-start'}">Attached: ${esc(m.attach)}</div>` : ''}`;
+    const who = me ? 'You' : (m.from === 'doctor' ? 'Ground doctor' : `Crew ${DB.cur}`);
+    const face = m.from === 'doctor' ? IMG.doctor : IMG[DB.cur];
+    const status = me ? 'Delivered' : 'Received';
+    if (mini) return `<div class="msg bubble ${me ? 'blue right' : ''}"><div class="who">${who}</div>${esc(m.text)}<div class="meta">${dayLabel(m.date)} ${m.time} · ${status}</div></div>`;
+    return `${sep}<div class="msg-row ${me ? 'me' : ''}"><img class="msg-av" src="${face}" alt="${who}"><div class="msg bubble ${me ? 'mine' : 'theirs'}"><div class="who">${who}</div>${esc(m.text)}<div class="meta">${dayLabel(m.date)} ${m.time} · ${status}</div>${m.attach ? `<div class="msg-attach">${ICON.doc}${esc(m.attach)}</div>` : ''}</div></div>`;
   }).join('');
 }
 function chatCard(role, mini) {
   const crewSide = role === 'crew';
   const head = crewSide
-    ? `<div><b>Ground doctor</b><small>Flight care team · 1:1 chat</small></div>`
+    ? `<img class="avatar" src="${IMG.doctor}" alt="Ground doctor" style="width:40px;height:40px"><div><b>Ground doctor</b><small>Flight care team · 1:1 chat</small></div>`
     : `<img class="avatar" src="${IMG[DB.cur]}" alt="Crew ${DB.cur}" style="width:40px;height:40px"><div><b>Crew ${DB.cur}</b><small>Crew ${DB.cur} · 1:1 conversation</small></div>`;
-  return `<section class="card chat ${mini ? 'mini' : ''}">
+  return `<section class="card chat ${mini ? 'mini' : 'dark-chat'}">
     <div class="chat-head">${head}${mini ? '' : '<span class="dots">···</span>'}</div>
     <div class="log" id="chatlog">${mini ? '' : `<div class="note">Messages may take time to reach ${crewSide ? 'Earth' : 'the crew'}. We'll show you when they arrive.</div>`}${chatLog(role, mini)}</div>
     <form class="compose" data-chat="${role}" data-crew="${DB.cur}"><button type="button" class="plus" data-attach-note aria-label="Attach a file">+</button><input name="m" placeholder="Write a message to ${crewSide ? 'your doctor' : `Crew ${DB.cur}`}…" autocomplete="off"><button class="btn primary" type="submit">Send${mini ? '' : ' ' + ICON.send}</button></form>
@@ -687,46 +685,32 @@ function doctorBioPage(b) {
 }
 function chatPage(role) {
   const crewSide = role === 'crew';
-  const shared = chat().filter((m) => m.attach);
+  // Astronaut: [compressed transmission panel — coming soon][chat]. Doctor: [crew conversations][chat].
   const left = crewSide
-    ? `<section class="card side-card" style="align-self:start">
-        <span class="label-pill">1:1 conversation</span>
-        <div class="item" style="margin-bottom:18px"><div style="margin-bottom:8px"><b style="font-size:13px">Ground doctor</b></div><div class="hint">Your flight care team</div><div style="font-size:11.5px;margin-top:4px">${shared.length ? 'Sleep record received' : 'No records shared yet'}</div></div>
-        <b style="font-size:13px">Shared in this chat</b>
-        ${shared.slice(-1).map((m) => `<div class="item" style="margin:12px 0 14px"><div style="font-size:13px;margin-bottom:6px">${esc(m.attach.split(' · ')[0].replace(/^./, (c) => c.toUpperCase()))}</div><div class="hint">${esc(m.attach.split(' · ')[1] || '')} · 07:00</div><div class="hint">${(() => { const t = valueAt('Total Sleep Time', m.date); return t ? `${fmt(t.v, 'Total Sleep Time')} hours · ${SEV_LABEL[statusOf('Total Sleep Time', t.v)]}` : ''; })()}</div></div>`).join('') || '<p class="hint" style="margin:10px 0">Nothing shared yet.</p>'}
-        <a class="btn primary block" href="#/crew/day/${shared.length ? shared[shared.length - 1].date : state.date}">${ICON.open}View shared record</a>
-        <p class="hint" style="margin-top:12px">Your messages stay saved here while the connection is delayed.</p></section>`
+    ? `<section class="tx-slot" aria-label="Compressed transmission (coming soon)"><div class="tx-head">${ICON.upload}<b>Compressed transmission</b></div><p>Coming soon</p></section>`
     : `<section class="card side-card" style="align-self:start"><h3 class="ico-title" style="font-size:17px">${ICON.chat.replace('<svg', '<svg style="width:16px;height:16px;color:var(--electric)"')}Conversations</h3><p class="hint" style="margin:2px 0 14px">4 assigned astronauts</p>
         <div class="items">${CREWS.map((c) => { const msgs = chat(c), last = msgs[msgs.length - 1]; return `<button type="button" class="item convo ${c === DB.cur ? 'on' : ''}" data-crew="${c}" aria-pressed="${c === DB.cur}"><div style="font-size:13px">Crew ${c}</div><div class="hint" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${last ? esc(last.text) : 'No messages yet'}</div><div style="font-size:11px;margin-top:4px">${last ? `${last.time} UTC · Latest message` : 'Open 1:1 conversation'}</div></button>`; }).join('')}</div>
         <p class="hint" style="margin-top:14px">Select a crew to open the conversation.</p></section>`;
   return `${topbar(role, 'home')}<main class="page">
     <a class="back" data-back href="${crewSide ? '#/crew' : '#/doctor'}" aria-label="Back" title="Back">←</a>
     <h1 class="page-title" style="margin-bottom:24px">${crewSide ? 'A conversation with your doctor.' : `A conversation with Crew ${DB.cur}.`}</h1>
-    <div class="grid g-side">${left}${chatCard(role, false)}</div>
+    <div class="grid g-side chat-layout">${left}${chatCard(role, false)}</div>
   </main>`;
 }
 function profilePage(role) {
+  // Both workspaces: profile photo + Personal information.
   const crewSide = role === 'crew';
-  const ns = notes();
+  const name = crewSide ? `Crew ${DB.cur}` : 'Ground doctor';
+  const photo = crewSide ? IMG[DB.cur] : IMG.doctor;
+  const rows = crewSide
+    ? `<dt>Name</dt><dd>${name}</dd><dt>Email</dt><dd>Not added</dd><dt>Mission start date</dt><dd>October 1, 2026</dd><dt>Mission time</dt><dd>${dayLabel(state.date)}</dd>`
+    : `<dt>Name</dt><dd>${name}</dd><dt>Email</dt><dd>Not added</dd><dt>Assigned crew</dt><dd>A, B, C, D</dd><dt>Mission start date</dt><dd>October 1, 2026</dd><dt>Mission reference</dt><dd>SOL ${pad3(missionDay(state.date))}</dd>`;
   return `${topbar(role, '')}<main class="page">
-    <h1 class="page-title">My profile</h1>${crewSide ? '<div style="height:16px"></div>' : '<p class="page-sub">Manage your personal information and care-team records.</p>'}
-    <div class="grid g-profile">
-      <section class="card" style="align-self:start">
-        ${crewSide ? `<div style="display:flex;gap:12px;align-items:center;margin-bottom:18px"><img class="avatar" src="${IMG[DB.cur]}" alt="Crew ${DB.cur} profile photo" style="width:36px;height:36px"><h3>Crew ${DB.cur}</h3></div><b style="font-size:13px">My health information</b><p class="hint" style="margin-top:12px">Medical history: Not added</p><p class="hint" style="margin-top:10px">Allergies: Not added</p><p class="hint" style="margin-top:10px">Medication: Not added</p>`
-          : `<h3 style="margin-bottom:16px">Ground doctor</h3><b style="font-size:13px">Professional information</b><p class="hint" style="margin-top:12px">Specialty: Not added</p><p class="hint" style="margin-top:10px">Organization: Not added</p><p class="hint" style="margin-top:10px">Assigned crew: A, B, C, D</p>`}
-        <button class="btn primary block" style="margin:20px 0">${ICON.user}Update my details</button>
-        <b style="font-size:13px">Doctor's notes</b>
-        <p class="hint" style="margin:8px 0 14px">${ns.length ? `${ns.length} assessment${ns.length > 1 ? 's' : ''} saved — latest: ${esc(ns[ns.length - 1].title)}` : "Your doctor's assessments will appear here when a record is added."}</p>
-        <a class="btn primary block" href="${crewSide ? '#/crew' : '#/doctor'}/instructions">${ICON.doc}Open Health Instruction</a>
-      </section>
-      <div class="stack">
-        <section class="card"><h3 class="ico-title">${ICON.user}Personal information</h3><p class="hint" style="margin:6px 0 20px">${crewSide ? 'Your profile details for this mission.' : 'Your care-team profile for this mission.'}</p>
-          <dl class="kv"><dt>Name</dt><dd>${crewSide ? `Crew ${DB.cur}` : 'Not added'}</dd><dt>Email</dt><dd>Not added</dd><dt>Mission start date</dt><dd>October 1, 2026</dd><dt>${crewSide ? 'Mission time' : 'Mission reference'}</dt><dd>${crewSide ? dayLabel(state.date) : 'SOL ' + pad3(missionDay(state.date))}</dd></dl></section>
-        <section class="card"><h3 class="ico-title" style="margin-bottom:18px">${ICON.doc}${crewSide ? 'My records' : 'Care records'}</h3>
-          <a class="rec-link" href="${crewSide ? '#/crew/attention' : '#/doctor/crew/A'}"><b>${crewSide ? 'Health history' : 'Crew health history'} ›</b><small>Medical history, allergies and medication</small></a>
-          <a class="rec-link" href="${crewSide ? '#/crew' : '#/doctor'}/instructions"><b>${crewSide ? "Doctor's notes" : 'My consultation notes'} ›</b><small>Your saved assessments and consultations</small></a>
-          <a class="rec-link" href="${crewSide ? '#/crew' : '#/doctor'}/instructions" style="margin:0"><b>Saved instructions ›</b><small>Care guidance you can return to</small></a></section>
-      </div>
+    <h1 class="page-title" style="margin-bottom:24px">My profile</h1>
+    <div class="grid profile-simple">
+      <section class="card profile-photo"><img src="${photo}" alt="${name} profile photo"><h3>${name}</h3></section>
+      <section class="card"><h3 class="ico-title">${ICON.user}Personal information</h3><p class="hint" style="margin:6px 0 20px">${crewSide ? 'Your profile details for this mission.' : 'Your care-team profile for this mission.'}</p>
+        <dl class="kv">${rows}</dl></section>
     </div>
   </main>`;
 }
