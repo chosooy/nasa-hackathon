@@ -445,7 +445,7 @@ const searchBar = (key, placeholder, button) => `<form class="search" data-searc
 /* ---------------- shared widgets ---------------- */
 function weekCalendar(crew, dayHref) {
   const focus = state.date;
-  const days = [...Array(6)].map((_, i) => addDays(focus, i + 1));
+  const days = [...Array(29)].map((_, i) => addDays(focus, i + 1));   // six visible, scroll sideways for later dates
   // Hazard tags use the crew's current state: Normal blue, Potential neon yellow, Urgent red.
   const hzSt = Object.fromEntries((hasCrew(crew) ? hazardStatus(statesFor(crew)) : []).map((h) => [h.key, h.status]));
   const chips = ['all', ...HAZARDS.map((h) => h.key)].map((k) => {
@@ -456,7 +456,7 @@ function weekCalendar(crew, dayHref) {
     const dim = state.hazardFilter !== 'all' && !e.hazards.includes(state.hazardFilter);
     // Card tint = most severe state among the event's hazards (Urgent > Potential > Normal).
     const evSt = e.hazards.map((h) => hzSt[h]).filter(Boolean).reduce((m, x) => (SEV[x] > SEV[m] ? x : m), 'nodata');
-    return `<div class="ev st-${evSt} ${dim ? 'dim' : ''}" title="${esc(`${e.start_time}–${e.end_time} · ${e.title} · ${e.category} · ${e.hazards.join(', ')}`)}"><div class="t">${e.start_time}</div>${esc(e.title)}</div>`;
+    return `<div class="ev st-${evSt} ${dim ? 'dim' : ''}" title="${esc(`${e.start_time}–${e.end_time} · ${e.title} · ${e.category} · ${e.hazards.join(', ')}`)}"><div class="t">${e.start_time}</div><div class="tt">${esc(e.title)}</div></div>`;
   };
   // Every event is listed; each day card scrolls inside itself.
   const evList = (evs) => evs.map(evCard).join('');
@@ -543,7 +543,7 @@ function crewHome() {
         <div class="items">${filteredInstr(states)}</div>
       </section>
       <section class="card home-hazard"><div class="card-head"><h3>My hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div><div class="hazard-wrap">${hazardBoard(states)}</div>
-        <div class="crew-bio">${biomarkerCarousel({ ranked: states.filter((s) => s.status !== 'nodata'), key: 'crewCarousel', bioBase: '#/crew/bio', title: 'My biomarkers', emptyText: 'No biomarker readings yet.' })}</div></section>
+        <div class="crew-bio">${biomarkerCarousel({ ranked: states.filter((s) => s.status !== 'nodata'), bioBase: '#/crew/bio', title: 'My biomarkers', emptyText: 'No biomarker readings yet.' })}</div></section>
     </div>
   </main>`;
 }
@@ -801,22 +801,16 @@ function doctorLibraryPage() {
 }
 /** Biomarker carousel (#1 large chart, #2-#3 small), shared by the doctor Overview and the astronaut hazard board.
  *  key = state field holding the page index; ranked = severity-sorted measured biomarkers. */
-function biomarkerCarousel({ ranked, key, bioBase, title, emptyText }) {
-  const pages = Math.max(1, ranked.length);
-  state[key] = Math.max(0, Math.min(state[key] || 0, pages - 1));
-  const at = state[key];
-  const big = ranked[at], small = [ranked[at + 1], ranked[at + 2]].filter(Boolean);
+function biomarkerCarousel({ ranked, bioBase, title, emptyText }) {
   const p14 = (s) => s.pts.slice(-14);
   const crit = (s) => (DB.rules[s.b] && DB.rules[s.b].yellowRaw ? `Normal: ${DB.rules[s.b].yellowRaw}` : s.category);
-  return `<div class="card-head"><h3>${title}</h3><div style="display:flex;gap:6px;align-items:center"><span class="hint pager-n">${ranked.length ? `${at + 1} / ${pages}` : '0 / 0'}</span><button class="arrow" data-car="-1" data-car-key="${key}" ${at === 0 ? 'disabled' : ''} aria-label="Previous">‹</button><button class="arrow" data-car="1" data-car-key="${key}" ${at >= pages - 1 ? 'disabled' : ''} aria-label="Next">›</button></div></div>
-    <div class="bio-car">
-      ${!ranked.length ? `<div class="bio-big bio-empty">${emptyText}</div><div class="stack" style="gap:10px"><div class="bio-small bio-empty"></div><div class="bio-small bio-empty"></div></div>` : ''}
-      ${big ? `<a class="bio-big" href="${bioBase}/${enc(big.b)}"><div style="display:flex;justify-content:space-between;gap:10px"><div><h4><span class="rk">#${at + 1}</span>${esc(big.name)}</h4><small class="hint">${esc(big.category)}</small></div><div><div class="num ${big.status}">${esc(fmt(big.v, big.b))}</div><div style="text-align:right;margin-top:6px"><span class="badge ${big.status}">${SEV_LABEL[big.status]}</span></div></div></div>
-        <div style="margin:12px 0 8px">${areaChart(big.b, p14(big), { w: 400, h: 230 })}</div>
-        <div style="display:flex;justify-content:space-between;gap:10px;font-size:10.5px"><span class="hint" style="font-size:10.5px">${esc(crit(big))} · ${p14(big).filter((p) => statusOf(big.b, p.v) !== 'normal').length} of ${p14(big).length} readings flagged in 14 days</span><span style="color:var(--electric);white-space:nowrap">Open records ›</span></div></a>` : ''}
-      <div class="stack" style="gap:10px">${small.map((s, i) => `<a class="bio-small" href="${bioBase}/${enc(s.b)}"><div style="display:flex;justify-content:space-between;gap:6px"><h4><span class="rk">#${at + 2 + i}</span>${esc(s.name)}</h4><span class="num ${s.status}">${esc(fmtU(s.v, s.b))}</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><small class="hint" style="font-size:10px">${esc(s.category)}</small><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></div>${areaChart(s.b, p14(s), { w: 220, h: 110, axis: false })}</a>`).join('')}</div>
-    </div>
-    <div class="pager-dots">${[...Array(8)].map((_, i) => `<i class="${i === Math.min(7, Math.floor((at / Math.max(1, pages - 1)) * 7)) ? 'on' : ''}"></i>`).join('')}</div>`;
+  const [big, ...rest] = ranked;
+  const bigCard = big ? `<a class="bio-big" href="${bioBase}/${enc(big.b)}"><div style="display:flex;justify-content:space-between;gap:10px"><div><h4><span class="rk">#1</span>${esc(big.name)}</h4><small class="hint">${esc(big.category)}</small></div><div><div class="num ${big.status}">${esc(fmt(big.v, big.b))}</div><div style="text-align:right;margin-top:6px"><span class="badge ${big.status}">${SEV_LABEL[big.status]}</span></div></div></div>
+      <div style="margin:12px 0 8px">${areaChart(big.b, p14(big), { w: 400, h: 230 })}</div>
+      <div style="display:flex;justify-content:space-between;gap:10px;font-size:10.5px"><span class="hint" style="font-size:10.5px">${esc(crit(big))} · ${p14(big).filter((p) => statusOf(big.b, p.v) !== 'normal').length} of ${p14(big).length} readings flagged in 14 days</span><span style="color:var(--electric);white-space:nowrap">Open records ›</span></div></a>` : '';
+  const small = rest.map((s, i) => `<a class="bio-small" href="${bioBase}/${enc(s.b)}"><div style="display:flex;justify-content:space-between;gap:6px"><h4><span class="rk">#${i + 2}</span>${esc(s.name)}</h4><span class="num ${s.status}">${esc(fmtU(s.v, s.b))}</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><small class="hint" style="font-size:10px">${esc(s.category)}</small><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></div>${areaChart(s.b, p14(s), { w: 220, h: 110, axis: false })}</a>`).join('');
+  return `<div class="card-head"><h3>${title}</h3><span class="hint">${ranked.length} biomarkers · scroll →</span></div>
+    <div class="bio-strip">${ranked.length ? bigCard + small : `<div class="bio-big bio-empty">${emptyText}</div>`}</div>`;
 }
 function doctorHome() {
   const all = Object.fromEntries(CREWS.map((c) => [c, statesFor(c)]));
@@ -842,7 +836,7 @@ function doctorHome() {
       <section class="card">
         <div class="card-head"><h3>Crew hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div>
         <div class="crew-tiles">${CREWS.map(tile).join('')}</div>
-        ${biomarkerCarousel({ ranked, key: 'carousel', bioBase: '#/doctor/bio', title: `Biomarkers · Crew ${sel}`, emptyText: `No biomarker data for Crew ${sel} yet.` })}
+        ${biomarkerCarousel({ ranked, bioBase: '#/doctor/bio', title: `Biomarkers · Crew ${sel}`, emptyText: `No biomarker data for Crew ${sel} yet.` })}
         <form class="compose doc-compose" data-chat="doctor" data-crew="${sel}"><input name="m" placeholder="Write a message to Crew ${sel}…" autocomplete="off"><button class="btn primary" type="submit">Send ${ICON.send}</button></form>
       </section>
     </div>
@@ -876,7 +870,7 @@ function crewSelect() {
   const sel = state.pick || state.me;
   return `<main class="landing onboard"><div class="inner wide">
     <img class="logo" src="${IMG.logo}" alt="KOOK — Kinetic Observation &amp; Optimal Keel">
-    <div class="ob-title"><a class="ob-back" href="#/">← Back</a><h1>Who's checking in?</h1><button type="button" class="btn yellow-cta" data-me="${sel}">Continue as Crew ${sel} →</button></div>
+    <div class="ob-title"><a class="btn ob-back" href="#/">← Back</a><h1>Who's checking in?</h1><button type="button" class="btn yellow-cta" data-me="${sel}">Continue as Crew ${sel} →</button></div>
     <div class="crew-choose">${CREWS.map((c) => `<button type="button" class="crew-choice ${c === sel ? 'on' : ''}" data-pick="${c}" aria-pressed="${c === sel}">
       <img src="${IMG[c]}" alt=""><b>Crew ${c}</b></button>`).join('')}</div>
     <section class="baseline">
