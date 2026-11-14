@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KOOK Test Bench</title>
+<link rel="icon" href="../assets/logo/Favicon%20Logo.png">
+<style>
+  :root {
+    --bg: #f5f6f8; --panel: #fff; --soft: #f5f6f8; --line: #e2e5ea; --text: #14171c; --muted: #6b7280;
+    --accent: #1267d6; --ok: #17804a; --warn: #a86400; --danger: #c62828; --ear-line: #b9bec7;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .app { max-width: 1500px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+  header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+  header h1 { margin: 0; font-size: 20px; }
+  header p { margin: 0; color: var(--muted); font-size: 13px; }
+  .clock { text-align: right; }
+  #clock { font-size: 24px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  #date { color: var(--muted); font-size: 12px; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+  .controls label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  select, button { font: inherit; font-size: 13px; color: var(--text); background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; min-height: 34px; cursor: pointer; }
+  button:hover:not(:disabled), select:hover { border-color: var(--text); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button:focus-visible, select:focus-visible, .part:focus-visible, .legend li:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn-primary { background: var(--text); color: #fff; border-color: var(--text); font-weight: 600; }
+  .btn-primary.running { background: #fff; color: var(--text); border-color: var(--line); }
+  .controls .spacer { flex: 1; }
+  .controls a { font-size: 13px; color: var(--accent); }
+  #status { font-size: 12.5px; color: var(--muted); }
+
+  main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 12px; align-items: start; }
+  .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; min-width: 0; display: flex; flex-direction: column; }
+  .panel > h2 { margin: 0; padding: 10px 14px; font-size: 14px; font-weight: 600; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .panel > h2 small { color: var(--muted); font-weight: 400; font-size: 12px; }
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+
+  /* device (from the ear-worn device simulator) */
+  .device-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .tile { background: var(--soft); border-radius: 10px; padding: 8px 10px; }
+  .tile .k { color: var(--muted); font-size: 12px; }
+  .tile .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+  .tile .v span { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 3px; }
+  .tile.potential .v b { color: var(--warn); }
+  .tile.urgent .v b { color: var(--danger); }
+  .stage svg { display: block; width: 100%; height: auto; max-height: 300px; }
+  .ear-outline { fill: #fff; stroke: var(--ear-line); stroke-width: 2.5; stroke-linejoin: round; }
+  .ear-fold { fill: none; stroke: var(--ear-line); stroke-width: 2.5; stroke-linecap: round; }
+  .ear-concha { fill: #eceef1; }
+  .ear-canal { fill: #c9cdd4; }
+  .dev { fill: #111317; }
+  .dev-hook { fill: none; stroke: #111317; stroke-width: 11; stroke-linecap: round; }
+  .part { cursor: pointer; outline: none; }
+  .part .dot { fill: #fff; stroke: var(--accent); stroke-width: 2; transition: fill .2s; }
+  .part .num { fill: var(--accent); font-size: 12px; font-weight: 700; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .part .lead { stroke: #9aa1ad; stroke-width: 1; stroke-dasharray: 3 3; }
+  .part .name { fill: var(--text); font-size: 15px; dominant-baseline: central; }
+  .part .hit { fill: transparent; }
+  .part .ring { fill: none; stroke: var(--accent); stroke-width: 2.5; opacity: 0; transform-box: fill-box; transform-origin: center; }
+  .part:hover .dot, .part:focus-visible .dot { fill: #d8e7fb; }
+  .part.active .dot { fill: var(--accent); }
+  .part.active .num { fill: #fff; }
+  .part.active .name { fill: var(--accent); }
+  .part.active .ring { animation: ping .55s ease-out; }
+  @keyframes ping { from { opacity: .9; transform: scale(1); } to { opacity: 0; transform: scale(2.6); } }
+  .waves path { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; opacity: 0; }
+  .speaking .waves path { animation: wave 1s infinite; }
+  .speaking .waves path:nth-child(2) { animation-delay: .18s; }
+  .speaking .waves path:nth-child(3) { animation-delay: .36s; }
+  .speaking .part[data-part="speaker"] .dot { fill: var(--accent); }
+  .speaking .part[data-part="speaker"] .num { fill: #fff; }
+  @keyframes wave { 0% { opacity: 0; } 30% { opacity: 1; } 100% { opacity: 0; } }
+  .legend { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .legend li { display: flex; gap: 8px; align-items: flex-start; background: var(--soft); border: 1px solid transparent; border-radius: 10px; padding: 8px 10px; cursor: pointer; transition: border-color .2s, background .2s; }
+  .legend li.active { border-color: var(--accent); background: #e9f1fd; }
+  .legend .n { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--accent); color: var(--accent); background: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center; margin-top: 1px; }
+  .legend b { display: block; font-size: 13px; font-weight: 600; }
+  .legend span { color: var(--muted); font-size: 12px; }
+  #tooltip { position: fixed; z-index: 10; max-width: 280px; background: #14171c; color: #fff; border-radius: 8px; padding: 8px 10px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,.2); pointer-events: none; opacity: 0; transition: opacity .12s; }
+  #tooltip.show { opacity: 1; }
+  #tooltip b { display: block; margin-bottom: 2px; }
+
+  /* logs */
+  .log { height: 260px; overflow-y: auto; overflow-wrap: anywhere; }
+  .empty { color: var(--muted); padding: 14px; font-size: 13px; }
+  .row, .row-head { display: grid; grid-template-columns: 3.4em minmax(0, 1fr) 4.2em 5.4em; gap: 6px; padding: 3px 12px; font-size: 12px; }
+  .row-head { color: var(--muted); border-bottom: 1px solid var(--line); padding-top: 6px; padding-bottom: 6px; }
+  .row { font-variant-numeric: tabular-nums; }
+  .row:nth-child(even) { background: #fafafb; }
+  .row .ts { color: var(--muted); }
+  .st-Normal { color: var(--ok); }
+  .st-Warning { color: var(--warn); font-weight: 700; }
+  .st-Critical { color: var(--danger); font-weight: 700; }
+  .voice { padding: 9px 14px; border-bottom: 1px solid var(--line); }
+  .voice .meta { display: flex; gap: 8px; align-items: center; font-size: 12px; color: var(--muted); }
+  .voice .tag { border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; }
+  .voice .tag.Warning { color: var(--warn); border-color: var(--warn); }
+  .voice .tag.Critical { color: var(--danger); border-color: var(--danger); }
+  .voice .say { font-size: 13.5px; margin-top: 2px; }
+
+  /* compression (from space-sim) */
+  .card-body { padding: 10px 14px 14px; }
+  .sub { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+  .scroll { max-height: 240px; overflow: auto; border: 1px solid #eee; border-radius: 6px; }
+  table { border-collapse: collapse; font-size: 12.5px; width: 100%; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+  th { position: sticky; top: 0; background: #fafafa; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 8px; }
+  ul.inbox { margin: 0; padding: 8px 14px 12px 30px; max-height: 200px; overflow: auto; }
+  ul.inbox li { font-size: 13px; margin: 3px 0; }
+
+  body.earth .mars-only { display: none !important; }
+  @media (max-width: 1100px) { main, .two { grid-template-columns: minmax(0, 1fr); } }
+  @media (prefers-reduced-motion: reduce) { .part.active .ring { animation: none; } .speaking .waves path { animation: none; opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1 id="title">KOOK test bench · Mars</h1>
+      <p id="subtitle">Ear-worn device measures → records → voice guidance → compression → 20-min link to Earth</p>
+    </div>
+    <div class="clock"><div id="clock">--:--:--</div><div id="date"></div></div>
+  </header>
+
+  <div class="controls mars-only">
+    <label>Crew <select id="crewSel"><option>A</option><option>B</option><option>C</option><option>D</option></select></label>
+    <label>Day <select id="daySel"></select></label>
+    <label>Speed <select id="speedSel">
+      <option value="1000">1 slot / s</option>
+      <option value="250" selected>4 slots / s</option>
+      <option value="60">16 slots / s</option>
+    </select></label>
+    <label><input type="checkbox" id="voiceChk" checked> Voice</label>
+    <button id="btnStart" class="btn-primary" type="button" disabled>▶ Start</button>
+    <button id="btnReset" type="button" disabled>Reset</button>
+    <span id="status"></span>
+    <span class="spacer"></span>
+    <a href="?side=earth" target="_blank" rel="noopener">Open Earth window ↗</a>
+  </div>
+
+  <main>
+    <!-- left: device + its logs -->
+    <div class="col mars-only">
+      <section class="panel">
+        <h2>Ear-worn device <small>Hover or tap a part for details</small></h2>
+        <div class="device-body">
+          <div class="tiles">
+            <div class="tile" id="tileHR"><div class="k">Heart rate</div><div class="v"><b>--</b><span>bpm</span></div></div>
+            <div class="tile" id="tileSBP"><div class="k">Blood pressure (SBP)</div><div class="v"><b>--</b><span>mmHg</span></div></div>
+            <div class="tile" id="tileTemp"><div class="k">Body temperature</div><div class="v"><b>--</b><span>°C</span></div></div>
+          </div>
+          <div class="stage">
+            <svg id="deviceSvg" viewBox="80 60 470 380" role="img" aria-label="Side view of an ear wearing an open-ear, hook-style device">
+              <rect class="dev" x="326" y="178" width="42" height="170" rx="21" transform="rotate(8 347 263)"/>
+              <path class="ear-outline" d="M222 200 C205 150 235 100 285 105 C335 110 355 170 348 235 C343 290 320 325 305 365 C295 400 270 425 248 415 C228 405 228 370 236 345 C240 330 232 320 226 310 C215 300 212 280 224 268 C232 255 228 230 222 200 Z"/>
+              <path class="ear-fold" d="M240 205 C232 160 262 128 292 135 C325 142 332 190 326 235 C322 275 305 300 295 330"/>
+              <path class="ear-fold" d="M262 200 C285 190 305 215 298 250 C293 280 275 300 268 325"/>
+              <path class="ear-concha" d="M240 250 C250 235 280 240 282 265 C284 290 265 312 248 308 C236 304 232 270 240 250 Z"/>
+              <ellipse class="ear-canal" cx="247" cy="279" rx="9" ry="13"/>
+              <path class="dev-hook" d="M358 190 C362 110 290 70 232 98 C204 112 198 160 201 215"/>
+              <rect class="dev" x="186" y="208" width="30" height="80" rx="15"/>
+              <g class="waves" aria-hidden="true">
+                <path d="M224.3 253.7 A16 16 0 0 1 224.3 274.3"/>
+                <path d="M231.9 247.3 A26 26 0 0 1 231.9 280.7"/>
+                <path d="M239.6 240.9 A36 36 0 0 1 239.6 287.1"/>
+              </g>
+              <g class="part" data-part="ppg" tabindex="0" role="button" aria-label="PPG optical sensor">
+                <line class="lead" x1="339" y1="331" x2="398" y2="345"/>
+                <circle class="ring" cx="327" cy="329" r="11"/><circle class="dot" cx="327" cy="329" r="11"/>
+                <text class="num" x="327" y="329">1</text><text class="name" x="404" y="345">PPG optical sensor</text>
+                <rect class="hit" x="310" y="312" width="236" height="46"/>
+              </g>
+              <g class="part" data-part="imu" tabindex="0" role="button" aria-label="Accelerometer (IMU)">
+                <line class="lead" x1="361" y1="268" x2="398" y2="272"/>
+                <circle class="ring" cx="349" cy="267" r="11"/><circle class="dot" cx="349" cy="267" r="11"/>
+                <text class="num" x="349" y="267">2</text><text class="name" x="404" y="272">Accelerometer (IMU)</text>
+                <rect class="hit" x="334" y="250" width="212" height="38"/>
+              </g>
+              <g class="part" data-part="speaker" tabindex="0" role="button" aria-label="Speaker">
+                <line class="lead" x1="189" y1="262" x2="152" y2="262"/>
+                <circle class="ring" cx="201" cy="262" r="11"/><circle class="dot" cx="201" cy="262" r="11"/>
+                <text class="num" x="201" y="262">3</text><text class="name" x="146" y="262" text-anchor="end">Speaker</text>
+                <rect class="hit" x="84" y="242" width="132" height="40"/>
+              </g>
+              <g class="part" data-part="power" tabindex="0" role="button" aria-label="Battery and wireless module">
+                <line class="lead" x1="369" y1="210" x2="398" y2="200"/>
+                <circle class="ring" cx="357" cy="213" r="11"/><circle class="dot" cx="357" cy="213" r="11"/>
+                <text class="num" x="357" y="213">4</text><text class="name" x="404" y="200">Battery &amp; wireless</text>
+                <rect class="hit" x="342" y="182" width="204" height="46"/>
+              </g>
+            </svg>
+          </div>
+          <ul class="legend" id="legend"></ul>
+        </div>
+      </section>
+
+      <div class="two">
+        <section class="panel">
+          <h2>Live data log <small id="recCount">0 records</small></h2>
+          <div class="row-head mono"><span>time</span><span>Biomarker</span><span>Figure</span><span>Status</span></div>
+          <div class="log mono" id="dataLog"><div class="empty">Press Start to replay the crew's readings.</div></div>
+        </section>
+        <section class="panel">
+          <h2>Voice guidance <small>from health_instruction.csv</small></h2>
+          <div class="log" id="voiceLog"><div class="empty">Announced when a reading turns Potential or Urgent.</div></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- right: compression + link (Rust/wasm space-sim) -->
+    <div class="col">
+      <section class="panel mars-only">
+        <h2>Size comparison <small>cumulative, played rows</small></h2>
+        <div class="card-body"><div class="scroll"><table id="sizeTable"></table></div></div>
+      </section>
+      <section class="panel mars-only">
+        <h2>Anomalies (priority) <small id="priorityStatus"></small></h2>
+        <div class="card-body">
+          <div class="scroll"><table id="prioTable"></table></div>
+          <div class="btns"><button id="priorityBtn" type="button">Send priority now</button></div>
+        </div>
+      </section>
+      <section class="panel mars-only">
+        <h2>Summary (cold · per biomarker, CCSDS 121) <small id="sendInfo"></small></h2>
+        <div class="card-body">
+          <div class="scroll"><table id="coldTable"></table></div>
+          <div class="btns"><button id="flushBtn" type="button">Send cold now</button></div>
+        </div>
+      </section>
+      <section class="panel">
+        <h2>Transmission log <button id="blockDownload" type="button">Download blocks.csv</button></h2>
+        <div class="card-body"><div class="scroll"><table id="blockTable"></table></div></div>
+      </section>
+      <section class="panel">
+        <h2>Received files <small id="delayNote">arrive 20 min after sending</small></h2>
+        <ul class="inbox" id="inbox"><li class="sub">Nothing received yet.</li></ul>
+      </section>
+    </div>
+  </main>
+</div>
+<div id="tooltip" role="tooltip"></div>
+<script type="module" src="app.js?v=3"></script>
+</body>
+</html>
