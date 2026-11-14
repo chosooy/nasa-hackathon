@@ -491,3 +491,19 @@ p { margin: 0; }
 .cal-head .chip.hz-potential { background: var(--yellow); color: var(--navy-900); }
 .cal-head .chip.hz-urgent { background: var(--crit); color: #fff; }
 .cal-head .chip.hz-normal.on, .cal-head .chip.hz-potential.on, .cal-head .chip.hz-urgent.on { border-color: var(--navy-900); box-shadow: none; }
+
+/* ---------- Round 6: event tint by hazard state, black time, fixed top bar ---------- */
+.ev, .ev.eva, .ev.health { background: var(--navy-100); }
+.ev.st-normal { background: rgba(168, 200, 255, .35); }
+.ev.st-potential { background: rgba(234, 254, 7, .32); }
+.ev.st-urgent { background: rgba(228, 55, 0, .14); }
+.ev .t, .ev.eva .t, .ev.health .t { color: #000; }
+.sev-h.notes { color: var(--sky); }
+
+/* top bar: fixed slots so text length never moves anything */
+.topbar nav a { width: 150px; text-align: center; }
+.topbar #clock { width: 150px; text-align: right; }
+.topbar #sol { width: 56px; text-align: center; }
+.role-pill { width: 160px; justify-content: center; padding: 7px 0; }
+.topbar .profile-link { width: 52px; text-align: right; }
+@media (max-width: 700px) { .topbar nav a { width: auto; } .role-pill { width: 140px; } }

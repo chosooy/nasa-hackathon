@@ -393,11 +393,11 @@ function topbar(role, active) {
   const base = role === 'crew' ? '#/crew' : '#/doctor';
   return `<header class="topbar">
     <a class="logo" href="#/" aria-label="KOOK"><img src="${IMG.logo}" alt="KOOK"></a>
-    <nav><a href="${base}" class="${active === 'home' ? 'active' : ''}">My Calendar</a><a href="${base}/instructions" class="${active === 'instr' ? 'active' : ''}">Health Instruction</a></nav>
+    <nav><a href="${base}" class="${active === 'home' ? 'active' : ''}">${role === 'crew' ? 'My Calendar' : 'Overview'}</a><a href="${base}/instructions" class="${active === 'instr' ? 'active' : ''}">Health Instruction</a></nav>
     <span class="spacer"></span>
     <span class="meta" id="clock">UTC ${simStamp()}</span>
     <span class="meta" id="sol">SOL ${pad3(missionDay(TODAY))}</span>
-    <a class="role-pill" href="${role === 'crew' ? '#/doctor' : '#/crew'}" title="Switch workspace">${role === 'crew' ? 'SPACE / Astronaut' : 'EARTH / Doctor'}<i></i></a>
+    <a class="role-pill" href="${role === 'crew' ? '#/doctor' : '#/crew'}" title="Switch workspace">${role === 'crew' ? 'SPACE / Astronaut' : 'EARTH / Doctor'}</a>
     <a class="profile-link" href="${base}/profile">Profile</a>
   </header>`;
 }
@@ -421,8 +421,9 @@ function weekCalendar(crew, dayHref) {
     const evs = eventsFor(crew, d);
     const list = evs.slice(0, 3).map((e) => {
       const dim = state.hazardFilter !== 'all' && !e.hazards.includes(state.hazardFilter);
-      const kind = e.category === 'Spacewalk' ? 'eva' : e.category === 'Health' ? 'health' : '';
-      return `<div class="ev ${kind} ${dim ? 'dim' : ''}" title="${esc(`${e.start_time}–${e.end_time} · ${e.title} · ${e.category} · ${e.hazards.join(', ')}`)}"><div class="t">${e.start_time}</div>${esc(e.title)}</div>`;
+      // Card tint = most severe state among the event's hazards (Urgent > Potential > Normal).
+      const evSt = e.hazards.map((h) => hzSt[h]).filter(Boolean).reduce((m, x) => (SEV[x] > SEV[m] ? x : m), 'nodata');
+      return `<div class="ev st-${evSt} ${dim ? 'dim' : ''}" title="${esc(`${e.start_time}–${e.end_time} · ${e.title} · ${e.category} · ${e.hazards.join(', ')}`)}"><div class="t">${e.start_time}</div>${esc(e.title)}</div>`;
     }).join('');
     return `<a class="dayc ${d === state.date ? 'today' : ''}" href="${dayHref(d)}"><div class="dn">${WD[toD(d).getUTCDay()]} ${String(toD(d).getUTCDate()).padStart(2, '0')}</div><div class="dd">${dayLabel(d)}</div>${list}${evs.length > 3 ? `<div class="ev-more">+${evs.length - 3} more</div>` : ''}</a>`;
   }).join('');
@@ -505,7 +506,6 @@ function crewHome() {
       <section class="card home-instr">
         <div class="card-head" style="margin-bottom:12px"><h3>Health Instruction</h3><a class="chev" href="#/crew/instructions" aria-label="Open Health Instruction">›</a></div>
         ${searchBar('query', "Search a symptom, a health check or a doctor's note…", false)}
-        <div class="chips" style="margin-bottom:14px">${instrChips()}</div>
         <div class="items">${filteredInstr(states)}</div>
       </section>
       <div class="stack">
@@ -542,10 +542,11 @@ function attentionPage(role) {
   }).join('');
   const chip = (k, l) => `<button class="chip ${state.attFilter === k ? 'on' : ''}" data-af="${k}"><i class="dot ${k}"></i>${l}<span class="n">${cnt(k)}</span></button>`;
   return `${topbar(role, 'instr')}<main class="page dark">
-    <h1 class="page-title">${role === 'crew' ? 'What needs your attention' : 'Health Instruction'}</h1>
+    <h1 class="page-title">Health Instruction</h1>
     <p class="page-sub">${role === 'crew' ? 'Your biomarkers, most urgent first. Tap one to see what it means and your past records.' : "Crew A's biomarkers, most urgent first. Tap one to see the guidance and past records."}</p>
     ${searchBar('query', 'Search a biomarker, a category or a symptom…', true)}
     <div class="chips"><button class="chip ${state.attFilter === 'all' ? 'light' : ''}" data-af="all">All<span class="n">${states.length}</span></button>${chip('urgent', 'Urgent')}${chip('potential', 'Potential')}${chip('normal', 'Normal')}</div>
+    ${role === 'crew' && notes().length && state.attFilter === 'all' ? `<div class="sev-h notes">DOCTOR'S NOTES · ${notes().length}</div>${notes().slice().reverse().map((n) => `<div class="alert"><div class="top"><div class="nm"><div class="lbl" style="color:var(--electric)">GROUND DOCTOR</div><h4>${esc(n.title)}</h4><small>${n.bio ? esc(nice(n.bio)) + ' · ' : ''}${dayLabel(n.date)} ${n.time} UTC</small></div></div><div class="body" style="background:var(--blue-tint)"><div class="k">INSTRUCTION</div>${esc(n.text)}</div></div>`).join('')}` : ''}
     ${list || '<div class="empty">Nothing matches your search.</div>'}
   </main>`;
 }
@@ -702,7 +703,7 @@ function doctorHome() {
     <div class="grid g-doc">
       <section class="card soft"><div class="card-head"><h3>Health Instruction</h3><a class="chev" href="#/doctor/instructions" aria-label="Open">›</a></div>
         ${libraryList(states, true)}
-        <button class="btn navy block" style="margin-top:16px" data-modal="library">+ &nbsp;Add to library</button></section>
+        <button class="btn navy block" style="margin-top:16px" data-modal="library">+ &nbsp;Add instruction</button></section>
       <section class="card">
         <div class="card-head"><h3>Crew hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div>
         <div class="crew-tiles">${CREWS.map(tile).join('')}</div>
@@ -767,7 +768,7 @@ function openModal(kind, bio) {
         <label>Title</label><input name="title" required placeholder="e.g. Reduce sugar intake today">
         <label>Instruction</label><textarea name="text" required placeholder="What should Crew A do?"></textarea>
         <div class="actions"><button type="button" class="btn cancel" data-close>Cancel</button><button class="btn primary">Send to crew</button></div></form></div>`
-    : `<div class="modal-bg"><form class="modal" data-form="library"><h3>Add to library</h3>
+    : `<div class="modal-bg"><form class="modal" data-form="library"><h3>Add instruction</h3>
         <label>Biomarker or protocol</label><input name="title" required placeholder="e.g. Post-EVA hydration protocol">
         <label>Instruction text</label><textarea name="text" required></textarea>
         <div class="actions"><button type="button" class="btn cancel" data-close>Cancel</button><button class="btn primary">Add</button></div></form></div>`;
@@ -790,8 +791,7 @@ function render() {
   if (role === 'crew') {
     r = 'crew';
     if (sub === 'day') { setDate(a1 || state.date); html = dayPage('crew', state.date); }
-    else if (sub === 'instructions') html = crewInstructions();
-    else if (sub === 'attention') html = attentionPage('crew');
+    else if (sub === 'instructions' || sub === 'attention') html = attentionPage('crew');
     else if (sub === 'bio') html = bioPage('crew', a1);
     else if (sub === 'chat') html = chatPage('crew');
     else if (sub === 'profile') html = profilePage('crew');
