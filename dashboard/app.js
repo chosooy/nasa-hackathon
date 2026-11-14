@@ -903,7 +903,7 @@ function libraryList(limit) {
   const f = state.libFilter, q = state.libQuery.toLowerCase();
   const items = libraryItems().filter((i) => (f === 'all' || (f === 'potential' && i.status === 'potential') || (f === 'urgent' && i.status === 'urgent')) && (!q || (i.b + i.category + i.text).toLowerCase().includes(q)));
   const chips = [['all', 'All'], ['potential', 'Potential'], ['urgent', 'Urgent']].map(([k, l]) => `<button class="chip ${f === k ? 'on' : ''}" data-lf="${k}">${l}</button>`).join('');
-  return `<form class="search" data-search="libQuery"><label class="field" style="background:#fff">${ICON.search}<input name="q" value="${esc(state.libQuery)}" placeholder="Search a biomarker, category or protocol…"></label></form>
+  return `<form class="search" data-search="libQuery"><label class="field">${ICON.search}<input name="q" value="${esc(state.libQuery)}" placeholder="Search a biomarker, category or protocol…"></label></form>
     <div class="chips" style="margin-bottom:14px">${chips}</div>
     <div class="items lib" style="max-height:${limit ? '560px' : 'none'};overflow-y:auto">${items.map((i) => `<a class="item ${i.forCrew ? 'care ' + i.status : ''}" href="${i.mine ? '#/doctor/instructions' : '#/doctor/bio/' + enc(i.b)}">
       ${i.forCrew ? crewChips(i.flagged) : ''}

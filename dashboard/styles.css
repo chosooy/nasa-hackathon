@@ -989,3 +989,80 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
   --navy-500: #2F3B58;
   --muted: #34405E;
 }
+
+/* =====================================================================
+   Glass theme — card surfaces at the same transparency as the filter tags
+   (white ~10% over the starfield). Text on glass is light; pastel status
+   blocks (events, care items, badges, instructions) stay solid with dark text.
+   ===================================================================== */
+:root { --glass: rgba(255,255,255,.1); --glass-2: rgba(255,255,255,.07); --glass-3: rgba(255,255,255,.14); --glass-line: rgba(255,255,255,.14); }
+
+/* surfaces */
+.card:not(.dark-chat), .card.soft, .alert, .nrow, .sleep-sum, .lib-card, .baseline, .crew-tile, .lib .item:not(.care), .dark-chat, .tx-slot {
+  background-color: var(--glass);
+  border: 1px solid var(--glass-line);
+  backdrop-filter: blur(14px) saturate(1.15); -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  color: #fff;
+}
+.item:not(.care), .row, .dayc, .bio-big, .bio-small, .sleep-sum .pill, .rec-empty, .tx-next, .tx-stats > div, .tx-row { background-color: var(--glass-2); color: #fff; }
+.bio-card { color: #fff; border-color: var(--glass-line); }
+.crew-tile.on { background-color: var(--glass-3); border-color: var(--yellow); }
+
+/* text tokens on glass */
+.card, .alert, .nrow, .row, .item, .dayc, .bio-big, .bio-small, .bio-card, .lib-card, .baseline, .sleep-sum, .crew-tile, .dark-chat, .tx-slot {
+  --navy-400: #C9D3E6; --navy-500: #C9D3E6; --navy-600: #E3E8F1; --muted: #C9D3E6;
+}
+.card h3, .card h4, .alert h4, .row .nm b, .nrow .nm b, .item .ttl, .dayc .dn, .kv dd, .bio-card .h b, .crew-tile b, .tile-sel b, .bl-step p, .baseline h2, .profile-photo h3 { color: #fff; }
+.item .desc, .detail-summary p, .measure p, .row .val, .nrow .v { color: #E3E8F1; }
+.bl-kicker { color: #8AB4FF; }
+.num.urgent, .bio-card .h .num.urgent, .bio-big .num.urgent { color: #FF8A65; }
+.num.potential, .bio-card .h .num.potential { color: #FFD24D; }
+
+/* pastel blocks keep dark text and the original dark tokens */
+.alert .body, .item.care, .do-now, .split-instr, .ev, .lib-ins, .rec, .badge, .lib-row .body, .bd-list .ev, .modal {
+  --navy-400: #4F5B75; --navy-500: #4A5670; --navy-600: #24407F; --muted: #4F5B75;
+  color: var(--navy-900);
+}
+.alert .body .k { color: #4A5670; }
+.dc-list .ev, .week.six .ev { color: var(--navy-900); }
+.ev.st-nodata, .dc-list .ev.st-nodata { background: #F3F5FA; }
+.ev.st-normal, .dc-list .ev.st-normal { background: #DCE8FF; }
+.ev.st-potential, .dc-list .ev.st-potential { background: #F8FFB8; }
+.ev.st-urgent, .dc-list .ev.st-urgent { background: #FBDCD1; }
+
+/* controls on glass: chips, arrows, search, compose */
+.card .chip:not(.hz-normal):not(.hz-potential):not(.hz-urgent), .baseline .chip { background: rgba(255,255,255,.1); color: #E3E8F1; }
+.card .chip.on:not(.hz-normal):not(.hz-potential):not(.hz-urgent) { background: #fff; color: var(--navy-900); }
+.card .chip .n { background: rgba(255,255,255,.16); }
+.card .chip.on .n { background: var(--navy-900); color: #fff; }
+.cal-tags .chip.on, .cal-tags .chip.hz-normal.on, .cal-tags .chip.hz-potential.on, .cal-tags .chip.hz-urgent.on { border-color: #fff; }
+.card .arrow { background: rgba(255,255,255,.12); color: #fff; }
+.card .search .field, .dark .search .field { background: rgba(255,255,255,.12); }
+.card .search input, .dark .search input { color: #fff; }
+.card .search svg, .dark .search svg { color: #C9D3E6; }
+.card .search input::placeholder, .dark .search input::placeholder, .compose input::placeholder { color: #C9D3E6; }
+.card .compose { background: transparent; }
+.card .compose input, .dark-chat .compose input { background: rgba(255,255,255,.12); color: #fff; }
+.bl-btn.light { background: rgba(255,255,255,.12); color: #fff; border-color: var(--glass-line); }
+.bl-btn.light:hover { background: rgba(255,255,255,.2); }
+.dark-chat .log { background: rgba(0,0,0,.22); }
+.dark-chat .compose { background: transparent; }
+.msg.bubble.theirs { background: rgba(255,255,255,.14); }
+.crew-bio { border-top-color: var(--glass-line); }
+.doc-compose { border-top-color: var(--glass-line) !important; }
+
+/* chart labels on glass */
+.card svg text[fill="#5F6D88"], .bio-big svg text[fill="#5F6D88"] { fill: #C9D3E6; }
+.card svg text[fill="#B42D00"] { fill: #FF8A65; }
+.card svg text[fill="#8F5600"] { fill: #FFD24D; }
+.card svg text[fill="#0042A6"] { fill: #8AB4FF; }
+.card svg line[stroke="#B42D00"] { stroke: #FF8A65; }
+.card svg line[stroke="#8F5600"] { stroke: #FFD24D; }
+.card svg line[stroke="#0042A6"] { stroke: #8AB4FF; }
+/* glass fixes */
+.card [style*="color:var(--electric)"], .card a[style*="electric"], .card span[style*="electric"] { color: #8AB4FF !important; }
+.hero-doc::before { background: linear-gradient(90deg, rgba(3,8,26,.92) 0%, rgba(3,8,26,.82) 55%, rgba(3,8,26,.35)); }
+.tx-row, .tx-rules, .tx-link, .tx-stats span, .tx-stats small, .tx-next small, .tx-buf, .tx-buf small, .tx-foot, .tx-st, .tx-tag { font-size: 12px; }
+.tx-name { font-size: 12px; }
+.crew-tile:not(.on) { background-color: var(--glass); }
+.chat .chat-head small, .chat .daysep { font-size: 12px; }
