@@ -53,7 +53,7 @@ The demo dashboard uses 32 of these biomarkers for four crew members (`data/crew
 
 ### Gathering biodata
 
-![Gathering biodata: baseline saved on Earth, then updated in space from computer tests, the ear-worn device and samples](assets/diagram/gathering_biodata.jpg)
+<p align="center"><img src="assets/diagram/gathering_biodata.jpg" width="520" alt="Gathering biodata: baseline saved on Earth, then updated in space from computer tests, the ear-worn device and samples"></p>
 
 Before launch, each crew member records an individual **baseline** of their health on Earth. After launch, KOOK compares that baseline with the biodata gathered in space from **computer tests, devices and samples**. These values are used to assess each crew member's health.
 
@@ -63,21 +63,21 @@ KOOK sorts each biomarker into one of three severity levels: **Urgent**, **Poten
 
 **Step 1 — Immediate response** (Potential)
 
-![Potential: the crew dashboard's health instruction is read aloud by the ear-worn device](assets/diagram/diagnosis_potential.jpg)
+<p align="center"><img src="assets/diagram/diagnosis_potential.jpg" width="480" alt="Potential: the crew dashboard's health instruction is read aloud by the ear-worn device"></p>
 
 - Astronauts open the **Health Instruction Library**. Its health guidelines and responses are uploaded and updated by medical professionals.
 - A **linked audio device** reads the instructions aloud, so astronauts can follow the recommended steps without relying only on the screen.
 
 **Step 2 — In-depth consultation** (Urgent, or whenever more help is needed)
 
-![Urgent: crew dashboard and doctor dashboard talk through the conversation](assets/diagram/diagnosis_urgent.jpg)
+<p align="center"><img src="assets/diagram/diagnosis_urgent.jpg" width="440" alt="Urgent: crew dashboard and doctor dashboard talk through the conversation"></p>
 
 - Astronauts talk directly with medical professionals on Earth in **one-on-one chat consultations**.
 - They can report a serious health problem and get out of the hazard quickly.
 
 ### Earth–space interaction
 
-![Earth-space interaction: biodata is sent, health instructions are updated, conversation goes both ways](assets/diagram/earth_space_interaction.jpg)
+<p align="center"><img src="assets/diagram/earth_space_interaction.jpg" width="480" alt="Earth-space interaction: biodata is sent, health instructions are updated, conversation goes both ways"></p>
 
 | Crew dashboard (space) | | Doctor dashboard (Earth) |
 | --- | :---: | --- |
@@ -92,24 +92,28 @@ KOOK sorts each biomarker into one of three severity levels: **Urgent**, **Poten
 - Each file arrives 20 minutes later, the one-way light delay. Chat has the same delay.
 - See [Data flow](docs/data-flow.md) for the details and the experiments behind it.
 
-![Data flow: raw readings → astronaut dashboard → 20 min → doctor dashboard](assets/diagram/data_flow.png)
+<p align="center"><img src="assets/diagram/data_flow.png" width="720" alt="Data flow: raw readings → astronaut dashboard → 20 min → doctor dashboard"></p>
 
 ## Screens
 
-**Crew (space)**
-
-- **Onboarding.** Crew members choose their profile and location, then download and upload the baseline measured on Earth.
-- **Main page.** Today's schedule and upcoming events. Each event is tagged with the space hazard it relates to.
-- **Health instruction.** Biomarkers in Urgent → Potential → Normal order, each with what to do.
-- **Biomarker detail.** Summary, past records, what to do now, measurement period, and the Earth–space comparison.
-- **Conversation.** One-on-one chat with the ground doctor, where serious health problems can be reported.
-
-**Ground doctor (Earth)**
-
-- **Main page.** The status of every crew member at a glance on one screen.
-- **Health instruction.** The doctor updates biomarker guidance and instructions directly, to match the crew's current state.
-- **Crew profile.** Click a crew member to see all their biomarkers. The graphs help anticipate their health and give advice.
-- **Conversation.** One-on-one chat with each crew member.
+<table>
+<tr>
+<td width="50%" valign="top"><img src="assets/screens/onboarding-select.jpg" alt="Onboarding"><br><b>Onboarding</b><br>Choose a crew profile and location, then download and upload the baseline measured on Earth.</td>
+<td width="50%" valign="top"><img src="assets/screens/crew-home.jpg" alt="Crew · Main page"><br><b>Crew · Main page</b><br>Today's schedule and upcoming events, each tagged with its space hazard, plus the hazard board.</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="assets/screens/crew-instruction.jpg" alt="Crew · Health instruction"><br><b>Crew · Health instruction</b><br>Biomarkers in Urgent → Potential → Normal order, each with what to do.</td>
+<td width="50%" valign="top"><img src="assets/screens/crew-biomarker.jpg" alt="Crew · Biomarker detail"><br><b>Crew · Biomarker detail</b><br>Summary, past records, what to do now, measurement period and the Earth–space comparison.</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="assets/screens/crew-chat.jpg" alt="Crew · Conversation"><br><b>Crew · Conversation</b><br>One-on-one chat with the ground doctor, next to the log of compressed files sent to Earth.</td>
+<td width="50%" valign="top"><img src="assets/screens/doctor-home.jpg" alt="Doctor · Main page"><br><b>Doctor · Main page</b><br>Every crew member’s status at a glance on one screen.</td>
+</tr>
+<tr>
+<td width="50%" valign="top"><img src="assets/screens/doctor-crew.jpg" alt="Doctor · Crew profile"><br><b>Doctor · Crew profile</b><br>All of a crew member's biomarkers with graphs, to anticipate their health and give advice.</td>
+<td width="50%" valign="top"><img src="assets/screens/doctor-instruction.jpg" alt="Doctor · Health instruction"><br><b>Doctor · Health instruction</b><br>The doctor updates biomarker guidance and instructions directly to match the crew's current state.</td>
+</tr>
+</table>
 
 ## Why it matters
 
