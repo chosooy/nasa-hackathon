@@ -141,10 +141,12 @@ const test1 = (p, v) => (p.op === 'range' ? v >= p.lo && v <= p.hi : p.op === '<
 const matches = (rule, v) => rule.some((p) => test1(p, v));
 
 /* ---------------- data model ---------------- */
-const DB = { events: [], rules: {}, info: {}, raw: {}, crews: {}, cur: 'A' };
+const DB = { events: [], rules: {}, info: {}, raw: {}, crews: {}, cur: 'A', view: 'live' };
 // Readings live per crew; the accessors below always point at the current crew (DB.cur).
+// DB.view 'live' = everything measured so far (astronaut); 'earth' = only what has reached Earth (ground doctor).
+const crewView = (c) => (DB.view === 'earth' ? earthCrew(c) : DB.crews[c]);
 ['series', 'daily', 'continuous', 'bios'].forEach((k) => Object.defineProperty(DB, k, {
-  get: () => (DB.crews[DB.cur] || { series: {}, daily: {}, continuous: new Set(), bios: [] })[k],
+  get: () => (crewView(DB.cur) || { series: {}, daily: {}, continuous: new Set(), bios: [] })[k],
 }));
 /** Run fn with another crew's readings as the current data (restores the previous crew afterwards). */
 function withCrew(c, fn) { const prev = DB.cur; DB.cur = c; try { return fn(); } finally { DB.cur = prev; } }
@@ -188,7 +190,6 @@ function buildModel(raw) {
   CREWS.forEach((c) => { if (raw['crew' + c]) DB.crews[c] = buildCrew(raw['crew' + c]); });
 }
 function buildCrew(rows) {
-  const crew = { series: {}, daily: {}, continuous: new Set(), bios: [] };
   const s = {};
   rows.forEach((r) => {
     const v = parseFloat(r.figure);
@@ -197,8 +198,44 @@ function buildCrew(rows) {
   });
   Object.entries(s).forEach(([b, arr]) => {
     arr.sort((a, z) => (a.date + a.time).localeCompare(z.date + z.time));
+    arr.forEach((pt) => { pt.arr = arrivalMs(b, pt); });
+  });
+  return crewFromSeries(s);
+}
+/** When a reading reaches Earth (same schedule as the transmission log):
+ *  Normal → hourly cold batch sent at the end of its hour; Potential/Urgent → 1-minute hot bundle; + 20 min light time. */
+function arrivalMs(b, pt) {
+  const ts = Date.parse(`${pt.date}T${pt.time}:00Z`);
+  const st = statusOf(b, pt.v);
+  const sent = st === 'potential' || st === 'urgent' ? (Math.floor(ts / 60000) + 1) * 60000 : (Math.floor(ts / HOUR_MS) + 1) * HOUR_MS;
+  return sent + LIGHT_MS;
+}
+const EARTH = { key: -1, crews: {}, lastRx: 0 };
+/** The crew's readings as the ground doctor has them right now (rebuilt once per simulated minute). */
+function earthCrew(c) {
+  if (!DB.crews[c]) return undefined;
+  const now = simNow().getTime(), key = Math.floor(now / 60000);
+  if (EARTH.key !== key) { EARTH.key = key; EARTH.crews = {}; EARTH.lastRx = 0; }
+  if (!EARTH.crews[c]) {
+    const s = {};
+    Object.entries(DB.crews[c].series).forEach(([b, arr]) => {
+      const got = arr.filter((pt) => pt.arr <= now);
+      got.forEach((pt) => { if (pt.arr > EARTH.lastRx) EARTH.lastRx = pt.arr; });
+      s[b] = got;                                      // keep every biomarker; one with nothing arrived shows as no data
+    });
+    EARTH.crews[c] = crewFromSeries(s, DB.crews[c].continuous);
+  }
+  return EARTH.crews[c];
+}
+/** Latest arrival time of data on Earth across all crews (for the "received on Earth" label). */
+function earthLastRx() { CREWS.forEach((c) => earthCrew(c)); return EARTH.lastRx; }
+/** Number of readings on Earth so far, all crews — changes whenever a new batch or bundle lands. */
+function earthCount() { return CREWS.reduce((n, c) => { const e = earthCrew(c); return n + (e ? Object.values(e.series).reduce((m, a) => m + a.length, 0) : 0); }, 0); }
+function crewFromSeries(s, continuous) {
+  const crew = { series: {}, daily: {}, continuous: new Set(), bios: [] };
+  Object.entries(s).forEach(([b, arr]) => {
     crew.series[b] = arr;
-    if (arr.length > 200) {
+    if (continuous ? continuous.has(b) : arr.length > 200) {
       crew.continuous.add(b);
       const by = {};
       arr.forEach((p) => {
@@ -580,6 +617,7 @@ function topbar(role, active) {
     <span class="spacer"></span>
     <span class="meta live-clock">UTC ${simStamp()}</span>
     <span class="meta live-sol">SOL ${pad3(missionDay(TODAY))}</span>
+    ${role === 'doctor' ? `<span class="meta earth-rx" title="The ground doctor sees only readings that have reached Earth: Potential/Urgent about 21 min after measurement, Normal in hourly batches 20 min after each hour.">${earthRxText()}</span>` : ''}
     <a class="profile-link" href="${base}/profile">Profile</a>
   </header>`;
 }
@@ -1095,6 +1133,7 @@ function toast(msg) {
 function render() {
   const { parts, qs } = route();
   const [role, sub, a1, a2] = parts;
+  DB.view = role === 'doctor' ? 'earth' : 'live';
   let html, r = null;
   if (role === 'crew') {
     r = 'crew';
@@ -1213,6 +1252,8 @@ window.addEventListener('hashchange', () => {
 });
 window.addEventListener('storage', (e) => { if (e.key && e.key.startsWith('kook.')) rerender(); });
 let lastSlot = Math.floor(simNow().getTime() / 300000);
+let lastEarth = -1;
+const earthRxText = () => { const t = earthLastRx(); return t ? `Received ${hhmm(t)} UTC` : 'Received —'; };
 setInterval(() => {
   document.querySelectorAll('.live-clock').forEach((c) => { c.textContent = `UTC ${simStamp()}`; });
   const nowMs = simNow().getTime();
@@ -1224,6 +1265,16 @@ setInterval(() => {
     lastSlot = slot;
     const busy = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
     if (state.date === TODAY && !busy && !$('#modal-root').innerHTML && route().parts[0]) rerender();
+  }
+  // Doctor: re-render when new data has reached Earth (hot bundles every minute, cold batches at :20).
+  if (route().parts[0] === 'doctor' && state.date === TODAY) {
+    const n = earthCount();
+    if (n !== lastEarth) {
+      const first = lastEarth < 0; lastEarth = n;
+      const busy = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+      if (!first && !busy && !$('#modal-root').innerHTML) rerender();
+    }
+    document.querySelectorAll('.earth-rx').forEach((x) => { x.textContent = earthRxText(); });
   }
   // Day rollover (incl. Nov 30 → Nov 1 loop): move "today" and follow it if the viewer was on today.
   const now = simNow().toISOString().slice(0, 10);

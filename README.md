@@ -39,6 +39,13 @@ Normal readings can wait, so they are buffered for an hour and sent together. Po
 
 **Ground-side check:** every batch is decoded right after it is built. The packets are reassembled, every CRC is checked, the stream is decompressed and compared byte for byte with the original CSV. The log shows `✓ verified` when all of that matches.
 
+**What the ground doctor sees:** the doctor's screens use only readings that have reached Earth on this schedule. The astronaut's screens show everything measured so far.
+
+- Potential and Urgent readings appear about 21 minutes after they are measured (a 1-minute bundle plus 20 minutes of light time).
+- Normal readings arrive in hourly batches, 20 minutes after each hour ends. A 10:05 reading, for example, shows up at 11:20.
+
+So at the same moment the two screens can show different latest values, and the doctor's top bar shows when data last arrived (`Received HH:MM UTC`). Chat messages are not delayed, so the demo conversation stays usable.
+
 **Log entry:** file name, number of readings, raw size → size on the wire, number of packets (cold only), verification, and send/arrival times.
 
 **Note:** a hot bundle usually holds a single reading (readings come every 5 minutes), so zstd's frame overhead can make it a few bytes larger than the raw CSV. The gain shows up in the hourly cold batches.
