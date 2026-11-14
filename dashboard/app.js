@@ -586,25 +586,37 @@ function dayPage(role, date) {
     </div>
   </main>`;
 }
-function bioPage(role, b) {
-  const s = bioState(b, state.date);
-  const crewSide = role === 'crew';
-  const raw = DB.raw[b] || {};
-  const cont = DB.continuous.has(b);
-  let pts;
-  if (cont) {
+/** Chart points for one biomarker up to the selected date (hourly means for continuous vitals). */
+function recordPoints(b) {
+  if (!DB.series[b]) return [];
+  if (DB.continuous.has(b)) {
     const by = {};
     DB.series[b].forEach((p) => { if (p.date <= state.date) { const k = p.date + ' ' + p.time.slice(0, 2); (by[k] = by[k] || []).push(p.v); } });
-    pts = Object.keys(by).sort().slice(-24 * 7).map((k) => ({ date: k.slice(0, 10), v: by[k].reduce((a, z) => a + z, 0) / by[k].length, label: `${dayLabel(k.slice(0, 10))} ${k.slice(11)}h` }));
-  } else pts = (DB.series[b] || []).filter((p) => p.date <= state.date).map((p) => ({ date: p.date, v: p.v }));
+    return Object.keys(by).sort().slice(-24 * 7).map((k) => ({ date: k.slice(0, 10), v: by[k].reduce((a, z) => a + z, 0) / by[k].length, label: `${dayLabel(k.slice(0, 10))} ${k.slice(11)}h` }));
+  }
+  return DB.series[b].filter((p) => p.date <= state.date).map((p) => ({ date: p.date, v: p.v }));
+}
+const summaryCard = (s) => `<section class="card detail-summary"><h3>Summary</h3><p>${esc(s.info.summary || '—')}</p>
+  <div class="sum-meta"><span><b>Category</b>${esc(s.category)}</span><span><b>Method</b>${esc(s.method || '—')}</span><span><b>Hazards</b>${esc(s.hazards.join(', ') || '—')}</span></div></section>`;
+const measureRow = (s, b) => { const raw = DB.raw[b] || {}; return `<div class="detail-row">
+  <section class="card measure"><h3>Measure period</h3>
+    <div class="k">CRITERIA</div><p>${esc(raw.numeric || (DB.rules[b] ? `${DB.rules[b].yellowRaw} normal; ${DB.rules[b].redRaw} urgent` : '—'))}</p>
+    <div class="k">RECOMMENDED TIMING</div><p>${esc(raw.timing || s.period || '—')}</p></section>
+  <section class="earth-space"><div class="track"><img src="${IMG.earth}" alt=""><i></i><img src="${IMG.mars}" alt=""></div><h4>Earth vs space</h4><p>${esc(raw.earth || 'Compare in-flight values with the preflight baseline.')}</p></section>
+</div>`; };
+
+function bioPage(role, b) {
+  if (role === 'doctor') return doctorBioPage(b);
+  const s = bioState(b, state.date);
+  const cont = DB.continuous.has(b);
   const info = s.info;
-  return `${topbar(role, 'instr')}<main class="page">
-    <a class="back" data-back href="${crewSide ? '#/crew/instructions' : '#/doctor/instructions'}" aria-label="Back" title="Back">←</a>
+  return `${topbar('crew', 'instr')}<main class="page">
+    <a class="back" data-back href="#/crew/instructions" aria-label="Back" title="Back">←</a>
     <div class="title-row"><h1 class="page-title" style="margin:0">${esc(s.name)}</h1><span class="badge solid ${s.status === 'urgent' ? '' : s.status}">${SEV_LABEL[s.status]}</span></div>
     <div style="height:20px"></div>
-    <!-- Row 1: [My past record] [Instruction] -->
+    ${summaryCard(s)}
     <div class="detail-row">
-      <section class="card"><h3 style="margin-bottom:12px">My past record</h3>${zoneChart(b, pts)}</section>
+      <section class="card"><h3 style="margin-bottom:12px">My past record</h3>${zoneChart(b, recordPoints(b))}</section>
       <section class="do-now ${s.status}">
         <div class="k">${s.status === 'urgent' ? 'DO THIS NOW' : s.status === 'potential' ? 'WHAT TO DO' : 'YOUR STATUS'}</div>
         <p>${esc(instructionFor(s))}</p>
@@ -612,16 +624,37 @@ function bioPage(role, b) {
         <details><summary>Guidance by state</summary>${info.yellow_instruction ? `<p><b>Potential —</b> ${esc(info.yellow_instruction)}</p>` : ''}${info.red_instruction ? `<p><b>Urgent —</b> ${esc(info.red_instruction)}</p>` : ''}</details>
       </section>
     </div>
-    <!-- Row 2: [Summary] full width -->
-    <section class="card detail-summary"><h3>Summary</h3><p>${esc(info.summary || '—')}</p>
-      <div class="sum-meta"><span><b>Category</b>${esc(s.category)}</span><span><b>Method</b>${esc(s.method || '—')}</span><span><b>Hazards</b>${esc(s.hazards.join(', ') || '—')}</span></div></section>
-    <!-- Row 3: [Measure period] [Earth vs space] -->
+    ${measureRow(s, b)}
+  </main>`;
+}
+
+/** Doctor's biomarker page: Summary, a crew record you can page through (Crew A → D), and both instructions. */
+function doctorBioPage(b) {
+  const crew = CREWS[((state.recCrew || 0) % CREWS.length + CREWS.length) % CREWS.length];
+  const s = bioState(b, state.date);            // Crew A is the only crew with readings in this dataset
+  const has = crew === 'A' && DB.series[b];
+  const st = has ? s.status : 'nodata';
+  const info = s.info;
+  const record = has
+    ? `<div class="rec-sub"><span class="badge ${st}">${SEV_LABEL[st]}</span><span class="hint">Latest ${esc(fmtU(s.v, b))}${s.r ? ` · ${dayLabel(s.r.date)} ${s.r.time} UTC` : ''}</span></div>${zoneChart(b, recordPoints(b))}`
+    : `<div class="empty rec-empty">No ${esc(nice(b))} records for Crew ${crew} yet.</div>`;
+  return `${topbar('doctor', 'instr')}<main class="page">
+    <a class="back" data-back href="#/doctor/instructions" aria-label="Back" title="Back">←</a>
+    <div class="title-row"><h1 class="page-title" style="margin:0">${esc(s.name)}</h1></div>
+    <div style="height:20px"></div>
+    ${summaryCard(s)}
     <div class="detail-row">
-      <section class="card measure"><h3>Measure period</h3>
-        <div class="k">CRITERIA</div><p>${esc(raw.numeric || (DB.rules[b] ? `${DB.rules[b].yellowRaw} normal; ${DB.rules[b].redRaw} urgent` : '—'))}</p>
-        <div class="k">RECOMMENDED TIMING</div><p>${esc(raw.timing || s.period || '—')}</p></section>
-      <section class="earth-space"><div class="track"><img src="${IMG.earth}" alt=""><i></i><img src="${IMG.mars}" alt=""></div><h4>Earth vs space</h4><p>${esc(raw.earth || 'Compare in-flight values with the preflight baseline.')}</p></section>
+      <section class="card crew-record">
+        <div class="card-head"><button class="arrow" data-rec="-1" aria-label="Previous crew">‹</button><h3 class="rec-title"><img class="avatar" src="${IMG[crew]}" alt="" style="width:28px;height:28px">Crew ${crew} record</h3><button class="arrow" data-rec="1" aria-label="Next crew">›</button></div>
+        ${record}
+        <div class="pager-dots">${CREWS.map((c) => `<i class="${c === crew ? 'on' : ''}"></i>`).join('')}</div>
+      </section>
+      <section class="split-instr">
+        <div class="si potential"><div class="k">IF POTENTIAL</div><p>${esc(info.yellow_instruction || 'No specific instruction.')}</p></div>
+        <div class="si urgent"><div class="k">IF URGENT — DO THIS NOW</div><p>${esc(info.red_instruction || 'No specific instruction.')}</p></div>
+      </section>
     </div>
+    ${measureRow(s, b)}
   </main>`;
 }
 function chatPage(role) {
@@ -701,12 +734,12 @@ function doctorLibraryPage() {
     <h1 class="page-title">Health Instruction</h1>
     <p class="page-sub">The full instruction library from health_instruction.csv — ${all.length} entries.</p>
     ${searchBar('libQuery', 'Search a biomarker, category or protocol…', true)}
-    <div class="lib-grid">${all.map((i) => `<article class="lib-card">
+    <div class="lib-grid">${all.map((i) => `<${i.mine ? 'article' : `a href="#/doctor/bio/${enc(i.b)}"`} class="lib-card">
       <h3>${esc(nice(i.b))}</h3><p class="hint">${esc(i.category)}</p>
       <div class="lib-body"><p>${esc(i.summary)}</p>
         ${i.yi ? `<div class="lib-ins potential"><b>If Potential</b>${esc(i.yi)}</div>` : ''}
         ${i.ri ? `<div class="lib-ins urgent"><b>If Urgent</b>${esc(i.ri)}</div>` : ''}</div>
-    </article>`).join('') || '<div class="empty">Nothing matches your search.</div>'}</div>
+    </${i.mine ? 'article' : 'a'}>`).join('') || '<div class="empty">Nothing matches your search.</div>'}</div>
   </main>`;
 }
 /** Biomarker carousel (#1 large chart, #2-#3 small), shared by the doctor Overview and the astronaut hazard board.
@@ -836,7 +869,7 @@ function render() {
     else if (sub === 'day') { setDate(a2 || state.date); html = dayPage('doctor', state.date); }
     else if (sub === 'instructions') html = doctorLibraryPage();
     else if (sub === 'attention') html = attentionPage('doctor');
-    else if (sub === 'bio') html = bioPage('doctor', a1);
+    else if (sub === 'bio') { if (state.recBio !== a1) { state.recBio = a1; state.recCrew = 0; } html = bioPage('doctor', a1); }
     else if (sub === 'chat') html = chatPage('doctor');
     else if (sub === 'profile') html = profilePage('doctor');
     else html = doctorHome();
@@ -862,6 +895,7 @@ document.addEventListener('click', (e) => {
   else if (d.af) { state.attFilter = d.af; rerender(); }
   else if (d.lf) { state.libFilter = d.lf; rerender(); }
   else if (d.cat) { state.bioCat = d.cat; rerender(); }
+  else if (d.rec) { state.recCrew = (state.recCrew || 0) + +d.rec; rerender(); }
   else if (d.car) { const k = d.carKey || 'carousel'; state[k] = (state[k] || 0) + +d.car; rerender(); }
   else if (d.attachNote !== undefined) toast('File attachments are not available yet. They will be added in a later version.');
   else if (d.crew) { state.docCrew = d.crew; state.carousel = 0; rerender(); }

@@ -658,3 +658,24 @@ p { margin: 0; }
 .sum-meta { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 12.5px; }
 .sum-meta b { display: block; font-size: 9.5px; font-weight: 700; color: var(--navy-500); letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px; }
 @media (max-width: 1000px) { .detail-row { grid-template-columns: 1fr; } }
+
+/* ---------- Round 15: doctor biomarker page ---------- */
+.crew-record { display: flex; flex-direction: column; }
+.crew-record .card-head { margin-bottom: 10px; }
+.rec-title { display: flex; align-items: center; gap: 10px; }
+.rec-sub { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.rec-empty { flex: 1; display: grid; place-items: center; background: var(--navy-50); border-radius: 12px; min-height: 230px; }
+.crew-record .pager-dots { margin-top: auto; padding-top: 10px; }
+.split-instr { display: flex; flex-direction: column; border-radius: 20px; overflow: hidden; color: #000; }
+.split-instr .si { flex: 1; padding: 20px 22px; }
+.split-instr .si.potential { background: var(--yellow-tint); }
+.split-instr .si.urgent { background: var(--crit-bg); }
+.split-instr .k { font-size: 9.5px; font-weight: 700; letter-spacing: .04em; margin-bottom: 6px; }
+.split-instr .potential .k { color: var(--on-yellow); } .split-instr .urgent .k { color: var(--crit); }
+.split-instr p { font-size: 13.5px; }
+a.lib-card { cursor: pointer; transition: transform .12s, box-shadow .12s; }
+a.lib-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.crew-record { height: 360px; }
+.split-instr { height: 360px; }
+.split-instr .si { min-height: 0; overflow-y: auto; }
+@media (max-width: 1000px) { .crew-record, .split-instr { height: auto; } }
