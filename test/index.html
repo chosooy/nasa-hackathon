@@ -5,21 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>KOOK Test Bench</title>
 <link rel="icon" href="../assets/logo/Favicon%20Logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
-  /* KOOK dashboard tokens (dashboard/styles.css), dark */
+  /* plain dark mode: neutral greys, one blue accent, system fonts */
   :root {
-    --navy-950: #03081A; --navy-900: #07173F; --navy-800: #0B214F; --navy-700: #13285E; --navy-600: #24407F;
-    --navy-500: #5F6D88; --navy-400: #9CA7B8; --navy-300: #C9D3E6; --navy-200: #E3E8F1;
-    --yonder: #2E96F5; --sky: #A8C8FF; --yellow: #EAFE07;
-    --bg: var(--navy-950); --panel: var(--navy-900); --soft: var(--navy-800); --line: rgba(255,255,255,.1);
-    --text: #fff; --muted: var(--navy-300); --accent: var(--sky);
-    --ok: var(--sky); --warn: #FFD24D; --danger: #FF8A65;
-    --display: "Space Grotesk", "Pretendard", system-ui, sans-serif;
-    --body: "Pretendard", system-ui, -apple-system, sans-serif;
+    color-scheme: dark;
+    --navy-950: #0d1117; --navy-900: #161b22; --navy-800: #21262d; --navy-700: #30363d; --navy-600: #484f58;
+    --navy-500: #6e7681; --navy-400: #8b949e; --navy-300: #9da7b3; --navy-200: #e6edf3;
+    --sky: #58a6ff; --yellow: #58a6ff;
+    --bg: var(--navy-950); --panel: var(--navy-900); --soft: var(--navy-800); --line: #30363d;
+    --text: #e6edf3; --muted: var(--navy-400); --accent: var(--sky);
+    --ok: #3fb950; --warn: #d29922; --danger: #f85149;
+    --display: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --body: system-ui, -apple-system, "Segoe UI", sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
@@ -33,26 +30,26 @@
   header h1 { margin: 0; font: 600 22px/1.2 var(--display); }
   header p { margin: 0; color: var(--muted); font-size: 13px; }
   .clock { text-align: right; }
-  #clock { font: 600 24px/1.2 var(--display); font-variant-numeric: tabular-nums; color: var(--yellow); }
+  #clock { font: 600 24px/1.2 var(--display); font-variant-numeric: tabular-nums; color: var(--text); }
   #date { color: var(--muted); font-size: 12px; }
 
-  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 10px 14px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
   .controls label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
-  select, button { font: inherit; font-size: 13px; color: #fff; background: var(--navy-800); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; min-height: 34px; cursor: pointer; }
-  select { border-radius: 10px; }
+  select, button { font: inherit; font-size: 13px; color: var(--text); background: var(--navy-800); border: 1px solid var(--line); border-radius: 6px; padding: 6px 14px; min-height: 34px; cursor: pointer; }
+  
   option { background: var(--navy-900); }
   button:hover:not(:disabled), select:hover { border-color: var(--navy-300); }
   button:disabled { opacity: .45; cursor: not-allowed; }
-  :focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
-  .btn-primary { background: var(--yellow); color: var(--navy-950); border-color: var(--yellow); font-weight: 700; }
-  .btn-primary:hover:not(:disabled) { border-color: var(--yellow); box-shadow: 0 0 0 4px rgba(234,254,7,.25); }
+  :focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+  .btn-primary { background: #1f6feb; color: #fff; border-color: #1f6feb; font-weight: 600; }
+  .btn-primary:hover:not(:disabled) { background: #388bfd; border-color: #388bfd; }
   .btn-primary.running { background: var(--navy-800); color: #fff; border-color: var(--line); }
   input[type="checkbox"] { accent-color: var(--yellow); }
   #status { font-size: 12.5px; color: var(--muted); }
 
   main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 12px; align-items: start; }
   .col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
-  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
   .panel > h2 { margin: 0; padding: 12px 16px; font: 600 15px/1.3 var(--display); border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
   .panel > h2 small { color: var(--muted); font: 400 12px var(--body); }
   .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
@@ -99,7 +96,7 @@
   .legend .n { flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--sky); color: var(--sky); font-size: 12px; font-weight: 700; display: grid; place-items: center; margin-top: 1px; }
   .legend b { display: block; font-size: 13px; font-weight: 600; }
   .legend span { color: var(--muted); font-size: 12px; }
-  #tooltip { position: fixed; z-index: 10; max-width: 280px; background: var(--navy-200); color: var(--navy-950); border-radius: 10px; padding: 8px 10px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,.4); pointer-events: none; opacity: 0; transition: opacity .12s; }
+  #tooltip { position: fixed; z-index: 10; max-width: 280px; background: var(--navy-800); color: var(--text); border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,.4); pointer-events: none; opacity: 0; transition: opacity .12s; }
   #tooltip.show { opacity: 1; }
   #tooltip b { display: block; margin-bottom: 2px; }
 
@@ -129,7 +126,7 @@
   th { position: sticky; top: 0; background: var(--navy-800); color: var(--muted); font-weight: 600; }
   td { color: var(--navy-200); }
   td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  tr.sec td { color: var(--yellow); font: 600 11.5px var(--display); letter-spacing: .04em; text-transform: uppercase; background: rgba(255,255,255,.03); }
+  tr.sec td { color: var(--muted); font: 600 11.5px var(--display); letter-spacing: .04em; text-transform: uppercase; background: rgba(255,255,255,.03); }
   .btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 10px; }
 
   @media (max-width: 1100px) { main, .two { grid-template-columns: minmax(0, 1fr); } }
@@ -140,9 +137,8 @@
 <div class="app">
   <header>
     <div class="brand">
-      <img src="../assets/logo/Logo_yellow%20ver..png" alt="KOOK">
       <div>
-        <h1>Test bench · Mars</h1>
+        <h1>KOOK test bench · Mars</h1>
         <p>Ear-worn device measures → voice guidance → compression → 20-min link to Earth</p>
       </div>
     </div>
@@ -258,6 +254,6 @@
   </main>
 </div>
 <div id="tooltip" role="tooltip"></div>
-<script type="module" src="app.js?v=4"></script>
+<script type="module" src="app.js?v=5"></script>
 </body>
 </html>
