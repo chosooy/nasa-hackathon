@@ -311,9 +311,17 @@ const chat = (c = DB.cur) => store.get('chat' + c, null) || (c === 'A' ? seedCha
 function sendChat(from, text, attach, c = DB.cur) {
   text = text.trim(); if (!text) return;
   const msgs = chat(c);
-  msgs.push({ from, date: state.date, time: new Date().toISOString().slice(11, 16), text, attach: attach || undefined });
+  const now = simNow();                                   // stamped with the dashboard (mission) clock
+  msgs.push({ from, date: now.toISOString().slice(0, 10), time: now.toISOString().slice(11, 16), ts: now.getTime(), text, attach: attach || undefined });
   store.set('chat' + c, msgs);
 }
+/** Chat obeys the same 20-minute Mars↔Earth light delay as the data: a message reaches the other side
+ *  LIGHT_MS after it was sent. Messages without a send time (demo seed, older ones) count as delivered;
+ *  so does one stamped "after now", which only happens when the month-long clock loops back to Nov 1. */
+const msgArrive = (m) => (m.ts ? m.ts + LIGHT_MS : 0);
+const msgArrived = (m, now = simNow().getTime()) => !m.ts || m.ts > now || now >= msgArrive(m);
+/** What `role` can see: everything they sent, plus what has reached them. */
+const visibleChat = (role, c = DB.cur) => { const now = simNow().getTime(); return chat(c).filter((m) => m.from === role || msgArrived(m, now)); };
 const notes = (c = DB.cur) => store.get('notes' + c, []);
 /** Doctor edits to summaries / instructions (kept in localStorage) layered over health_instruction.csv. */
 function applyEdits() {
@@ -661,7 +669,9 @@ function weekCalendar(crew, dayHref) {
   return `<div class="strip">${big}<div class="strip-right"><div class="chips cal-tags">${chips}</div><div class="week six">${cols}</div></div></div>`;
 }
 function chatLog(role, mini) {
-  const msgs = mini ? chat().slice(-2) : chat();
+  const all = visibleChat(role);
+  const msgs = mini ? all.slice(-2) : all;
+  const now = simNow().getTime();
   let lastDate = '';
   return msgs.map((m) => {
     const me = m.from === role;
@@ -669,7 +679,10 @@ function chatLog(role, mini) {
     if (!mini && m.date !== lastDate) { sep = `<div class="daysep">${weekday(m.date)}, ${shortDate(m.date)} · ${m.date === '2026-11-13' ? 'Demo conversation' : dayLabel(m.date)}</div>`; lastDate = m.date; }
     const who = me ? 'You' : (m.from === 'doctor' ? 'Ground doctor' : `Crew ${DB.cur}`);
     const face = m.from === 'doctor' ? IMG.doctor : IMG[DB.cur];
-    const status = me ? 'Delivered' : 'Received';
+    const arrived = msgArrived(m, now);
+    const status = !m.ts ? (me ? 'Delivered' : 'Received')
+      : me ? (arrived ? `Delivered ${hhmm(msgArrive(m))}` : `<span class="msg-st" data-arrive="${msgArrive(m)}">In transit · arrives ${hhmm(msgArrive(m))}</span>`)
+      : `Received ${hhmm(msgArrive(m))}`;
     if (mini) return `<div class="msg bubble ${me ? 'blue right' : ''}"><div class="who">${who}</div>${esc(m.text)}<div class="meta">${dayLabel(m.date)} ${m.time} · ${status}</div></div>`;
     return `${sep}<div class="msg-row ${me ? 'me' : ''}"><img class="msg-av" src="${face}" alt="${who}"><div class="msg bubble ${me ? 'mine' : 'theirs'}"><div class="who">${who}</div>${esc(m.text)}<div class="meta">${dayLabel(m.date)} ${m.time} · ${status}</div>${m.attach ? `<div class="msg-attach">${ICON.doc}${esc(m.attach)}</div>` : ''}</div></div>`;
   }).join('');
@@ -681,7 +694,7 @@ function chatCard(role, mini) {
     : `<img class="avatar" src="${IMG[DB.cur]}" alt="Crew ${DB.cur}" style="width:40px;height:40px"><div><b>Crew ${DB.cur}</b><small>Crew ${DB.cur} · 1:1 conversation</small></div>`;
   return `<section class="card chat ${mini ? 'mini' : 'dark-chat'}">
     <div class="chat-head">${head}</div>
-    <div class="log" id="chatlog">${mini ? '' : `<div class="note">Messages may take time to reach ${crewSide ? 'Earth' : 'the crew'}. We'll show you when they arrive.</div>`}${chatLog(role, mini)}</div>
+    <div class="log" id="chatlog" data-role="${role}" data-crew="${DB.cur}" data-mini="${mini ? 1 : ''}" data-n="${visibleChat(role).length}">${mini ? '' : `<div class="note">Messages may take time to reach ${crewSide ? 'Earth' : 'the crew'}. We'll show you when they arrive.</div>`}${chatLog(role, mini)}</div>
     <form class="compose" data-chat="${role}" data-crew="${DB.cur}"><button type="button" class="plus" data-attach-note aria-label="Attach a file">+</button><input name="m" placeholder="Write a message to ${crewSide ? 'your doctor' : `Crew ${DB.cur}`}…" autocomplete="off"><button class="btn primary" type="submit">Send${mini ? '' : ' ' + ICON.send}</button></form>
   </section>`;
 }
@@ -876,7 +889,7 @@ function chatPage(role) {
   const left = crewSide
     ? txPanel(DB.cur)
     : `<section class="card side-card" style="align-self:start"><h3 class="ico-title" style="font-size:17px">${ICON.chat.replace('<svg', '<svg style="width:16px;height:16px;color:var(--electric)"')}Conversations</h3><p class="hint" style="margin:2px 0 14px">4 assigned astronauts</p>
-        <div class="items">${CREWS.map((c) => { const msgs = chat(c), last = msgs[msgs.length - 1]; return `<button type="button" class="item convo ${c === DB.cur ? 'on' : ''}" data-crew="${c}" aria-pressed="${c === DB.cur}"><img class="convo-av" src="${IMG[c]}" alt=""><span class="convo-tx"><div style="font-size:13px">Crew ${c}</div><div class="hint" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${last ? esc(last.text) : 'No messages yet'}</div><div style="font-size:11px;margin-top:4px">${last ? `${last.time} UTC · Latest message` : 'Open 1:1 conversation'}</div></span></button>`; }).join('')}</div>
+        <div class="items">${CREWS.map((c) => { const msgs = visibleChat('doctor', c), last = msgs[msgs.length - 1]; return `<button type="button" class="item convo ${c === DB.cur ? 'on' : ''}" data-crew="${c}" aria-pressed="${c === DB.cur}"><img class="convo-av" src="${IMG[c]}" alt=""><span class="convo-tx"><div style="font-size:13px">Crew ${c}</div><div class="hint" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${last ? esc(last.text) : 'No messages yet'}</div><div style="font-size:11px;margin-top:4px">${last ? `${last.time} UTC · Latest message` : 'Open 1:1 conversation'}</div></span></button>`; }).join('')}</div>
         <p class="hint" style="margin-top:14px">Select a crew to open the conversation.</p></section>`;
   return `${topbar(role, 'home')}<main class="page">
     <a class="back" data-back href="${crewSide ? '#/crew' : '#/doctor'}" aria-label="Back" title="Back">←</a>
@@ -1276,6 +1289,19 @@ setInterval(() => {
     }
     document.querySelectorAll('.earth-rx').forEach((x) => { x.textContent = earthRxText(); });
   }
+  // Chat: own messages flip to Delivered on arrival; the other side's messages appear when they arrive.
+  document.querySelectorAll('.msg-st[data-arrive]').forEach((el) => { if (nowMs >= +el.dataset.arrive) { el.textContent = `Delivered ${hhmm(+el.dataset.arrive)}`; el.removeAttribute('data-arrive'); } });
+  document.querySelectorAll('#chatlog[data-role]').forEach((log) => {
+    const { role, crew, mini } = log.dataset;
+    const n = withCrew(crew, () => visibleChat(role).length);
+    if (String(n) === log.dataset.n) return;
+    log.dataset.n = n;
+    const typing = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+    if (!typing && !$('#modal-root').innerHTML) { rerender(); return; }   // also refreshes the conversation list
+    const note = log.querySelector('.note');
+    log.innerHTML = (note ? note.outerHTML : '') + withCrew(crew, () => chatLog(role, !!mini));
+    log.scrollTop = log.scrollHeight;
+  });
   // Day rollover (incl. Nov 30 → Nov 1 loop): move "today" and follow it if the viewer was on today.
   const now = simNow().toISOString().slice(0, 10);
   if (now !== TODAY) {

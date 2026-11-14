@@ -44,7 +44,7 @@ Normal readings can wait, so they are buffered for an hour and sent together. Po
 - Potential and Urgent readings appear about 21 minutes after they are measured (a 1-minute bundle plus 20 minutes of light time).
 - Normal readings arrive in hourly batches, 20 minutes after each hour ends. A 10:05 reading, for example, shows up at 11:20.
 
-So at the same moment the two screens can show different latest values, and the doctor's top bar shows when data last arrived (`Received HH:MM UTC`). Chat messages are not delayed, so the demo conversation stays usable.
+So at the same moment the two screens can show different latest values, and the doctor's top bar shows when data last arrived (`Received HH:MM UTC`). Chat follows the same 20-minute light delay: the sender sees a message right away as *In transit*, which turns into *Delivered* when it arrives. The other side sees it only when it arrives.
 
 **Log entry:** file name, number of readings, raw size → size on the wire, number of packets (cold only), verification, and send/arrival times.
 
