@@ -1186,3 +1186,10 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 .role-card.earth .ws { color: #8AB4FF; }
 .role-card p { opacity: 1; color: #E3E8F1; }
 .role-card.earth .role-ico { background: rgba(138,180,255,.16); color: #8AB4FF; }
+
+/* onboarding: fixed card heights whatever is selected */
+.loc { height: 80px; }
+.loc-check { display: grid; visibility: hidden; }
+.loc.on .loc-check { visibility: visible; }
+.loc-tx b, .loc-tx small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.crew-scroll { height: 226px; }
