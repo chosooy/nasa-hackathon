@@ -1033,7 +1033,6 @@ function crewSelect() {
         <div class="bl-kicker">EARTH BASELINE</div>
         <h2>Bring your health data from Earth.</h2>
         <p class="bl-lead">To support your care throughout the mission, we collect your health data on Earth as your baseline. The same biomarkers are measured again in space and compared with it, so your care team can see what has changed for you.</p>
-        <div class="bl-chips"><span><b>77</b> biomarkers</span><span>${ICON.tube}Samples</span><span>${ICON.monitor}Cognitive tests</span></div>
         <hr>
         <div class="bl-step"><i>1</i><p>Download the template to see which biomarkers to prepare and how to measure each one.</p></div>
         <a class="bl-btn light" href="${ROOT}/ui/baseline_template.csv" download="baseline_template.csv">${ICON.download}Download baseline template (.csv)</a>
