@@ -21,7 +21,7 @@
 NASA Space Apps Challenge · *Create Health Monitoring Software for Astronauts on Space Missions*
 Team Kook · Sooyeon Cho, Haejun Paik, Dahyun Lee
 
-[Live dashboard](https://chosooy.github.io/nasa-hackathon/dashboard/) · [Test bench](https://chosooy.github.io/nasa-hackathon/test/) · [Slides](https://docs.google.com/presentation/d/1-_GjA7EkPju9ftL7wJygjFODrgVq4lCvm-AXgDYFebA/edit?slide=id.p#slide=id.p) · [Data flow](docs/data-flow.md)
+[Space Apps team page](https://www.spaceappschallenge.org/2026/find-a-team/team-cook/?tab=details) · [Live dashboard](https://chosooy.github.io/nasa-hackathon/dashboard/) · [Test bench](https://chosooy.github.io/nasa-hackathon/test/) · [Slides](https://docs.google.com/presentation/d/1-_GjA7EkPju9ftL7wJygjFODrgVq4lCvm-AXgDYFebA/edit?slide=id.p#slide=id.p) · [Data flow](docs/data-flow.md)
 
 ## Summary
 
