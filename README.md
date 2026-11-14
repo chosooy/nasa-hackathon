@@ -55,6 +55,47 @@ That means a new problem reaches the doctor 20 minutes after it is measured, and
 
 For comparison, sending every 5-minute slot as its own file kept the doctor exactly 20 minutes behind on everything, but came to about 64% of raw (see Design history).
 
+### The trade-off
+
+This flow does **not** give the smallest possible size. zstd shrinks data better the more it gets at once, because repeated dates and biomarker names are stored only once. So the longer Mars waits, the smaller the data, and the later the doctor sees it:
+
+| How often Mars sends (Nov 13, ~45.5 KB raw per crew) | Size vs raw | When the doctor sees it |
+| --- | ---: | --- |
+| Every 5-minute slot | ~64% | Always 20 min after measurement |
+| **New Potential/Urgent, or every 6 h (current)** | 9.8–12.1% | New problems after 20 min; Normal data within 6 h |
+| A whole day in one file | 7.8–8.6% | Up to a day later |
+
+We chose the middle row on purpose. It costs only 2–4 percentage points more than sending once a day, and in return a new problem reaches the doctor in 20 minutes instead of the next day.
+
+### Shrinking further under the same rule
+
+Same send rule, same files, packed differently. Every option is decoded again and must give back the same readings. Measured on 2026-11-13 by [`tools/compression_options.py`](tools/compression_options.py) (dictionaries trained on Nov 1–12 files made by the same rule):
+
+| Option | A | B | C | D |
+| --- | ---: | ---: | ---: | ---: |
+| a) CSV rows, zstd 19 (**current**) | 12.1% | 10.1% | 9.8% | 9.8% |
+| b) CSV rows, zstd 22 (highest level) | 12.1% | 10.1% | 9.8% | 9.8% |
+| c) CSV rows, zstd + shared dictionary | 9.5% | 9.2% | 8.9% | 9.1% |
+| d) compact text, zstd | 8.5% | 7.9% | 7.6% | 7.7% |
+| e) compact text, zstd + dictionary | 7.7% | 7.6% | 7.3% | 7.6% |
+| **f) columns + deltas, zstd** | **4.1%** | **3.6%** | **3.6%** | **3.6%** |
+| g) columns + deltas, no zstd | 5.7% | 5.5% | 5.5% | 5.4% |
+| h) columns + deltas, zstd + dictionary | 3.6% | 3.3% | 3.2% | 3.2% |
+
+What the options mean:
+
+- **compact text:** the date is written once per file, time as `HHMM`, and the biomarker as a number from a list both sides already hold, e.g. `1305,4,142.1`.
+- **columns + deltas:** readings are grouped by biomarker. For each one we store the slot number and the value as whole numbers, with decimals fixed per biomarker, e.g. 142.1 → 1421. Each number is stored as the change from the previous one, in a variable number of bytes. Readings that barely change become runs of tiny numbers, which zstd squeezes very well.
+
+What we learned:
+
+- Raising zstd from level 19 to 22 changes nothing on files this small.
+- A shared dictionary helps plain CSV (~2 points) but adds little once the format is already compact (f → h: ~0.4 points), and both sides must keep the same dictionary file.
+- **The format matters more than the compressor.** Option f takes a day to 3.6–4.1% of raw. That is about a third of the current size, and smaller than a whole day of CSV in one file (7.8%), while keeping the same 20-minute alerts.
+- The values come back exactly, but number formatting does not: `142.0` comes back as `142`.
+
+**Not applied yet.** The dashboard and test bench still send option a (CSV rows + zstd). Option f is the recommended next step.
+
 ## Design history
 
 **Step 2, one zstd file per 5-minute slot.** Every slot, whatever its status, went to the doctor 20 minutes after it was measured. It was simple, but each file held only about four readings, so a day came to ~29 KB (64% of raw). We also considered sending on any Potential/Urgent reading, else once a day: that cut Crews B–D to ~9%, but Crew A's blood pressure is Potential all day, so it still sent every 5 minutes (64%). Counting only *new* Potential/Urgent readings and adding the 6-hour cap gave the current flow.
