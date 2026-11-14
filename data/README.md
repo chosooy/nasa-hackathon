@@ -1,6 +1,4 @@
--clear = 값을 기준으로 normal/potential/urgent 나눌 수 있는 biomarker
--unclear = 값을 기준으로 normal/potential/urgent 나눌 수 없는 biomarker
-
+clear = 값을 기준으로 normal/potential/urgent 나눌 수 있는 biomarker / unclear = 값을 기준으로 normal/potential/urgent 나눌 수 없는 biomarker
 
 clear biomarker.csv = clear한 biomarker
 
