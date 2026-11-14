@@ -845,8 +845,6 @@ function doctorHome() {
 function doctorCrew(c) {
   const hasData = hasCrew(c);
   const states = statesFor(c);
-  const TILE = [['Total Sleep Time', 'Time asleep'], ['Sleep Efficiency', 'Sleep efficiency'], ['Self-reported sleep quality', 'slept'], ['Mood', 'Mood'], ['Team cohesion', 'Team cohesion'], ['LDL-cholesterol', 'Cholesterol']];
-  const tiles = TILE.map(([b, l]) => { const s = states.find((x) => x.b === b); return s ? `<a class="tile" href="#/doctor/bio/${enc(b)}"><small>${l}</small><div class="num ${s.status}">${esc(fmt(s.v, b))}${unitOf(b) && unitOf(b).length < 4 ? `<small>${esc(unitOf(b))}</small>` : ''}</div><div class="st ${s.status}">${SEV_LABEL[s.status]}</div>${areaChart(b, s.pts.slice(-10), { w: 160, h: 34, axis: false })}</a>` : ''; }).join('');
   const shown = states.filter((s) => s.status !== 'nodata');
   const cats = ['All', ...new Set(shown.map((s) => s.category))];
   const grid = shown.filter((s) => state.bioCat === 'All' || s.category === state.bioCat);
@@ -857,8 +855,7 @@ function doctorCrew(c) {
       <div class="right">
         <div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn outline" href="${hasData ? `#/doctor/day/${c}/${state.date}` : '#/doctor/crew/' + c}">Daily records</a><button class="btn outline" data-modal="instruction">Send instruction</button><a class="btn primary" href="#/doctor/chat">${ICON.chat}Message</a></div></div></div>
     <section class="card" style="padding:20px">${weekCalendar(c, (x) => (hasData ? `#/doctor/day/${c}/${x}` : `#/doctor/crew/${c}`))}</section>
-    ${hasData ? `<div class="tiles">${tiles}</div>
-    <section class="card"><h3 style="margin-bottom:12px">Biomarkers</h3>
+    ${hasData ? `<section class="card" style="margin-top:18px"><h3 style="margin-bottom:12px">Biomarkers</h3>
       <div class="chips" style="margin-bottom:16px">${cats.map((k) => `<button class="chip ${state.bioCat === k ? 'on' : ''}" data-cat="${esc(k)}">${esc(k)}</button>`).join('')}</div>
       <div class="bio-grid">${grid.map((s, i) => `<a class="bio-card ${s.status}" href="#/doctor/bio/${enc(s.b)}"><div class="h"><div><small>#${i + 1}</small> <b>${esc(s.name)}</b></div><span class="num ${s.status}">${esc(fmt(s.v, s.b))}</span></div><div class="h" style="align-items:center"><small>${esc(s.category)}</small><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></div><div style="margin-top:6px">${areaChart(s.b, s.pts.slice(-14), { w: 220, h: 46, axis: false })}</div><div class="f">${s.pts.slice(-14).filter((p) => statusOf(s.b, p.v) !== 'normal').length} of ${s.pts.slice(-14).length} readings flagged</div></a>`).join('')}</div>
     </section>` : `<section class="card" style="margin-top:18px"><div class="empty">No biomarker data for Crew ${c} yet.</div></section>`}
