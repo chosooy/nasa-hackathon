@@ -1,159 +1,66 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1110" viewBox="0 0 1600 1110" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="700" viewBox="0 0 1600 700" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
   <defs>
-    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#A9B6D3"/></marker>
-    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#FF8A65"/></marker>
-    <marker id="ac" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7FA8FF"/></marker>
-    <marker id="ay" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#EAFE07"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#A9B6D3"/></marker>
+    <marker id="h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#FF8A65"/></marker>
+    <marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7FA8FF"/></marker>
   </defs>
   <style>
-    .t { fill: #FFFFFF; }
-    .m { fill: #A9B6D3; }
-    .y { fill: #EAFE07; }
-    .h1 { font-size: 34px; font-weight: 700; }
-    .h2 { font-size: 15px; font-weight: 700; letter-spacing: 1.5px; }
-    .b  { font-size: 17px; font-weight: 700; }
-    .s  { font-size: 13.5px; }
-    .xs { font-size: 12px; }
-    .panel { fill: #0B1A45; stroke: #22346B; stroke-width: 1.5; }
-    .box { fill: #12245A; stroke: #2C4386; stroke-width: 1.5; }
-    .hot { fill: #3A1E22; stroke: #FF8A65; stroke-width: 1.5; }
-    .cold { fill: #13295E; stroke: #7FA8FF; stroke-width: 1.5; }
-    .ln { stroke: #A9B6D3; stroke-width: 2; fill: none; }
+    .w { fill: #FFFFFF; } .m { fill: #A9B6D3; } .y { fill: #EAFE07; }
+    .title { font-size: 40px; font-weight: 700; }
+    .k { font-size: 15px; font-weight: 700; letter-spacing: 2px; }
+    .n { font-size: 24px; font-weight: 700; }
+    .s { font-size: 17px; }
   </style>
+  <rect width="1600" height="700" fill="#050E2A"/>
 
-  <rect width="1600" height="1110" fill="#050E2A"/>
+  <text x="60" y="92" class="w title">How crew data gets from Mars to Earth</text>
 
-  <!-- title -->
-  <text x="40" y="66" class="t h1">KOOK · Data compression &amp; transmission</text>
-  <text x="40" y="98" class="m s">Crew biomarkers travel from Mars to Earth in two lanes. Status decides the lane: urgent data goes fast, normal data is batched and packed tighter.</text>
+  <!-- side labels -->
+  <text x="60" y="170" class="y k">MARS</text>
+  <text x="1540" y="170" text-anchor="end" class="y k">EARTH</text>
 
-  <!-- ===== MARS ===== -->
-  <rect x="40" y="130" width="580" height="530" rx="22" class="panel"/>
-  <text x="70" y="168" class="y h2">MARS · CREW SIDE</text>
+  <!-- 1. readings -->
+  <rect x="60" y="300" width="230" height="110" rx="20" fill="#0F2052" stroke="#2C4386" stroke-width="2"/>
+  <text x="175" y="347" text-anchor="middle" class="w n">Readings</text>
+  <text x="175" y="378" text-anchor="middle" class="m s">every 5 min</text>
+  <path d="M290 355 H346" stroke="#A9B6D3" stroke-width="2.5" marker-end="url(#g)"/>
 
-  <rect x="70" y="188" width="520" height="62" rx="12" class="box"/>
-  <text x="90" y="214" class="t b">Biomarker readings</text>
-  <text x="90" y="236" class="m s">every 5 min · CSV row: date, time, biomarker, figure</text>
-  <path d="M330 250 V282" class="ln" marker-end="url(#a)"/>
+  <!-- 2. status -->
+  <rect x="350" y="300" width="230" height="110" rx="20" fill="#0F2052" stroke="#2C4386" stroke-width="2"/>
+  <text x="465" y="347" text-anchor="middle" class="w n">Status</text>
+  <text x="465" y="378" text-anchor="middle" class="m s">normal · potential · urgent</text>
 
-  <rect x="70" y="284" width="520" height="62" rx="12" class="box"/>
-  <text x="90" y="310" class="t b">Status check (biomarker.csv)</text>
-  <text x="90" y="332" class="m s">yellow column = normal range · red column = urgent · else potential</text>
-  <path d="M195 346 V392" stroke="#7FA8FF" stroke-width="2" fill="none" marker-end="url(#ac)"/>
-  <path d="M465 346 V392" stroke="#FF8A65" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+  <!-- split -->
+  <path d="M580 355 C 630 355, 630 250, 676 250" stroke="#FF8A65" stroke-width="2.5" fill="none" marker-end="url(#h)"/>
+  <path d="M580 355 C 630 355, 630 460, 676 460" stroke="#7FA8FF" stroke-width="2.5" fill="none" marker-end="url(#c)"/>
 
-  <!-- cold lane (left) -->
-  <rect x="70" y="394" width="250" height="50" rx="12" class="cold"/>
-  <text x="88" y="416" fill="#7FA8FF" class="b">COLD lane</text>
-  <text x="88" y="434" class="t xs">Normal readings</text>
-  <path d="M195 444 V462" stroke="#7FA8FF" stroke-width="2" marker-end="url(#ac)"/>
-  <rect x="70" y="464" width="250" height="50" rx="12" class="box"/>
-  <text x="88" y="486" class="t b">1-hour batch</text>
-  <text x="88" y="504" class="m xs">buffered, sent on the hour</text>
-  <path d="M195 514 V532" stroke="#7FA8FF" stroke-width="2" marker-end="url(#ac)"/>
-  <rect x="70" y="534" width="250" height="50" rx="12" class="box"/>
-  <text x="88" y="556" class="t b">zstd · level 19</text>
-  <text x="88" y="574" class="m xs">then split into packets</text>
-  <path d="M195 584 V600" stroke="#7FA8FF" stroke-width="2" marker-end="url(#ac)"/>
-  <rect x="70" y="602" width="250" height="44" rx="12" class="box"/>
-  <text x="88" y="630" class="t b">CCSDS Space Packets</text>
+  <!-- hot lane -->
+  <rect x="680" y="195" width="400" height="110" rx="20" fill="#3A1E22" stroke="#FF8A65" stroke-width="2"/>
+  <text x="710" y="240" fill="#FF8A65" class="n">HOT · Potential / Urgent</text>
+  <text x="710" y="274" class="w s">zstd  ·  sent every minute</text>
 
-  <!-- hot lane (right) -->
-  <rect x="340" y="394" width="250" height="50" rx="12" class="hot"/>
-  <text x="358" y="416" fill="#FF8A65" class="b">HOT lane</text>
-  <text x="358" y="434" class="t xs">Potential / Urgent readings</text>
-  <path d="M465 444 V462" stroke="#FF8A65" stroke-width="2" marker-end="url(#ah)"/>
-  <rect x="340" y="464" width="250" height="50" rx="12" class="box"/>
-  <text x="358" y="486" class="t b">1-minute bundle</text>
-  <text x="358" y="504" class="m xs">sent at the end of each minute</text>
-  <path d="M465 514 V532" stroke="#FF8A65" stroke-width="2" marker-end="url(#ah)"/>
-  <rect x="340" y="534" width="250" height="50" rx="12" class="box"/>
-  <text x="358" y="556" class="t b">zstd · level 19</text>
-  <text x="358" y="574" class="m xs">.zst payload, no packet framing</text>
+  <!-- cold lane -->
+  <rect x="680" y="405" width="400" height="110" rx="20" fill="#13295E" stroke="#7FA8FF" stroke-width="2"/>
+  <text x="710" y="450" fill="#7FA8FF" class="n">COLD · Normal</text>
+  <text x="710" y="484" class="w s">zstd + CCSDS packets  ·  sent every hour</text>
 
-  <!-- ===== LINK ===== -->
-  <rect x="640" y="130" width="320" height="530" rx="22" class="panel"/>
-  <text x="800" y="168" text-anchor="middle" class="y h2">DEEP-SPACE LINK</text>
-  <text x="800" y="262" text-anchor="middle" class="y" font-size="64" font-weight="700">20 min</text>
-  <text x="800" y="292" text-anchor="middle" class="m s">one-way light time, Mars → Earth</text>
+  <!-- link -->
+  <path d="M1080 250 C 1160 250, 1180 330, 1246 340" stroke="#FF8A65" stroke-width="2.5" fill="none" stroke-dasharray="9 7" marker-end="url(#h)"/>
+  <path d="M1080 460 C 1160 460, 1180 380, 1246 370" stroke="#7FA8FF" stroke-width="2.5" fill="none" stroke-dasharray="9 7" marker-end="url(#c)"/>
+  <text x="1165" y="354" text-anchor="middle" class="y" font-size="30" font-weight="700">20 min</text>
+  <text x="1165" y="378" text-anchor="middle" class="m" font-size="14">light delay</text>
 
-  <text x="800" y="376" text-anchor="middle" fill="#FF8A65" class="s">hot: arrives ≈ 21 min after measurement</text>
-  <text x="800" y="396" text-anchor="middle" fill="#7FA8FF" class="s">cold: arrives at :20 past each hour</text>
+  <!-- earth -->
+  <rect x="1250" y="300" width="290" height="110" rx="20" fill="#1B2F10" stroke="#EAFE07" stroke-width="2"/>
+  <text x="1395" y="347" text-anchor="middle" class="y n">Ground doctor</text>
+  <text x="1395" y="378" text-anchor="middle" class="w s">verify · decompress · show</text>
 
-  <path d="M690 322 H910" stroke="#EAFE07" stroke-width="2" marker-start="url(#ay)" marker-end="url(#ay)"/>
-  <text x="800" y="346" text-anchor="middle" class="t s">Chat · same 20-min delay, both ways</text>
-
-  <!-- ===== EARTH ===== -->
-  <rect x="980" y="130" width="580" height="530" rx="22" class="panel"/>
-  <text x="1010" y="168" class="y h2">EARTH · GROUND DOCTOR</text>
-
-  <rect x="1010" y="372" width="520" height="62" rx="12" class="box"/>
-  <text x="1030" y="398" class="t b">1 · Receive</text>
-  <text x="1030" y="420" class="m s">reassemble packets by APID and sequence count</text>
-  <path d="M1270 434 V452" class="ln" marker-end="url(#a)"/>
-  <rect x="1010" y="454" width="520" height="50" rx="12" class="box"/>
-  <text x="1030" y="485" class="t b">2 · CRC-16 check on every packet <tspan class="m s" font-weight="400">(cold)</tspan></text>
-  <path d="M1270 504 V522" class="ln" marker-end="url(#a)"/>
-  <rect x="1010" y="524" width="520" height="50" rx="12" class="box"/>
-  <text x="1030" y="555" class="t b">3 · zstd decompress → compare with original CSV  <tspan class="y">✓</tspan></text>
-  <path d="M1270 574 V592" class="ln" marker-end="url(#a)"/>
-  <rect x="1010" y="594" width="520" height="50" rx="12" fill="#1B2F10" stroke="#EAFE07" stroke-width="1.5"/>
-  <text x="1030" y="625" class="y b">4 · Doctor dashboard uses only data that has arrived</text>
-
-  <rect x="1010" y="188" width="520" height="160" rx="12" fill="#081433" stroke="#22346B"/>
-  <text x="1030" y="216" class="t b">What the doctor sees, and when</text>
-  <circle cx="1040" cy="246" r="6" fill="#FF8A65"/>
-  <text x="1056" y="251" class="t s">Potential / Urgent: about 21 min after measurement</text>
-  <circle cx="1040" cy="276" r="6" fill="#7FA8FF"/>
-  <text x="1056" y="281" class="t s">Normal: hourly batch, 20 min after the hour ends</text>
-  <circle cx="1040" cy="306" r="6" fill="#EAFE07"/>
-  <text x="1056" y="311" class="t s">Top bar shows the last arrival: "Received HH:MM UTC"</text>
-  <text x="1056" y="334" class="m xs">The astronaut's screens stay live; the doctor's lag by the link.</text>
-
-  <!-- link curves drawn last so the arrowheads sit on top of the Earth panel -->
-  <path d="M590 559 C 760 559, 830 395, 1008 395" stroke="#FF8A65" stroke-width="2.5" fill="none" stroke-dasharray="9 7" marker-end="url(#ah)"/>
-  <path d="M320 624 H620 C 800 624, 850 420, 1008 420" stroke="#7FA8FF" stroke-width="2.5" fill="none" stroke-dasharray="9 7" marker-end="url(#ac)"/>
-
-  <!-- ===== CCSDS packet ===== -->
-  <text x="40" y="712" class="y h2">CCSDS SPACE PACKET (COLD LANE) · ≤ 1032 BYTES</text>
-  <rect x="40" y="728" width="430" height="70" rx="10" fill="#1A2C66" stroke="#7FA8FF"/>
-  <text x="58" y="756" class="t b">Primary header · 6 B</text>
-  <text x="58" y="780" class="m xs">version · type TM · sec-hdr flag · APID · seq flags · seq count · length</text>
-  <rect x="478" y="728" width="300" height="70" rx="10" fill="#1A2C66" stroke="#7FA8FF"/>
-  <text x="496" y="756" class="t b">Secondary header · 6 B</text>
-  <text x="496" y="780" class="m xs">CUC time: 4 B seconds + 2 B fine</text>
-  <rect x="786" y="728" width="560" height="70" rx="10" fill="#13295E" stroke="#7FA8FF"/>
-  <text x="804" y="756" class="t b">User data · up to 1018 B</text>
-  <text x="804" y="780" class="m xs">a chunk of the zstd stream (larger batches span several packets)</text>
-  <rect x="1354" y="728" width="206" height="70" rx="10" fill="#1A2C66" stroke="#7FA8FF"/>
-  <text x="1372" y="756" class="t b">CRC · 2 B</text>
-  <text x="1372" y="780" class="m xs">CRC-16/CCITT-FALSE</text>
-
-  <text x="40" y="826" class="m s">APID per crew: A 0x101 · B 0x102 · C 0x103 · D 0x104   ·   sequence flags: first / middle / last / unsegmented   ·   CUC epoch: 2026-10-01 00:00 UTC</text>
-
-  <!-- ===== timeline examples ===== -->
-  <text x="40" y="882" class="y h2">EXAMPLES</text>
-
-  <g>
-    <rect x="40" y="898" width="1520" height="86" rx="14" fill="#0B1A45" stroke="#22346B"/>
-    <rect x="58" y="916" width="120" height="30" rx="15" fill="#3A1E22" stroke="#FF8A65"/>
-    <text x="118" y="936" text-anchor="middle" fill="#FF8A65" class="xs" font-weight="700">POTENTIAL</text>
-    <text x="196" y="937" class="t s">SBP 142 mmHg measured</text><text x="196" y="962" class="y b">12:05</text>
-    <path d="M370 940 H520" stroke="#FF8A65" stroke-width="2" marker-end="url(#ah)"/>
-    <text x="540" y="937" class="t s">1-minute bundle → zstd, sent</text><text x="540" y="962" class="y b">12:06</text>
-    <path d="M760 940 H910" stroke="#FF8A65" stroke-width="2" stroke-dasharray="8 6" marker-end="url(#ah)"/>
-    <text x="835" y="930" text-anchor="middle" class="m xs">+20 min</text>
-    <text x="930" y="937" class="t s">arrives on Earth, doctor sees it</text><text x="930" y="962" class="y b">12:26</text>
-  </g>
-  <g>
-    <rect x="40" y="996" width="1520" height="86" rx="14" fill="#0B1A45" stroke="#22346B"/>
-    <rect x="58" y="1014" width="120" height="30" rx="15" fill="#13295E" stroke="#7FA8FF"/>
-    <text x="118" y="1034" text-anchor="middle" fill="#7FA8FF" class="xs" font-weight="700">NORMAL</text>
-    <text x="196" y="1035" class="t s">Body temp 36.9 °C measured</text><text x="196" y="1060" class="y b">10:05</text>
-    <path d="M410 1038 H520" stroke="#7FA8FF" stroke-width="2" marker-end="url(#ac)"/>
-    <text x="540" y="1035" class="t s">10:00–11:00 batch → zstd → CCSDS, sent</text><text x="540" y="1060" class="y b">11:00</text>
-    <path d="M840 1038 H910" stroke="#7FA8FF" stroke-width="2" stroke-dasharray="8 6" marker-end="url(#ac)"/>
-    <text x="875" y="1028" text-anchor="middle" class="m xs">+20 min</text>
-    <text x="930" y="1035" class="t s">arrives on Earth, CRC + round-trip check ✓</text><text x="930" y="1060" class="y b">11:20</text>
-  </g>
+  <!-- bottom summary -->
+  <line x1="60" y1="580" x2="1540" y2="580" stroke="#22346B" stroke-width="1.5"/>
+  <circle cx="72" cy="627" r="8" fill="#FF8A65"/>
+  <text x="92" y="633" class="w s">Urgent data reaches the doctor in ~21 min</text>
+  <circle cx="602" cy="627" r="8" fill="#7FA8FF"/>
+  <text x="622" y="633" class="w s">Normal data arrives hourly, packed tighter</text>
+  <circle cx="1132" cy="627" r="8" fill="#EAFE07"/>
+  <text x="1152" y="633" class="w s">Chat has the same 20-min delay</text>
 </svg>
