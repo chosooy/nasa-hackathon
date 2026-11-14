@@ -64,6 +64,37 @@ const worst = (list) => (list.some((r) => r.st === 'urgent') ? 'urgent' : list.s
 
 parseCSV(await fetch(`${ROOT}/data/biomarker/biomarker.csv`).then((r) => r.text()))
   .forEach((r) => { RULES[r.biomarker] = { yellow: parseRule(r.yellow), red: parseRule(r.red) }; });
+const INFO = {};
+parseCSV(await fetch(`${ROOT}/data/health_instruction/health_instruction.csv`).then((r) => r.text()))
+  .forEach((r) => { INFO[r.biomarker] = r; });
+
+// ===== voice guidance: when a biomarker newly turns Potential/Urgent, read its instruction aloud =====
+// Uses the browser's built-in speech (Web Speech API). Playback waits while the device is speaking,
+// so every announcement is heard in full. Clicking Start unlocks audio in the browser.
+let speaking = false;
+function announce(list) {
+  const r = list.find((x) => x.st === 'urgent') || list[0];
+  const i = INFO[r.b] || {};
+  const guide = (r.st === 'urgent' ? i.red_instruction : i.yellow_instruction) || 'Contact the flight medical officer.';
+  const first = guide.split(/(?<=\.)\s/)[0];
+  const label = r.st === 'urgent' ? 'Urgent' : 'Potential';
+  const text = `${r.b} is ${label}, ${r.fig}${i.unit ? ' ' + i.unit : ''}. ${first}`;
+  $('sayLine').innerHTML = '';
+  const b = document.createElement('b'); b.textContent = `🔊 ${r.b} · ${label}`; if (r.st === 'urgent') b.className = 'urgent';
+  $('sayLine').append(b, document.createTextNode(` — ${first}`));
+  if (!$('voiceChk').checked || !('speechSynthesis' in window)) return;
+  speaking = true;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  const v = speechSynthesis.getVoices().find((x) => x.lang === 'en-US') || speechSynthesis.getVoices().find((x) => (x.lang || '').startsWith('en'));
+  if (v) u.voice = v;
+  const done = () => { speaking = false; };
+  u.onend = done; u.onerror = done;
+  setTimeout(done, 4000 + text.length * 90);          // in case the browser never fires onend
+  speechSynthesis.speak(u);
+}
+function hush() { speaking = false; if ('speechSynthesis' in window) speechSynthesis.cancel(); }
+if ('speechSynthesis' in window) speechSynthesis.getVoices();
 
 let zstd = null;
 const zstdReady = import(`${ZSTD_PKG}/+esm`).then(async (m) => { await m.init(`${ZSTD_PKG}/dist/web/zstd.wasm`); zstd = m; })
@@ -93,12 +124,15 @@ function reset() {
   stop();
   slotIdx = 0; files.length = 0; sum.readings = 0; sum.raw = 0; buf = []; bufFrom = null; prev = {};
   $('rawList').innerHTML = '<div class="empty">Press Start to replay the day.</div>';
+  $('sayLine').textContent = '';
+  hush();
   $('btnStart').disabled = !slots.length;
   render();
 }
 
 // ===== playback: one 5-minute slot per tick =====
 function step() {
+  if (speaking) return;                                     // wait until the announcement ends
   if (slotIdx >= slots.length) { stop(); $('btnStart').disabled = true; render(); return; }
   const slot = slots[slotIdx++];
   const t = slot[0].time;
@@ -107,7 +141,7 @@ function step() {
   sum.readings += slot.length; sum.raw += utf8.encode(slot.map((r) => `${r.date},${r.time},${r.b},${r.fig}\n`).join('')).length;
   const newly = slot.filter((r) => r.st !== 'normal' && prev[r.b] !== r.st);
   slot.forEach((r) => { prev[r.b] = r.st; });
-  if (newly.length) send(t, 'new', newly);
+  if (newly.length) { send(t, 'new', newly); announce(newly); }
   else if (toMin(t) - toMin(bufFrom) + 5 >= CAP_MIN) send(t, 'cap', []);
 
   const box = $('rawList');
@@ -198,7 +232,7 @@ async function start() {
   $('btnStart').textContent = 'Pause';
   step();
 }
-function stop() { clearInterval(timer); timer = null; $('btnStart').textContent = 'Start'; }
+function stop() { clearInterval(timer); timer = null; $('btnStart').textContent = 'Start'; hush(); }
 
 // ===== render =====
 function row(cells) {
@@ -248,6 +282,7 @@ function render() {
 // ===== controls =====
 $('btnStart').addEventListener('click', () => (timer ? stop() : start()));
 $('btnReset').addEventListener('click', reset);
+$('voiceChk').addEventListener('change', () => { if (!$('voiceChk').checked) hush(); });
 $('speedSel').addEventListener('change', () => { if (timer) { stop(); start(); } });
 $('crewSel').addEventListener('change', loadDay);
 $('daySel').addEventListener('change', loadDay);

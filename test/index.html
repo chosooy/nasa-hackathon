@@ -33,6 +33,10 @@
   .stamp img { width: 76px; height: 76px; border-radius: 50%; object-fit: cover; object-position: center 15%; border: 3px solid rgba(255,255,255,.25); }
   .stamp span { font: 500 40px/1 var(--mono); color: var(--muted); letter-spacing: -.02em; }
   .stamp b { font: 700 64px/1 var(--mono); letter-spacing: -.03em; }
+  .say { min-height: 22px; margin: 12px auto 0; padding: 0 20px; max-width: 900px; text-align: center; color: var(--muted); font-size: 14px; }
+  .say b { color: #EAFE07; font-weight: 600; }
+  .say b.urgent { color: var(--danger); }
+  input[type="checkbox"] { accent-color: var(--accent); }
   @media (max-width: 700px) { .stamp { gap: 12px; } .stamp img { width: 48px; height: 48px; } .stamp span { font-size: 20px; } .stamp b { font-size: 34px; } }
   option { background: #07173F; }
   .progress { height: 2px; background: var(--line); }
@@ -78,14 +82,15 @@
     <label>Speed <select id="speedSel">
       <option value="1000">1×</option>
       <option value="250" selected>4×</option>
-      <option value="60">16×</option>
     </select></label>
+    <label><input type="checkbox" id="voiceChk" checked> Voice</label>
     <button id="btnStart" class="primary" type="button" disabled>Start</button>
     <button id="btnReset" type="button" disabled>Reset</button>
   </div>
   <div class="progress"><i id="progress"></i></div>
 
   <div class="stamp"><img id="stampImg" src="../assets/image/web/A_profile.jpg" alt="Crew A"><span id="stampDate">2026-11-13</span><b id="stampTime">--:--</b></div>
+  <p class="say" id="sayLine" aria-live="polite"></p>
 
   <main>
     <section class="card raw">
@@ -120,6 +125,6 @@
     </section>
   </main>
 
-<script type="module" src="app.js?v=14"></script>
+<script type="module" src="app.js?v=15"></script>
 </body>
 </html>

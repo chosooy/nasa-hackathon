@@ -10,6 +10,14 @@ Replays one crew's day through the same data flow as the dashboard:
 
 At the top, pick the crew (A–D), the day (Nov 1–30) and the playback speed. The crew photo, date and current replay time are shown above the cards.
 
+**Voice guidance.** When a biomarker newly turns Potential or Urgent, the page reads the first sentence of its instruction from `data/health_instruction/health_instruction.csv` aloud (`yellow_instruction` for Potential, `red_instruction` for Urgent). The same sentence is shown under the time.
+
+- It uses the browser's built-in speech (Web Speech API).
+- Playback pauses while it speaks, so every announcement is heard in full.
+- Clicking **Start** allows the browser to play sound.
+- The **Voice** checkbox turns it off.
+- Speeds are 1× (one 5-minute slot per second) and 4×.
+
 Serve the repository root so the page can read `../data`:
 
 ```bash
