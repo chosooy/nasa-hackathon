@@ -343,22 +343,22 @@ p { margin: 0; }
 
 /* landing */
 .landing { min-height: 100vh; display: grid; place-items: center; padding: 40px 16px; }
-.landing .inner { width: min(640px, 100%); text-align: center; }
-.landing .logo { height: 64px; }
-.landing h1 { font-family: var(--display); font-size: 30px; margin: 26px 0 26px; }
-.roles { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; text-align: left; }
-.role-card { position: relative; border-radius: 16px; overflow: hidden; min-height: 210px; padding: 18px; display: flex; flex-direction: column; justify-content: flex-end; }
+.landing .inner { width: min(960px, 100%); text-align: center; }
+.landing .logo { height: 104px; }
+.landing h1 { font-family: var(--display); font-size: 46px; margin: 34px 0 40px; letter-spacing: -.02em; }
+.roles { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: left; }
+.role-card { position: relative; border-radius: 24px; overflow: hidden; height: 320px; padding: 30px; display: flex; flex-direction: column; justify-content: flex-end; transition: transform .15s; }
+.role-card:hover { transform: translateY(-3px); }
 .role-card.space { background: var(--navy-900); color: #fff; }
 .role-card.earth { background: #fff; color: var(--text); }
-.role-card .ws { position: absolute; top: 16px; left: 18px; font-size: 8.5px; font-weight: 600; }
+.role-card .ws { position: absolute; top: 26px; left: 30px; font-size: 12px; font-weight: 600; letter-spacing: .03em; }
 .role-card.space .ws { color: var(--yellow); } .role-card.earth .ws { color: var(--navy-500); }
-.role-card .orb { position: absolute; right: -24px; top: -24px; width: 120px; height: 120px; border-radius: 50%; background-size: 175%; background-position: center; }
+.role-card .orb { position: absolute; right: -40px; top: -40px; width: 190px; height: 190px; border-radius: 50%; background-size: 175%; background-position: center; }
 .role-card.space .orb { background-image: url("../assets/background/Background_Mars.jpeg"); }
 .role-card.earth .orb { background-image: url("../assets/background/Background_Earth.jpeg"); background-size: 300%; background-position: 45% 30%; }
-.role-card svg { width: 24px; height: 24px; margin-bottom: 8px; }
-.role-card h2 { font-family: var(--display); font-size: 19px; font-weight: 600; margin-bottom: 8px; }
-.role-card p { font-size: 11px; opacity: .75; }
-.landing .test { display: inline-block; margin-top: 28px; font-size: 11px; text-decoration: underline; color: var(--navy-200); }
+.role-card h2 { font-family: var(--display); font-size: 30px; font-weight: 600; margin-bottom: 12px; }
+.role-card p { font-size: 15px; opacity: .75; max-width: 380px; }
+.landing .test { display: inline-block; margin-top: 40px; font-size: 15px; text-decoration: underline; color: var(--navy-200); }
 
 /* floating */
 .fab { position: fixed; right: 32px; bottom: 32px; z-index: 50; display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; border-radius: 999px; background: var(--yellow); color: var(--navy-900); font-weight: 600; font-size: 13.5px; box-shadow: 0 8px 24px rgba(0,0,0,.4); }
@@ -399,3 +399,87 @@ p { margin: 0; }
   .dayhead .big { font-size: 42px; }
   .fab { right: 16px; bottom: 16px; }
 }
+
+/* ---------- Round 3: fixed sizes, hazard tag states, misc ---------- */
+/* hazard tags: potential = neon yellow, urgent = red (kept when selected, with a ring) */
+.chip.hz-potential { background: var(--yellow); color: var(--navy-900); font-weight: 600; }
+.chip.hz-urgent { background: var(--crit); color: #fff; font-weight: 600; }
+.chip.hz-potential.on, .chip.hz-urgent.on { box-shadow: 0 0 0 2px var(--navy-900); }
+
+/* fixed geometry so content changes never move cards or arrows */
+.cal-head .range { display: inline-block; width: 220px; text-align: center; white-space: nowrap; }
+.dayc { height: 262px; min-height: 0; overflow: hidden; }
+.dayc .ev { flex: none; }
+.ev { height: 44px; }
+.ev.sleep { height: 40px; }
+.ev > :last-child:not(.t) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.today-card { height: 312px; min-height: 0; }
+.home-instr { height: 784px; display: flex; flex-direction: column; }
+.home-instr .items { flex: 1; overflow-y: auto; min-height: 0; padding-right: 2px; }
+.home-hazard { height: 392px; }
+.chat.mini { height: 376px; }
+.chat.mini .log { min-height: 0; max-height: none; flex: 1; }
+.pager-n { display: inline-block; min-width: 54px; text-align: right; font-variant-numeric: tabular-nums; }
+.crew-tile { font: inherit; width: 100%; cursor: pointer; height: 138px; }
+.crew-tile small { display: block; height: 14px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 4px; }
+.bio-big { height: 384px; overflow: hidden; }
+.bio-small { height: 187px; overflow: hidden; }
+.bio-big h4, .bio-small h4 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bio-empty { display: grid; place-items: center; color: var(--navy-400); font-size: 13px; }
+.lib { height: 560px; }
+.tile { height: 128px; overflow: hidden; }
+.tile small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bio-card { height: 150px; overflow: hidden; }
+.bio-card .h b { white-space: nowrap; }
+.dayhead .nav .arrow { flex: none; }
+
+/* ground doctor: plain navy stethoscope */
+.doc-ico { display: inline-grid; place-items: center; flex: none; }
+.doc-ico svg { width: 22px; height: 22px; }
+.chat-head .doc-ico svg { width: 26px; height: 26px; }
+
+/* compose "+" */
+.compose .plus { width: 28px; height: 28px; border-radius: 50%; color: var(--navy-500); font-size: 20px; line-height: 1; display: grid; place-items: center; flex: none; }
+.compose .plus:hover { background: var(--navy-100); }
+.compose input:disabled, .compose button:disabled { opacity: .45; cursor: not-allowed; }
+
+/* toast */
+.toast { position: fixed; left: 50%; bottom: 100px; transform: translate(-50%, 12px); z-index: 95; background: var(--navy-900); color: #fff; border: 1px solid rgba(255,255,255,.15); padding: 12px 18px; border-radius: 12px; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: calc(100vw - 32px); }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 1000px) {
+  .home-instr { height: 620px; }
+}
+@media (max-width: 700px) {
+  .landing .logo { height: 72px; }
+  .landing h1 { font-size: 30px; margin: 24px 0 28px; }
+  .role-card { height: 260px; padding: 24px; }
+  .role-card h2 { font-size: 24px; }
+  .role-card p { font-size: 13px; }
+  .today-card { height: auto; }
+  .cal-head .range { width: 190px; font-size: 14px; }
+  .bio-big { height: 360px; }
+}
+.bio-car { height: 384px; overflow: hidden; }
+.bio-car > .stack { gap: 10px; }
+@media (max-width: 1000px) { .bio-car { height: auto; } }
+@media (max-width: 700px) { .hero-crew .planet { right: 0; } }
+
+/* ---------- Round 4: identical hero box for astronaut + doctor ---------- */
+.hero-crew, .hero-doc { position: relative; height: 210px; padding: 0 40px; margin: 0 0 20px; border-radius: 22px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+.hero-crew { overflow: visible; }
+.hero-crew .planet { top: -30px; right: 30px; }
+.hero-crew .chip-day, .hero-doc .chip-day { margin-bottom: 14px; }
+.hero-crew .hero-title, .hero-doc .hero-title { font-size: 56px; line-height: 1.1; margin: 0; }
+.hero-crew .hero-sub, .hero-doc .hero-sub { font-size: 13px; margin-top: 10px; color: #fff; }
+@media (max-width: 700px) {
+  .hero-crew, .hero-doc { height: 170px; padding: 0 20px; }
+  .hero-crew .hero-title, .hero-doc .hero-title { font-size: 34px; }
+  .hero-crew .planet { right: 0; top: -10px; }
+}
+.crew-tile { display: flex; flex-direction: column; align-items: center; justify-content: space-between; cursor: default; }
+.crew-tile .tile-sel { width: 100%; cursor: pointer; color: inherit; }
+.crew-tile .tile-sel b { display: block; font-size: 12.5px; margin-top: 4px; }
+.tile-open { display: inline-block; margin-top: 6px; padding: 4px 12px; border-radius: 999px; background: var(--navy-900); color: #fff; font-size: 10.5px; font-weight: 600; white-space: nowrap; }
+.tile-open:hover { background: var(--electric); }
+.crew-tile { height: 156px; }
