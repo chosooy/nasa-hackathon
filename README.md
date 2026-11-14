@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="assets/banner.png" width="100%" alt="KOCK Banner">
+  <img src="assets/logo/banner.png" width="100%" alt="KOCK Banner">
 </p>
 
 
