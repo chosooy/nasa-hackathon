@@ -285,7 +285,7 @@ const libExtra = () => store.get('library', []);
 
 /* ---------------- charts ---------------- */
 const ZC = { urgent: '#FDE7DF', potential: '#F4FFB0', normal: '#E6EEF8' };
-const ZL = { urgent: '#E43700', potential: '#C27400', normal: '#0042A6' };
+const ZL = { urgent: '#B42D00', potential: '#8F5600', normal: '#0042A6' };
 // Line colours per segment: deep red / deep yellow where readings are Urgent / Potential.
 const LINE = { urgent: '#C21F00', potential: '#C9A100' };
 function statusLine(b, pts, X, Y, base, width) {
@@ -334,15 +334,15 @@ function zoneChart(b, pts, w = 600, h = 250) {
     g += `<rect x="${P.l}" y="${Y(z.hi)}" width="${w - P.l - P.r}" height="${Math.max(0, Y(z.lo) - Y(z.hi))}" fill="${ZC[z.st]}"/>`;
     if (Y(z.lo) - Y(z.hi) > 14) {
       g += `<line x1="${w - P.r + 8}" x2="${w - P.r + 8}" y1="${Y(z.hi) + 1}" y2="${Y(z.lo) - 1}" stroke="${ZL[z.st]}" stroke-width="2"/>`;
-      g += `<text x="${w - P.r + 14}" y="${(Y(z.hi) + Y(z.lo)) / 2 + 3}" font-size="9.5" font-weight="600" fill="${ZL[z.st]}">${SEV_LABEL[z.st]} zone</text>`;
+      g += `<text x="${w - P.r + 14}" y="${(Y(z.hi) + Y(z.lo)) / 2 + 3}" font-size="11" font-weight="600" fill="${ZL[z.st]}">${SEV_LABEL[z.st]} zone</text>`;
     }
   });
   for (let i = 1; i < bands.length; i++) {
     const y = Y(bands[i].lo);
-    g += `<line x1="${P.l}" x2="${w - P.r}" y1="${y}" y2="${y}" stroke="#9CA7B8" stroke-dasharray="3 3" stroke-width=".8"/><text x="${P.l - 5}" y="${y + 3}" font-size="9" fill="#5F6D88" text-anchor="end">${fmt(bands[i].lo, b)}</text>`;
+    g += `<line x1="${P.l}" x2="${w - P.r}" y1="${y}" y2="${y}" stroke="#5F6D88" stroke-dasharray="3 3" stroke-width=".8"/><text x="${P.l - 5}" y="${y + 3}" font-size="11" fill="#5F6D88" text-anchor="end">${fmt(bands[i].lo, b)}</text>`;
   }
   const idx = [...new Set([0, Math.round((pts.length - 1) / 3), Math.round((2 * (pts.length - 1)) / 3), pts.length - 1])];
-  idx.forEach((i) => { g += `<text x="${X(i)}" y="${h - 9}" font-size="9" fill="#9CA7B8" text-anchor="middle">${esc(pts[i].label || dayLabel(pts[i].date))}</text>`; });
+  idx.forEach((i) => { g += `<text x="${X(i)}" y="${h - 9}" font-size="11" fill="#5F6D88" text-anchor="middle">${esc(pts[i].label || dayLabel(pts[i].date))}</text>`; });
   g += statusLine(b, pts, X, Y, '#07173F', 2);
   return `<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="${esc(nice(b))} past record">${g}</svg>`;
 }
@@ -366,8 +366,8 @@ function areaChart(b, pts, { w = 400, h = 220, axis = true } = {}) {
     });
   }
   if (axis) {
-    for (let i = 0; i <= 3; i++) { const v = lo + ((hi - lo) * i) / 3; g += `<text x="${P.l - 4}" y="${Y(v) + 3}" font-size="8.5" fill="#9CA7B8" text-anchor="end">${fmt(v, b)}</text>`; }
-    [0, Math.round((pts.length - 1) / 2), pts.length - 1].forEach((i) => { g += `<text x="${X(i)}" y="${h - 6}" font-size="8.5" fill="#9CA7B8" text-anchor="middle">${dayLabel(pts[i].date)}</text>`; });
+    for (let i = 0; i <= 3; i++) { const v = lo + ((hi - lo) * i) / 3; g += `<text x="${P.l - 4}" y="${Y(v) + 3}" font-size="11" fill="#5F6D88" text-anchor="end">${fmt(v, b)}</text>`; }
+    [0, Math.round((pts.length - 1) / 2), pts.length - 1].forEach((i) => { g += `<text x="${X(i)}" y="${h - 6}" font-size="11" fill="#5F6D88" text-anchor="middle">${dayLabel(pts[i].date)}</text>`; });
   }
   if (!banded) g += `<path d="${line}L${X(pts.length - 1)},${h - P.b}L${X(0)},${h - P.b}Z" fill="url(#${id})"/>`;
   g += statusLine(b, pts, X, Y, '#0042A6', axis ? 2 : 1.8);
@@ -807,8 +807,8 @@ function biomarkerCarousel({ ranked, bioBase, title, emptyText }) {
   const [big, ...rest] = ranked;
   const bigCard = big ? `<a class="bio-big" href="${bioBase}/${enc(big.b)}"><div style="display:flex;justify-content:space-between;gap:10px"><div><h4><span class="rk">#1</span>${esc(big.name)}</h4><small class="hint">${esc(big.category)}</small></div><div><div class="num ${big.status}">${esc(fmt(big.v, big.b))}</div><div style="text-align:right;margin-top:6px"><span class="badge ${big.status}">${SEV_LABEL[big.status]}</span></div></div></div>
       <div style="margin:12px 0 8px">${areaChart(big.b, p14(big), { w: 400, h: 230 })}</div>
-      <div style="display:flex;justify-content:space-between;gap:10px;font-size:10.5px"><span class="hint" style="font-size:10.5px">${esc(crit(big))} · ${p14(big).filter((p) => statusOf(big.b, p.v) !== 'normal').length} of ${p14(big).length} readings flagged in 14 days</span><span style="color:var(--electric);white-space:nowrap">Open records ›</span></div></a>` : '';
-  const small = rest.map((s, i) => `<a class="bio-small" href="${bioBase}/${enc(s.b)}"><div style="display:flex;justify-content:space-between;gap:6px"><h4><span class="rk">#${i + 2}</span>${esc(s.name)}</h4><span class="num ${s.status}">${esc(fmtU(s.v, s.b))}</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><small class="hint" style="font-size:10px">${esc(s.category)}</small><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></div>${areaChart(s.b, p14(s), { w: 220, h: 110, axis: false })}</a>`).join('');
+      <div style="display:flex;justify-content:space-between;gap:10px;font-size:11px"><span class="hint" style="font-size:11px">${esc(crit(big))} · ${p14(big).filter((p) => statusOf(big.b, p.v) !== 'normal').length} of ${p14(big).length} readings flagged in 14 days</span><span style="color:var(--electric);white-space:nowrap">Open records ›</span></div></a>` : '';
+  const small = rest.map((s, i) => `<a class="bio-small" href="${bioBase}/${enc(s.b)}"><div style="display:flex;justify-content:space-between;gap:6px"><h4><span class="rk">#${i + 2}</span>${esc(s.name)}</h4><span class="num ${s.status}">${esc(fmtU(s.v, s.b))}</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><small class="hint" style="font-size:11px">${esc(s.category)}</small><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></div>${areaChart(s.b, p14(s), { w: 220, h: 110, axis: false })}</a>`).join('');
   return `<div class="card-head"><h3>${title}</h3><span class="hint">${ranked.length} biomarkers · scroll →</span></div>
     <div class="bio-strip">${ranked.length ? bigCard + small : `<div class="bio-big bio-empty">${emptyText}</div>`}</div>`;
 }
