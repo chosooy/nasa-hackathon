@@ -32,6 +32,7 @@ On GitHub Pages (deploy from `main` / root) it lives at `https://<user>.github.i
 - `data/crew/A_hotdata.csv` → Crew A readings; continuous vitals use the daily mean, with flagged-reading counts
 - `data/biomarker/biomarker.csv` → `yellow` column = **Potential** boundary (neon yellow): outside it → Potential; `red` column = **Urgent** condition (red): matching it → Urgent; otherwise Normal
 - `data/health_instruction/health_instruction.csv` → summaries, hazards, yellow/red instructions, library
+- `data/biomarker/raw biomarker.csv` → detail page "Earth vs space" (`earth_space_comparison`) and "Measure period" (`Numeric_criteria_or_limitation`, `Recommended_timing`)
 - `assets/image/A_profile.png` → Crew A face in all profile spots
 
 Chat messages, doctor instructions and library additions are stored in the browser's `localStorage`
