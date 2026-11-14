@@ -6,3 +6,8 @@
 
 
 [구글 슬라이드](https://docs.google.com/presentation/d/1-_GjA7EkPju9ftL7wJygjFODrgVq4lCvm-AXgDYFebA/edit?slide=id.p#slide=id.p)
+- [ ] Project Summary(50-200 단어)
+- [ ] Project Links(ppt, 깃허브)
+- [ ] Project Details 
+- [ ] Use of AI 
+- [ ] Nasa Data + Other Data Resources 밝히기
