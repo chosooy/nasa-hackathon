@@ -1199,3 +1199,9 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 .convo-av { flex: none; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; object-position: center 15%; border: 2px solid rgba(255,255,255,.2); }
 .convo.on .convo-av { border-color: var(--yellow); }
 .convo-tx { display: block; min-width: 0; flex: 1; }
+
+/* onboarding crew strip: no vertical scroll — selected card slightly smaller */
+.crew-scroll { overflow-y: hidden; }
+.ob2 .crew-scroll .crew-choice.on { padding: 20px 12px 16px; }
+.ob2 .crew-scroll .crew-choice.on img { width: 104px; height: 104px; }
+.ob2 .crew-scroll .crew-choice.on b { font-size: 21px; }
