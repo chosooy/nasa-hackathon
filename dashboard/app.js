@@ -517,7 +517,8 @@ function crewHome() {
         ${searchBar('query', 'Search a symptom or a biomarker…', false)}
         <div class="items">${filteredInstr(states)}</div>
       </section>
-      <section class="card home-hazard"><div class="card-head"><h3>My hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div><div class="hazard-wrap">${hazardBoard(states)}</div></section>
+      <section class="card home-hazard"><div class="card-head"><h3>My hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div><div class="hazard-wrap">${hazardBoard(states)}</div>
+        <div class="crew-bio">${biomarkerCarousel({ ranked: states.filter((s) => s.status !== 'nodata'), key: 'crewCarousel', bioBase: '#/crew/bio', title: 'My biomarkers', emptyText: 'No biomarker readings yet.' })}</div></section>
     </div>
   </main>`;
 }
@@ -703,21 +704,35 @@ function doctorLibraryPage() {
     </article>`).join('') || '<div class="empty">Nothing matches your search.</div>'}</div>
   </main>`;
 }
+/** Biomarker carousel (#1 large chart, #2-#3 small), shared by the doctor Overview and the astronaut hazard board.
+ *  key = state field holding the page index; ranked = severity-sorted measured biomarkers. */
+function biomarkerCarousel({ ranked, key, bioBase, title, emptyText }) {
+  const pages = Math.max(1, ranked.length);
+  state[key] = Math.max(0, Math.min(state[key] || 0, pages - 1));
+  const at = state[key];
+  const big = ranked[at], small = [ranked[at + 1], ranked[at + 2]].filter(Boolean);
+  const p14 = (s) => s.pts.slice(-14);
+  const crit = (s) => (DB.rules[s.b] && DB.rules[s.b].yellowRaw ? `Normal: ${DB.rules[s.b].yellowRaw}` : s.category);
+  return `<div class="card-head"><h3>${title}</h3><div style="display:flex;gap:6px;align-items:center"><span class="hint pager-n">${ranked.length ? `${at + 1} / ${pages}` : '0 / 0'}</span><button class="arrow" data-car="-1" data-car-key="${key}" ${at === 0 ? 'disabled' : ''} aria-label="Previous">‹</button><button class="arrow" data-car="1" data-car-key="${key}" ${at >= pages - 1 ? 'disabled' : ''} aria-label="Next">›</button></div></div>
+    <div class="bio-car">
+      ${!ranked.length ? `<div class="bio-big bio-empty">${emptyText}</div><div class="stack" style="gap:10px"><div class="bio-small bio-empty"></div><div class="bio-small bio-empty"></div></div>` : ''}
+      ${big ? `<a class="bio-big" href="${bioBase}/${enc(big.b)}"><div style="display:flex;justify-content:space-between;gap:10px"><div><h4><span class="rk">#${at + 1}</span>${esc(big.name)}</h4><small class="hint">${esc(big.category)}</small></div><div><div class="num ${big.status}">${esc(fmt(big.v, big.b))}</div><div style="text-align:right;margin-top:6px"><span class="badge ${big.status}">${SEV_LABEL[big.status]}</span></div></div></div>
+        <div style="margin:12px 0 8px">${areaChart(big.b, p14(big), { w: 400, h: 230 })}</div>
+        <div style="display:flex;justify-content:space-between;gap:10px;font-size:10.5px"><span class="hint" style="font-size:10.5px">${esc(crit(big))} · ${p14(big).filter((p) => statusOf(big.b, p.v) !== 'normal').length} of ${p14(big).length} readings flagged in 14 days</span><span style="color:var(--electric);white-space:nowrap">Open records ›</span></div></a>` : ''}
+      <div class="stack" style="gap:10px">${small.map((s, i) => `<a class="bio-small" href="${bioBase}/${enc(s.b)}"><div style="display:flex;justify-content:space-between;gap:6px"><h4><span class="rk">#${at + 2 + i}</span>${esc(s.name)}</h4><span class="num ${s.status}">${esc(fmtU(s.v, s.b))}</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><small class="hint" style="font-size:10px">${esc(s.category)}</small><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></div>${areaChart(s.b, p14(s), { w: 220, h: 110, axis: false })}</a>`).join('')}</div>
+    </div>
+    <div class="pager-dots">${[...Array(8)].map((_, i) => `<i class="${i === Math.min(7, Math.floor((at / Math.max(1, pages - 1)) * 7)) ? 'on' : ''}"></i>`).join('')}</div>`;
+}
 function doctorHome() {
   const states = allStates(state.date);
   const flagged = states.filter((s) => s.status === 'urgent' || s.status === 'potential');
   const sel = state.docCrew;
   // Biomarkers ordered Urgent > Potential > Normal (allStates is severity-sorted). Only Crew A has data.
   const ranked = sel === 'A' ? states.filter((s) => s.status !== 'nodata') : [];
-  const pages = Math.max(1, ranked.length);
-  state.carousel = Math.max(0, Math.min(state.carousel, pages - 1));
-  const big = ranked[state.carousel], small = [ranked[state.carousel + 1], ranked[state.carousel + 2]].filter(Boolean);
   const tile = (c) => {
     const st = c === 'A' ? states : null;
     return `<div class="crew-tile ${c === sel ? 'on' : ''}"><button type="button" class="tile-sel" data-crew="${c}" aria-pressed="${c === sel}">${miniDonut(st, c)}<b>Crew ${c}</b></button><a class="tile-open" href="#/doctor/crew/${c}">View page ›</a></div>`;
   };
-  const p14 = (s) => s.pts.slice(-14);
-  const crit = (s) => (DB.rules[s.b] && DB.rules[s.b].yellowRaw ? `Normal: ${DB.rules[s.b].yellowRaw}` : s.category);
   return `${topbar('doctor', 'home')}<main class="page">
     <section class="hero-doc">
       <span class="chip-day"><i>${ICON.planet}</i>${dayLabel(state.date)} · EARTH</span>
@@ -731,15 +746,7 @@ function doctorHome() {
       <section class="card">
         <div class="card-head"><h3>Crew hazard board</h3><div class="legend"><span><i class="dot sky"></i>Normal</span><span><i class="dot potential"></i>Potential</span><span><i class="dot urgent"></i>Urgent</span></div></div>
         <div class="crew-tiles">${CREWS.map(tile).join('')}</div>
-        <div class="card-head"><h3>Biomarkers · Crew ${sel}</h3><div style="display:flex;gap:6px;align-items:center"><span class="hint pager-n">${ranked.length ? `${state.carousel + 1} / ${pages}` : '0 / 0'}</span><button class="arrow" data-car="-1" ${state.carousel === 0 ? 'disabled' : ''} aria-label="Previous">‹</button><button class="arrow" data-car="1" ${state.carousel >= pages - 1 ? 'disabled' : ''} aria-label="Next">›</button></div></div>
-        <div class="bio-car">
-          ${!ranked.length ? `<div class="bio-big bio-empty">No biomarker data for Crew ${sel} yet.</div><div class="stack" style="gap:10px"><div class="bio-small bio-empty"></div><div class="bio-small bio-empty"></div></div>` : ''}
-          ${big ?`<a class="bio-big" href="#/doctor/bio/${enc(big.b)}"><div style="display:flex;justify-content:space-between;gap:10px"><div><h4><span class="rk">#${state.carousel + 1}</span>${esc(big.name)}</h4><small class="hint">${esc(big.category)}</small></div><div><div class="num ${big.status}">${esc(fmt(big.v, big.b))}</div><div style="text-align:right;margin-top:6px"><span class="badge ${big.status}">${SEV_LABEL[big.status]}</span></div></div></div>
-            <div style="margin:12px 0 8px">${areaChart(big.b, p14(big), { w: 400, h: 230 })}</div>
-            <div style="display:flex;justify-content:space-between;gap:10px;font-size:10.5px"><span class="hint" style="font-size:10.5px">${esc(crit(big))} · ${p14(big).filter((p) => statusOf(big.b, p.v) !== 'normal').length} of ${p14(big).length} readings flagged in 14 days</span><span style="color:var(--electric);white-space:nowrap">Open records ›</span></div></a>` : ''}
-          <div class="stack" style="gap:10px">${small.map((s, i) => `<a class="bio-small" href="#/doctor/bio/${enc(s.b)}"><div style="display:flex;justify-content:space-between;gap:6px"><h4><span class="rk">#${state.carousel + 2 + i}</span>${esc(s.name)}</h4><span class="num ${s.status}">${esc(fmtU(s.v, s.b))}</span></div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><small class="hint" style="font-size:10px">${esc(s.category)}</small><span class="badge ${s.status}">${SEV_LABEL[s.status]}</span></div>${areaChart(s.b, p14(s), { w: 220, h: 110, axis: false })}</a>`).join('')}</div>
-        </div>
-        <div class="pager-dots">${[...Array(8)].map((_, i) => `<i class="${i === Math.min(7, Math.floor((state.carousel / Math.max(1, pages - 1)) * 7)) ? 'on' : ''}"></i>`).join('')}</div>
+        ${biomarkerCarousel({ ranked, key: 'carousel', bioBase: '#/doctor/bio', title: `Biomarkers · Crew ${sel}`, emptyText: `No biomarker data for Crew ${sel} yet.` })}
         <form class="compose" data-chat="doctor" style="padding:14px 0 0;border-top:1px solid var(--navy-100);margin-top:10px"><input name="m" placeholder="Write a message to Crew ${sel}…" autocomplete="off" ${sel === 'A' ? '' : 'disabled'}><button class="btn primary" type="submit" ${sel === 'A' ? '' : 'disabled'}>Send ${ICON.send}</button></form>
       </section>
     </div>
@@ -850,7 +857,7 @@ document.addEventListener('click', (e) => {
   else if (d.af) { state.attFilter = d.af; rerender(); }
   else if (d.lf) { state.libFilter = d.lf; rerender(); }
   else if (d.cat) { state.bioCat = d.cat; rerender(); }
-  else if (d.car) { state.carousel += +d.car; rerender(); }
+  else if (d.car) { const k = d.carKey || 'carousel'; state[k] = (state[k] || 0) + +d.car; rerender(); }
   else if (d.attachNote !== undefined) toast('File attachments are not available yet. They will be added in a later version.');
   else if (d.crew) { state.docCrew = d.crew; state.carousel = 0; rerender(); }
   else if (d.modal) openModal(d.modal, d.bio);

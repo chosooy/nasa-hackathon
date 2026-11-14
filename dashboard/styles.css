@@ -636,3 +636,9 @@ p { margin: 0; }
 .cal-tags .chip.hz-potential { background: var(--yellow); color: var(--navy-900); }
 .cal-tags .chip.hz-urgent { background: var(--crit); color: #fff; }
 .cal-tags .chip.hz-normal.on, .cal-tags .chip.hz-potential.on, .cal-tags .chip.hz-urgent.on { border-color: var(--navy-900); box-shadow: none; }
+
+/* ---------- Round 12: biomarker carousel under the astronaut hazard donut ---------- */
+.home-hazard .hazard-wrap { height: 330px; }
+.crew-bio { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--navy-100); }
+.home-instr, .home-hazard { height: 896px; }
+@media (max-width: 1000px) { .home-instr, .home-hazard { height: auto; } .home-hazard .hazard-wrap { height: auto; } }
