@@ -575,3 +575,33 @@ p { margin: 0; }
 .item.care .foot { opacity: .55; }
 .item.care.urgent { background: var(--crit-bg); }
 .item.care.potential { background: var(--yellow-tint); }
+
+/* ---------- Round 10 ---------- */
+/* calendar: clock + SOL in the header, no arrows, max 5 events, "View page" buttons */
+.cal-clock { display: inline-flex; gap: 16px; font-size: 12.5px; color: var(--navy-600); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cal-clock .live-clock { width: 168px; }
+.strip { grid-template-columns: 300px minmax(0, 1fr); align-items: stretch; }
+.big-day, .week.six .dayc { height: 404px; }
+.week.six .dayc { display: flex; flex-direction: column; gap: 6px; }
+.dc-list { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 6px; }
+.dc-list .ev { flex: none; }
+.page-btn { flex: none; align-self: center; display: inline-block; padding: 5px 14px; border-radius: 999px; background: var(--navy-900); color: #fff; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.page-btn:hover { background: var(--electric); }
+.page-btn.light { background: var(--yellow); color: var(--navy-900); }
+.page-btn.light:hover { background: #fff; }
+
+/* crew home: Health Instruction and hazard board side by side, same fixed height */
+.g-home { align-items: stretch; }
+.home-instr, .home-hazard { height: 446px; }
+.item.care.normal { background: var(--normal-bg); }
+
+/* back button: icon only */
+.back { width: 38px; height: 38px; border-radius: 50%; justify-content: center; background: rgba(255,255,255,.1); font-size: 18px; padding: 0; gap: 0; }
+.back:hover { background: rgba(255,255,255,.2); color: #fff; }
+
+@media (max-width: 1000px) {
+  .strip { grid-template-columns: 1fr; }
+  .big-day { grid-column: auto; height: 340px; }
+  .home-instr, .home-hazard { height: auto; }
+  .home-instr .items { max-height: 420px; }
+}
