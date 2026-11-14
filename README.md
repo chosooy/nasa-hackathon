@@ -15,49 +15,56 @@
 
 ## Data flow
 
-![KOOK data flow: raw readings → zstd → astronaut dashboard → 20 min → doctor dashboard](assets/diagram/data_flow.png)
+![KOOK data flow: raw readings → astronaut dashboard (buffer) → zstd, 20 min → doctor dashboard](assets/diagram/data_flow.png)
 
 Crew health data goes through three stages:
 
-| Stage | Where | What it holds | When |
+| Stage | Where | What happens | When |
 | --- | --- | --- | --- |
-| **Raw** | Ear-worn device | Every reading as CSV rows (`date,time,biomarker,figure`), one 5-minute slot at a time | As measured |
-| **Astronaut dashboard** | Mars | Each slot zstd-compressed into one file, whatever the readings' status | Right away |
-| **Doctor dashboard** | Earth | The same files | 20 minutes later (one-way light time) |
+| **Raw** | Ear-worn device | Readings as CSV rows (`date,time,biomarker,figure`), every 5 minutes | As measured |
+| **Astronaut dashboard** | Mars | Shows every reading right away and keeps it in a buffer | Right away |
+| **Doctor dashboard** | Earth | Receives the buffer as one zstd file | 20 minutes after it is sent (one-way light time) |
+
+**When the buffer is sent.** Whichever of these comes first:
+
+- **A biomarker newly turns Potential or Urgent.** Its status changes into Potential or Urgent, or from Potential to Urgent. A biomarker that stays Potential does not trigger again, so a crew whose blood pressure is Potential all day doesn't send every 5 minutes.
+- **The buffer is 6 hours old.** Normal data never waits longer than 6 hours.
+
+That means a new problem reaches the doctor 20 minutes after it is measured, and everything else arrives in larger files that compress much better.
 
 - **zstd.** Real Zstandard compression (level 19) runs in the browser via WebAssembly ([`@bokuweb/zstd-wasm`](https://www.npmjs.com/package/@bokuweb/zstd-wasm)), called from JavaScript.
-  - A file holds only the rows, with no CSV header; both dashboards know the columns.
-  - Each file is decompressed again and compared with the original rows. The log shows `✓ verified` when they match.
-- **File names.** `A_2026-11-14T1335.zst` means Crew A's readings measured at 13:35 UTC on Nov 14.
-- **Doctor dashboard.** It uses only readings that have arrived, so each reading appears exactly 20 minutes after it was measured.
-  - At the same moment the astronaut's and the doctor's latest values can differ.
-  - The doctor's top bar shows the last arrival (`Received HH:MM UTC`).
-- **Chat** has the same 20-minute delay. The sender sees a message right away as *In transit*, which turns into *Delivered* when it arrives. The other side sees it only on arrival.
+  - A file holds only the rows, with no CSV header; both sides know the columns.
+  - Each file is decompressed again and compared with the original rows (`✓ verified`).
+- **File names.** `A_2026-11-14T1300.zst` is Crew A's buffer, sent at 13:00 UTC on Nov 14.
+- **Doctor dashboard.** It uses only readings whose file has arrived, and its top bar shows the last arrival (`Received HH:MM UTC`). The astronaut's and the doctor's latest values can differ by up to 6 hours for Normal data.
+- **Chat** has the same 20-minute delay. The sender sees *In transit*, then *Delivered*; the other side sees a message only on arrival.
 - **Where to see it**
-  - The astronaut's **Conversation** page shows the file log: name, readings, raw → zstd size, check, measured time, doctor arrival time.
+  - The astronaut's **Conversation** page shows the files sent today, with the trigger (new Potential/Urgent or 6-hour send), readings, raw → zstd size, check, and doctor arrival. It also shows what is waiting in the buffer.
   - The [test bench](test/) replays a whole day as **Raw | Astronaut dashboard | Doctor dashboard**.
-- **Code:** [`dashboard/app.js`](dashboard/app.js) (`transmissionLog`, `arrivalMs`, `earthCrew`) and [`test/app.js`](test/app.js).
+- **Code:** [`dashboard/app.js`](dashboard/app.js) (`sendSchedule`, `transmissionLog`, `earthCrew`) and [`test/app.js`](test/app.js).
 - **Data:** `data/crew/{A,B,C,D}_raw.csv`.
 
-**Size for one day** (2026-11-13, 288 slots, 1,168 readings per crew):
+**Size for one day** (2026-11-13, 1,168 readings per crew, buffer starting empty at 00:00):
 
-| Crew | Raw | zstd, one file per slot | (reference) whole day in one file |
-| --- | ---: | ---: | ---: |
-| A | 45.5 KB | 29.1 KB (64.0%) | 3.6 KB (7.8%) |
-| B | 45.5 KB | 29.0 KB (63.8%) | 3.9 KB (8.6%) |
-| C | 45.5 KB | 29.1 KB (64.0%) | 3.8 KB (8.3%) |
-| D | 45.5 KB | 29.1 KB (63.8%) | 3.9 KB (8.5%) |
+| Crew | Raw | Files sent | zstd total | Longest wait for Normal data |
+| --- | ---: | ---: | ---: | ---: |
+| A (blood pressure turns Potential often) | 45.5 KB | 17 | 5.5 KB (12.1%) | 6 h |
+| B | 45.5 KB | 5 | 4.6 KB (10.1%) | 6 h |
+| C | 45.5 KB | 5 | 4.5 KB (9.8%) | 6 h |
+| D (all Normal) | 45.5 KB | 4 | 4.5 KB (9.8%) | 6 h |
 
-A 5-minute slot holds about four readings (~160 B), which zstd brings to ~100 B. A whole day in one file would be far smaller, but the doctor would then wait until the day ends. Sending every slot keeps the doctor exactly 20 minutes behind.
+For comparison, sending every 5-minute slot as its own file kept the doctor exactly 20 minutes behind on everything, but came to about 64% of raw (see Design history).
 
 ## Design history
 
-Before the flow above, we split readings into two lanes by status:
+**Step 2, one zstd file per 5-minute slot.** Every slot, whatever its status, went to the doctor 20 minutes after it was measured. It was simple, but each file held only about four readings, so a day came to ~29 KB (64% of raw). We also considered sending on any Potential/Urgent reading, else once a day: that cut Crews B–D to ~9%, but Crew A's blood pressure is Potential all day, so it still sent every 5 minutes (64%). Counting only *new* Potential/Urgent readings and adding the 6-hour cap gave the current flow.
+
+**Step 1, hot/cold lanes.** Before that, we split readings into two lanes by status:
 
 - **hot:** Potential/Urgent readings, sent every minute
 - **cold:** Normal readings, batched hourly and packed into CCSDS Space Packets
 
-We later added a shared zstd dictionary for the hot lane. That design was replaced by the single zstd flow above. These are the measurements we made along the way.
+We later added a shared zstd dictionary for the hot lane. That design was replaced by step 2. These are the measurements we made along the way.
 
 ### Size experiments (hot/cold design)
 
@@ -116,6 +123,6 @@ A shared dictionary gives zstd the repeated parts (dates, biomarker names, numbe
 
 **Then replaced.** We used option d for a while: a 2 KB dictionary trained on Nov 1–12 data cut Crew A's 288 hot bundles from 15.8 KB to 9.6 KB.
 
-In the end we dropped the hot/cold split, CCSDS packets and the dictionary for the simpler flow in [Data flow](#data-flow). Every 5-minute slot goes out as one plain zstd file, and the doctor sees it 20 minutes later.
+In the end we dropped the hot/cold split, CCSDS packets and the dictionary for plain zstd: first one file per 5-minute slot (step 2), then the buffered flow in [Data flow](#data-flow).
 
 **Test bench:** [`test/`](test/) replays a day as Raw | Astronaut dashboard | Doctor dashboard. See [`test/README.md`](test/README.md).

@@ -1,8 +1,9 @@
 // KOOK test bench: replays one crew's day through the same data flow as the dashboard.
 //
 //   RAW                  device readings, one 5-minute slot at a time (CSV rows)
-//   ASTRONAUT DASHBOARD  each slot is zstd-compressed into one file (every status) and shown on Mars right away
-//   DOCTOR DASHBOARD     the same file reaches Earth 20 minutes after it was measured (one-way light time)
+//   ASTRONAUT DASHBOARD  shows every reading right away and keeps it in a buffer; the buffer is zstd-compressed
+//                        into one file and sent when a biomarker NEWLY turns Potential/Urgent, or every 6 hours
+//   DOCTOR DASHBOARD     each file reaches Earth 20 minutes after it was sent (one-way light time)
 //
 // Every file is decompressed again and compared with its rows. Status (for colour only) follows the
 // dashboard's rules: biomarker.csv yellow = normal range, red = urgent, otherwise potential.
@@ -13,6 +14,7 @@ const ZSTD_LEVEL = 19;
 const ZSTD_PKG = 'https://cdn.jsdelivr.net/npm/@bokuweb/zstd-wasm@0.0.22';
 const DEFAULT_DAY = '2026-11-13';
 const MAX_ROWS = 300;
+const CAP_MIN = 6 * 60;                           // send the buffer at least every 6 hours
 
 const $ = (id) => document.getElementById(id);
 const utf8 = new TextEncoder(), unutf8 = new TextDecoder();
@@ -68,8 +70,10 @@ const zstdReady = import(`${ZSTD_PKG}/+esm`).then(async (m) => { await m.init(`$
 
 // ===== state =====
 let slots = [], slotIdx = 0, timer = null, total = 0, crew = 'A', day = DEFAULT_DAY;
-const files = [];                                  // { time, arrive, n, raw, zst, ok, st }
+const files = [];                                  // sent: { time, from, arrive, n, raw, zst, ok, st, reason, trig }
 const sum = { readings: 0, raw: 0 };
+let buf = [], bufFrom = null, prev = {};
+const toMin = (hhmm) => +hhmm.slice(0, 2) * 60 + +hhmm.slice(3, 5);
 
 async function loadDay() {
   stop();
@@ -86,7 +90,7 @@ async function loadDay() {
 }
 function reset() {
   stop();
-  slotIdx = 0; files.length = 0; sum.readings = 0; sum.raw = 0;
+  slotIdx = 0; files.length = 0; sum.readings = 0; sum.raw = 0; buf = []; bufFrom = null; prev = {};
   $('rawList').innerHTML = '<div class="empty">Press Start to replay the day.</div>';
   $('btnStart').disabled = !slots.length;
   render();
@@ -96,12 +100,14 @@ function reset() {
 function step() {
   if (slotIdx >= slots.length) { stop(); $('btnStart').disabled = true; render(); return; }
   const slot = slots[slotIdx++];
-  const text = slot.map((r) => `${r.date},${r.time},${r.b},${r.fig}\n`).join('');   // rows only; both sides know the columns
-  const raw = utf8.encode(text);
-  const packed = zstd.compress(raw, ZSTD_LEVEL);
-  const ok = unutf8.decode(zstd.decompress(packed)) === text;
-  files.push({ time: slot[0].time, arrive: addMin(slot[0].time, LIGHT_MIN), n: slot.length, raw: raw.length, zst: packed.length, ok, st: worst(slot) });
-  sum.readings += slot.length; sum.raw += raw.length;
+  const t = slot[0].time;
+  if (bufFrom === null) bufFrom = t;
+  buf.push(...slot);
+  sum.readings += slot.length; sum.raw += utf8.encode(slot.map((r) => `${r.date},${r.time},${r.b},${r.fig}\n`).join('')).length;
+  const newly = slot.filter((r) => r.st !== 'normal' && prev[r.b] !== r.st);
+  slot.forEach((r) => { prev[r.b] = r.st; });
+  if (newly.length) send(t, 'new', newly);
+  else if (toMin(t) - toMin(bufFrom) + 5 >= CAP_MIN) send(t, 'cap', []);
 
   const box = $('rawList');
   const empty = box.querySelector('.empty'); if (empty) empty.remove();
@@ -110,6 +116,16 @@ function step() {
   while (box.children.length > MAX_ROWS) box.firstElementChild.remove();
   if (stick) box.scrollTop = box.scrollHeight;
   render();
+}
+// the buffer goes out as one zstd file (rows only; both sides know the columns)
+function send(time, reason, newly) {
+  const text = buf.map((r) => `${r.date},${r.time},${r.b},${r.fig}\n`).join('');
+  const raw = utf8.encode(text);
+  const packed = zstd.compress(raw, ZSTD_LEVEL);
+  const ok = unutf8.decode(zstd.decompress(packed)) === text;
+  files.push({ time, from: bufFrom, arrive: addMin(time, LIGHT_MIN), n: buf.length, raw: raw.length, zst: packed.length, ok,
+    st: reason === 'new' ? worst(newly) : 'normal', reason, trig: [...new Set(newly.map((r) => r.b))] });
+  buf = []; bufFrom = null;
 }
 async function start() {
   if (slotIdx >= slots.length) return;
@@ -144,22 +160,25 @@ function render() {
   $('rawSize').textContent = fmtBytes(sum.raw);
   $('rawMeta').textContent = sum.readings ? `${sum.readings} of ${total} readings` : 'Press Start to replay the day.';
 
-  // ASTRONAUT: every file, right away
-  const zst = files.reduce((n, f) => n + f.zst, 0);
+  // ASTRONAUT: every reading right away; files leave on a new Potential/Urgent or every 6 h
+  const zst = files.reduce((n, f) => n + f.zst, 0), sentRaw = files.reduce((n, f) => n + f.raw, 0);
   const bad = files.filter((f) => !f.ok).length;
-  $('astroSize').innerHTML = files.length ? `${fmtBytes(zst)}<small>${pct(zst, sum.raw)} of raw</small>` : '0 B';
-  $('astroMeta').textContent = files.length ? `${files.length} zstd file${files.length > 1 ? 's' : ''} · ${bad ? `${bad} failed the check` : 'all verified'}` : 'One zstd file per 5-minute slot, every status.';
-  fill('astroList', files, (f) => row([[f.time, 't'], [`${f.n} reading${f.n > 1 ? 's' : ''}`, 'b'], [`${f.raw} → ${f.zst} B`, `v ${f.st}`]]), 'Files show up here as each slot is measured.');
+  $('astroSize').innerHTML = files.length ? `${fmtBytes(zst)}<small>${pct(zst, sentRaw)} of what it sent</small>` : '0 B';
+  $('astroMeta').textContent = sum.readings
+    ? `${files.length} file${files.length === 1 ? '' : 's'} sent${bad ? ` · ${bad} failed the check` : files.length ? ' · all verified' : ''} · ${buf.length} reading${buf.length === 1 ? '' : 's'} in the buffer${bufFrom ? ` since ${bufFrom}` : ''}`
+    : 'Sends its buffer on a new Potential/Urgent, or every 6 hours.';
+  fill('astroList', files, (f) => row([[f.time, 't'], [f.reason === 'new' ? f.trig.join(', ') : '6-hour send', 'b'], [`${fmtBytes(f.raw)} → ${fmtBytes(f.zst)}`, `v ${f.st}`]]), 'Nothing sent yet. Readings wait in the buffer.');
 
-  // DOCTOR: the same files, 20 minutes later (replay time; files measured after 23:40 arrive the next day)
+  // DOCTOR: each file 20 minutes after it was sent (replay time; files sent after 23:40 arrive the next day)
   const got = now ? files.filter((f) => f.arrive <= now && f.arrive >= f.time) : [];
   const transit = files.length - got.length;
   const docBytes = got.reduce((n, f) => n + f.zst, 0);
+  const latest = got.length ? got[got.length - 1].time : null;
   $('docSize').innerHTML = got.length ? `${fmtBytes(docBytes)}<small>${got.length} file${got.length > 1 ? 's' : ''}</small>` : '0 B';
-  $('docMeta').textContent = files.length
-    ? `${got.length ? `Latest reading ${got[got.length - 1].time}` : 'Nothing has arrived yet'} · ${transit} in transit`
-    : 'The same files arrive 20 minutes after they were measured.';
-  fill('docList', got, (f) => row([[f.arrive, 't'], [`measured ${f.time}`, 'b'], [`${f.zst} B`, `v ${f.st}`]]), `Each file arrives ${LIGHT_MIN} minutes after it was measured.`);
+  $('docMeta').textContent = sum.readings
+    ? `${latest ? `Has readings up to ${latest}` : 'Nothing has arrived yet'}${transit ? ` · ${transit} in transit` : ''}`
+    : 'Each file arrives 20 minutes after it was sent.';
+  fill('docList', got, (f) => row([[f.arrive, 't'], [`${f.n} readings ${f.from}–${f.time}`, 'b'], [fmtBytes(f.zst), `v ${f.st}`]]), `Each file arrives ${LIGHT_MIN} minutes after it was sent.`);
 }
 
 // ===== controls =====

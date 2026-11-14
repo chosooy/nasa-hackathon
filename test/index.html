@@ -97,29 +97,29 @@
       <div class="list" id="rawList"></div>
     </section>
 
-    <div class="hop" aria-hidden="true"><i>→</i>zstd</div>
+    <div class="hop" aria-hidden="true"><i>→</i>buffer</div>
 
     <section class="card astro">
       <div class="head">
-        <div class="kind"><b>ASTRONAUT DASHBOARD</b><span>Mars · right away</span></div>
+        <div class="kind"><b>ASTRONAUT DASHBOARD</b><span>Mars · buffer → zstd</span></div>
         <div class="size" id="astroSize">0 B</div>
-        <div class="meta" id="astroMeta">One zstd file per 5-minute slot, every status.</div>
+        <div class="meta" id="astroMeta">Sends its buffer on a new Potential/Urgent, or every 6 hours.</div>
       </div>
       <div class="list" id="astroList"></div>
     </section>
 
-    <div class="hop" aria-hidden="true"><i>→</i>+20 min</div>
+    <div class="hop" aria-hidden="true"><i>→</i>zstd<br>+20 min</div>
 
     <section class="card doctor">
       <div class="head">
-        <div class="kind"><b>DOCTOR DASHBOARD</b><span>Earth · 20 min later</span></div>
+        <div class="kind"><b>DOCTOR DASHBOARD</b><span>Earth · 20 min after sending</span></div>
         <div class="size" id="docSize">0 B</div>
-        <div class="meta" id="docMeta">The same files arrive 20 minutes after they were measured.</div>
+        <div class="meta" id="docMeta">Each file arrives 20 minutes after it was sent.</div>
       </div>
       <div class="list" id="docList"></div>
     </section>
   </main>
 
-<script type="module" src="app.js?v=10"></script>
+<script type="module" src="app.js?v=12"></script>
 </body>
 </html>

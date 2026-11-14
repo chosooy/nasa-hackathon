@@ -196,15 +196,44 @@ function buildCrew(rows) {
     if (!r.biomarker || Number.isNaN(v)) return;
     (s[r.biomarker] = s[r.biomarker] || []).push({ date: r.date, time: r.time, v });
   });
-  Object.entries(s).forEach(([b, arr]) => {
-    arr.sort((a, z) => (a.date + a.time).localeCompare(z.date + z.time));
-    arr.forEach((pt) => { pt.arr = arrivalMs(b, pt); });
-  });
-  return crewFromSeries(s);
+  Object.values(s).forEach((arr) => arr.sort((a, z) => (a.date + a.time).localeCompare(z.date + z.time)));
+  const crew = crewFromSeries(s);
+  crew.files = sendSchedule(s);
+  return crew;
 }
-/** When a reading reaches the doctor dashboard on Earth: 20 minutes (one-way light time) after it was measured. */
-function arrivalMs(b, pt) {
-  return Date.parse(`${pt.date}T${pt.time}:00Z`) + LIGHT_MS;
+/** When readings leave Mars. The astronaut dashboard keeps every reading in a buffer and sends the buffer
+ *  as one zstd file when a biomarker NEWLY turns Potential or Urgent (its status changes to it), or when the
+ *  buffer is 6 hours old, whichever comes first. Each reading reaches the doctor dashboard 20 minutes after
+ *  its file is sent (pt.arr). Worked out once for the whole month, because "newly" depends on history. */
+const SEND_CAP_MS = 6 * 3600 * 1000;
+const SLOT_MS = 5 * 60 * 1000;
+function sendSchedule(series) {
+  const slots = new Map();                              // ts -> [{ b, pt, st }]
+  Object.entries(series).forEach(([b, arr]) => arr.forEach((pt) => {
+    const ts = Date.parse(`${pt.date}T${pt.time}:00Z`);
+    if (!slots.has(ts)) slots.set(ts, []);
+    slots.get(ts).push({ b, pt, st: statusOf(b, pt.v) });
+  }));
+  const files = [], prev = {};
+  let buf = [], start = null;
+  const flush = (sentAt, reason) => {
+    if (!buf.length) return;
+    const st = buf.some((x) => x.st === 'urgent') ? 'urgent' : buf.some((x) => x.st === 'potential') ? 'potential' : 'normal';
+    files.push({ start, sentAt, reason, st, items: buf });
+    buf.forEach((x) => { x.pt.arr = sentAt + LIGHT_MS; });
+    buf = []; start = null;
+  };
+  [...slots.keys()].sort((a, z) => a - z).forEach((ts) => {
+    const list = slots.get(ts);
+    if (start === null) start = ts;
+    buf.push(...list);
+    const trigger = list.some((x) => x.st !== 'normal' && prev[x.b] !== x.st);
+    list.forEach((x) => { prev[x.b] = x.st; });
+    if (trigger) flush(ts, 'new');
+    else if (ts - start + SLOT_MS >= SEND_CAP_MS) flush(ts, 'cap');
+  });
+  buf.forEach((x) => { x.pt.arr = Infinity; });           // still waiting at the end of the data
+  return files;
 }
 const EARTH = { key: -1, crews: {}, lastRx: 0 };
 /** The crew's readings as the ground doctor has them right now (rebuilt once per simulated minute). */
@@ -456,10 +485,10 @@ function todayArt() {
 }
 
 /* ---------------- Raw → astronaut dashboard → doctor dashboard ----------------
- * Readings come in 5-minute slots. Each slot (every biomarker measured at that time, whatever its
- * status) is written as CSV rows and zstd-compressed into one file. That file feeds the astronaut
- * dashboard on Mars as soon as the slot is measured, and the same file reaches the doctor dashboard
- * on Earth 20 minutes later (one-way light time). Compression runs for real in the browser and every
+ * The astronaut dashboard on Mars shows every reading right away and keeps it in a buffer. The buffer
+ * is written as CSV rows, zstd-compressed into one file and sent to Earth when a biomarker newly turns
+ * Potential or Urgent, or when the buffer is 6 hours old (see sendSchedule). The file reaches the doctor
+ * dashboard 20 minutes later (one-way light time). Compression runs for real in the browser and every
  * file is decompressed again to check it matches the original rows. */
 const LIGHT_MS = 20 * 60 * 1000;
 const ZSTD_LEVEL = 19;
@@ -481,47 +510,49 @@ const utf8 = new TextEncoder();
 const unutf8 = new TextDecoder();
 const fmtBytes = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`);
 const hhmm = (ms) => new Date(ms).toISOString().slice(11, 16);
-// rows only: both dashboards already know the columns (date,time,biomarker,figure)
-const toRows = (rows) => rows.map((r) => `${r.date},${r.time},${r.b},${r.v}\n`).join('');
 
-/** Every zstd file made for crew c today, up to the dashboard clock (one per 5-minute slot). */
+/** zstd files crew c sent today, up to the dashboard clock, plus what is waiting in the buffer. */
 function transmissionLog(c) {
   const now = simNow().getTime(), day = TODAY;
-  const rows = withCrew(c, () => Object.entries(DB.series).flatMap(([b, arr]) => arr.filter((p) => p.date === day)
-    .map((p) => ({ b, date: p.date, time: p.time, v: p.v, ts: Date.parse(`${p.date}T${p.time}:00Z`), st: statusOf(b, p.v) }))))
-    .filter((r) => r.ts <= now).sort((a, z) => a.ts - z.ts);
-  const bySlot = new Map();
-  rows.forEach((r) => { if (!bySlot.has(r.ts)) bySlot.set(r.ts, []); bySlot.get(r.ts).push(r); });
+  const d0 = Date.parse(`${day}T00:00:00Z`);
+  const files = (DB.crews[c] && DB.crews[c].files) || [];
   const z = TX.zstd, entries = [];
-  bySlot.forEach((list, ts) => {
-    const key = `${c}|${ts}`;
+  files.filter((f) => f.sentAt >= d0 && f.sentAt <= now).forEach((f) => {
+    const key = `${c}|${f.sentAt}`;
     let e = TX.cache.get(key);
     if (!e && z) {
-      const raw = utf8.encode(toRows(list));
+      const text = f.items.map((x) => `${x.pt.date},${x.pt.time},${x.b},${x.pt.v}\n`).join('');
+      const raw = utf8.encode(text);
       const packed = z.compress(raw, ZSTD_LEVEL);
-      const ok = unutf8.decode(z.decompress(packed)) === unutf8.decode(raw);
-      const st = list.some((r) => r.st === 'urgent') ? 'urgent' : list.some((r) => r.st === 'potential') ? 'potential' : 'normal';
-      e = { st, name: `${c}_${day}T${hhmm(ts).replace(':', '')}.zst`, readings: list.length, raw: raw.length, zst: packed.length, ok, sentAt: ts };
+      const ok = unutf8.decode(z.decompress(packed)) === text;
+      const trig = f.reason === 'new' ? [...new Set(f.items.filter((x) => x.st !== 'normal' && x.pt.time === hhmm(f.sentAt)).map((x) => nice(x.b)))] : [];
+      e = { st: f.reason === 'new' ? f.st : 'normal', reason: f.reason, trig, name: `${c}_${day}T${hhmm(f.sentAt).replace(':', '')}.zst`, readings: f.items.length, from: f.start, raw: raw.length, zst: packed.length, ok, sentAt: f.sentAt };
       TX.cache.set(key, e);
     }
     if (e) entries.push(e);
   });
-  return { entries: entries.sort((a, z2) => z2.sentAt - a.sentAt), now };
+  // readings measured but not sent yet (the open buffer)
+  const last = files.filter((f) => f.sentAt <= now).pop();
+  const since = last ? last.sentAt + SLOT_MS : null;
+  const waiting = withCrew(c, () => Object.values(DB.series).reduce((n, arr) => n + arr.filter((pt) => { const ts = Date.parse(`${pt.date}T${pt.time}:00Z`); return ts <= now && (since === null || ts >= since); }).length, 0));
+  return { entries: entries.sort((a, z2) => z2.sentAt - a.sentAt), now, waiting, since, capAt: since !== null ? since + SEND_CAP_MS - SLOT_MS : null };
 }
 function txPanel(c) {
   loadZstd();
   const head = `<div class="tx-head">${ICON.upload}<b>Compressed data · zstd</b></div>
-    <div class="tx-link"><span class="tx-dot"></span>Astronaut now · Doctor +${LIGHT_MS / 60000} min<a class="tx-how" href="${TX_DOC}" target="_blank" rel="noopener">How it works ↗</a></div>`;
+    <div class="tx-link"><span class="tx-dot"></span>Sends on a new Potential/Urgent or every 6 h · Doctor +${LIGHT_MS / 60000} min<a class="tx-how" href="${TX_DOC}" target="_blank" rel="noopener">How it works ↗</a></div>`;
   if (TX.error) return `<section class="tx-slot">${head}<p class="tx-note">The zstd encoder could not load (${esc(TX.error)}). Check the connection and reload.</p></section>`;
   if (!TX.zstd) return `<section class="tx-slot">${head}<p class="tx-note">Loading zstd encoder…</p></section>`;
-  const { entries, now } = transmissionLog(c);
+  const { entries, now, waiting, since, capAt } = transmissionLog(c);
   const status = (e) => { const arrive = e.sentAt + LIGHT_MS; return `<span class="tx-st ${now >= arrive ? 'done' : 'transit'}" data-arrive="${arrive}">${now >= arrive ? 'Delivered' : 'In transit'}</span>`; };
+  const tag = (e) => (e.reason === 'new' ? e.st.toUpperCase() : '6 H');
   const row = (e) => `<li class="tx-row ${e.st}">
-      <div class="tx-r1"><span class="tx-tag ${e.st}">${e.st.toUpperCase()}</span><span class="tx-name">${esc(e.name)}</span></div>
-      <div class="tx-r2">${e.readings} reading${e.readings > 1 ? 's' : ''} · ${fmtBytes(e.raw)} → ${fmtBytes(e.zst)}${e.ok ? ' · ✓ verified' : ' · ✕ check failed'}</div>
-      <div class="tx-r3">Measured ${hhmm(e.sentAt)} · Doctor ${hhmm(e.sentAt + LIGHT_MS)} UTC ${status(e)}</div></li>`;
-  return `<section class="tx-slot">${head}
-    <ul class="tx-log">${entries.slice(0, 60).map(row).join('') || '<li class="tx-note">Nothing measured yet today.</li>'}</ul>
+      <div class="tx-r1"><span class="tx-tag ${e.reason === 'new' ? e.st : 'normal'}">${tag(e)}</span><span class="tx-name">${esc(e.name)}</span></div>
+      <div class="tx-r2">${e.reason === 'new' ? `New ${e.st}: ${esc(e.trig.slice(0, 2).join(', ') || 'reading')}` : '6-hour send'} · ${e.readings} readings since ${hhmm(e.from)} · ${fmtBytes(e.raw)} → ${fmtBytes(e.zst)}${e.ok ? ' · ✓ verified' : ' · ✕ check failed'}</div>
+      <div class="tx-r3">Sent ${hhmm(e.sentAt)} · Doctor ${hhmm(e.sentAt + LIGHT_MS)} UTC ${status(e)}</div></li>`;
+  const buffer = `<div class="tx-buffer"><b>${waiting}</b> reading${waiting === 1 ? '' : 's'} in the buffer${since !== null ? ` since ${hhmm(since)} · sends by ${hhmm(capAt)} UTC at the latest` : ''}</div>`;
+  return `<section class="tx-slot">${head}${buffer}
+    <ul class="tx-log">${entries.slice(0, 60).map(row).join('') || '<li class="tx-note">Nothing sent yet today.</li>'}</ul>
   </section>`;
 }
 
@@ -542,7 +573,7 @@ function topbar(role, active) {
     <span class="spacer"></span>
     <span class="meta live-clock">UTC ${simStamp()}</span>
     <span class="meta live-sol">SOL ${pad3(missionDay(TODAY))}</span>
-    ${role === 'doctor' ? `<span class="meta earth-rx" title="The doctor dashboard shows each reading 20 minutes after it was measured (one-way light time from Mars).">${earthRxText()}</span>` : ''}
+    ${role === 'doctor' ? `<span class="meta earth-rx" title="The doctor dashboard shows readings 20 minutes after they leave Mars. Mars sends its buffer when a biomarker newly turns Potential or Urgent, or every 6 hours.">${earthRxText()}</span>` : ''}
     <a class="profile-link" href="${base}/profile">Profile</a>
   </header>`;
 }
@@ -1195,7 +1226,7 @@ setInterval(() => {
     const busy = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
     if (state.date === TODAY && !busy && !$('#modal-root').innerHTML && route().parts[0]) rerender();
   }
-  // Doctor: re-render when new readings reach Earth (each one 20 min after it was measured).
+  // Doctor: re-render when a sent file reaches Earth (20 min after it leaves Mars).
   if (route().parts[0] === 'doctor' && state.date === TODAY) {
     const n = earthCount();
     if (n !== lastEarth) {
