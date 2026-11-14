@@ -137,11 +137,19 @@ We believe technology should not make health management more complicated. It sho
 
 Our team's greatest strength is the way we bring together different perspectives and skills. With backgrounds in biology, programming and design, each of us approaches problems differently, but we share the same goal: making space health management more accessible and practical for astronauts.
 
+<table>
+<tr>
+<td align="center" width="33%"><img src="assets/image/team/sooyeon.jpg" width="110" alt="Sooyeon Cho"><br><b>Sooyeon Cho</b><br>Development</td>
+<td align="center" width="33%"><img src="assets/image/team/haejun.jpg" width="110" alt="Haejun Paik"><br><b>Haejun Paik</b><br>Design</td>
+<td align="center" width="33%"><img src="assets/image/team/dahyun.jpg" width="110" alt="Dahyun Lee"><br><b>Dahyun Lee</b><br>Biology</td>
+</tr>
+</table>
+
 **Sooyeon Cho** — Development
 
-- Built the KOOK dashboard (crew and ground doctor views) in HTML, CSS and JavaScript from the Figma designs.
-- Designed the Mars–Earth data flow: buffered sending, compression and the 20-minute delay, plus a test bench that replays it with voice guidance.
-- Deployed the project on GitHub Pages and wrote the documentation.
+- Developed the KOOK dashboard with Claude (an AI coding assistant), turning the team's Figma designs into a working web app.
+- Created the dummy crew data: a month of readings for four crew members, each with a different mix of Normal, Potential and Urgent biomarkers.
+- Designed the data compression for the Mars–Earth link and measured it. Readings are buffered on Mars and sent when a biomarker newly turns Potential or Urgent, or every 6 hours. Each file is packed as columns + deltas and compressed with zstd, which brings a day of data to about 4% of its raw size.
 
 **Haejun Paik** — Design
 
