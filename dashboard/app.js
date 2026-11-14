@@ -400,7 +400,8 @@ function topbar(role, active) {
     <a class="logo" href="#/" aria-label="KOOK"><img src="${IMG.logo}" alt="KOOK"></a>
     <nav><a href="${base}" class="${active === 'home' ? 'active' : ''}">Overview</a><a href="${base}/instructions" class="${active === 'instr' ? 'active' : ''}">Health Instruction</a></nav>
     <span class="spacer"></span>
-    ${role === 'doctor' ? `<span class="meta live-clock">UTC ${simStamp()}</span><span class="meta live-sol">SOL ${pad3(missionDay(TODAY))}</span>` : ''}
+    <span class="meta live-clock">UTC ${simStamp()}</span>
+    <span class="meta live-sol">SOL ${pad3(missionDay(TODAY))}</span>
     <a class="role-pill" href="${role === 'crew' ? '#/doctor' : '#/crew'}" title="Switch workspace">${role === 'crew' ? 'SPACE / Astronaut' : 'EARTH / Doctor'}</a>
     <a class="profile-link" href="${base}/profile">Profile</a>
   </header>`;
@@ -444,8 +445,7 @@ function weekCalendar(crew, dayHref) {
     const evs = eventsFor(crew, d);
     return `<div class="dayc"><div class="dn">${WD[toD(d).getUTCDay()]} ${String(toD(d).getUTCDate()).padStart(2, '0')}</div><div class="dd">${dayLabel(d)}</div><div class="dc-list">${evList(evs)}</div><a class="page-btn" href="${dayHref(d)}">View page ›</a></div>`;
   }).join('');
-  return `<div class="cal-head"><span class="cal-clock"><span class="live-clock">UTC ${simStamp()}</span><span class="live-sol">SOL ${pad3(missionDay(TODAY))}</span></span><div class="chips">${chips}</div></div>
-    <div class="strip">${big}<div class="week six">${cols}</div></div>`;
+  return `<div class="strip">${big}<div class="strip-right"><div class="chips cal-tags">${chips}</div><div class="week six">${cols}</div></div></div>`;
 }
 function chatLog(role, mini) {
   const msgs = mini ? chat().slice(-2) : chat();
@@ -753,9 +753,7 @@ function doctorCrew(c) {
   const shown = states.filter((s) => s.status !== 'nodata');
   const cats = ['All', ...new Set(shown.map((s) => s.category))];
   const grid = shown.filter((s) => state.bioCat === 'All' || s.category === state.bioCat);
-  const head = c === 'A'
-    ? `<img class="avatar" src="${IMG.A}" alt="Crew A profile photo" style="width:96px;height:96px">`
-    : `<span class="letter y" style="width:96px;height:96px;font-size:36px">${c}</span>`;
+  const head = `<img class="avatar" src="${IMG[c]}" alt="Crew ${c} profile photo" style="width:96px;height:96px">`;
   return `${topbar('doctor', 'home')}<main class="page">
     <a class="back" data-back href="#/doctor" aria-label="Back" title="Back">←</a>
     <div class="crew-head">${head}<div><div class="lbl">ASTRONAUT · MARS MISSION</div><h1>Crew ${c}</h1><small>${dayLabel(state.date)} &nbsp; Mission start Oct 1</small></div>

@@ -605,3 +605,34 @@ p { margin: 0; }
   .home-instr, .home-hazard { height: auto; }
   .home-instr .items { max-height: 420px; }
 }
+
+/* ---------- Round 11: compact calendar ---------- */
+/* top bar clock / SOL restored (fixed slots) */
+.topbar .live-clock { width: 150px; text-align: right; }
+.topbar .live-sol { width: 56px; text-align: center; }
+/* [today 240px] [tags row + 6 shorter day cards] — total height 340px */
+.strip { grid-template-columns: 240px minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.big-day { height: 340px; padding: 16px; }
+.bd-head .big { font-size: 30px; }
+.strip-right { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cal-tags { justify-content: flex-end; height: 32px; align-items: center; flex-wrap: nowrap; }
+.week.six .dayc { height: 298px; padding: 8px 6px; gap: 5px; }
+.week.six .dayc .dn { font-size: 12.5px; }
+.dc-list { gap: 5px; }
+.dc-list .ev { height: 32px; padding: 4px 7px; }
+.dc-list .ev .t { font-size: 9px; margin-bottom: 0; }
+.dc-list .ev > :last-child:not(.t), .dc-list .ev { white-space: nowrap; text-overflow: ellipsis; }
+.dc-list .ev { display: block; overflow: hidden; font-size: 10.5px; line-height: 1.35; }
+.dc-list .ev-more { font-size: 9.5px; }
+.week.six .page-btn { padding: 4px 12px; font-size: 10.5px; }
+@media (max-width: 1000px) {
+  .strip { grid-template-columns: 1fr; }
+  .big-day { height: 300px; }
+  .cal-tags { flex-wrap: wrap; height: auto; justify-content: flex-start; }
+}
+.cal-tags .chip { border: 2px solid transparent; padding: 4px 12px; font-weight: 600; }
+.cal-tags .chip.on { background: var(--navy-100); color: var(--navy-900); border-color: var(--navy-900); box-shadow: none; }
+.cal-tags .chip.hz-normal { background: var(--sky); color: var(--navy-900); }
+.cal-tags .chip.hz-potential { background: var(--yellow); color: var(--navy-900); }
+.cal-tags .chip.hz-urgent { background: var(--crit); color: #fff; }
+.cal-tags .chip.hz-normal.on, .cal-tags .chip.hz-potential.on, .cal-tags .chip.hz-urgent.on { border-color: var(--navy-900); box-shadow: none; }
