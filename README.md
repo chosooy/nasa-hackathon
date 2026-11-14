@@ -145,8 +145,9 @@ Our team's greatest strength is the way we bring together different perspectives
 
 **Haejun Paik** — Design
 
-- Brand identity and guidelines.
-- UI design.
+- Established the project's brand identity and visual guidelines, including the logo, typography, icons and other visual elements.
+- Designed the user interface to make the health-monitoring experience intuitive and accessible for astronauts.
+- Created the final presentation deck to communicate the project's concept, key features and design solutions.
 
 **Dahyun Lee** — Biology
 
