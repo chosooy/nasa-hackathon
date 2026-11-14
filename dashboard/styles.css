@@ -1172,3 +1172,10 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 .ob-base .bl-drop svg { background: rgba(255,255,255,.12); color: #8AB4FF; }
 .ob-base .bl-drop b { color: #fff; }
 .ob-base .bl-drop small { color: #C9D3E6; }
+
+/* onboarding baseline: "already submitted" note under the text, actions pinned to the bottom */
+.bl-done { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border-radius: 16px; background: rgba(255,255,255,.08); border: 1px solid var(--glass-line); }
+.bl-ok { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--yellow); color: var(--navy-900); font-weight: 800; font-size: 14px; display: grid; place-items: center; }
+.bl-done b { display: block; font-size: 15px; color: #fff; margin-bottom: 2px; }
+.bl-done small { font-size: 13.5px; line-height: 1.5; color: #E3E8F1; }
+.bl-actions { margin-top: auto; display: flex; flex-direction: column; gap: 14px; padding-top: 8px; }

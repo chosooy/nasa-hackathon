@@ -642,7 +642,7 @@ function chatCard(role, mini) {
     ? `<img class="avatar" src="${IMG.doctor}" alt="Ground doctor" style="width:40px;height:40px"><div><b>Ground doctor</b><small>Flight care team · 1:1 chat</small></div>`
     : `<img class="avatar" src="${IMG[DB.cur]}" alt="Crew ${DB.cur}" style="width:40px;height:40px"><div><b>Crew ${DB.cur}</b><small>Crew ${DB.cur} · 1:1 conversation</small></div>`;
   return `<section class="card chat ${mini ? 'mini' : 'dark-chat'}">
-    <div class="chat-head">${head}${mini ? '' : '<span class="dots">···</span>'}</div>
+    <div class="chat-head">${head}</div>
     <div class="log" id="chatlog">${mini ? '' : `<div class="note">Messages may take time to reach ${crewSide ? 'Earth' : 'the crew'}. We'll show you when they arrive.</div>`}${chatLog(role, mini)}</div>
     <form class="compose" data-chat="${role}" data-crew="${DB.cur}"><button type="button" class="plus" data-attach-note aria-label="Attach a file">+</button><input name="m" placeholder="Write a message to ${crewSide ? 'your doctor' : `Crew ${DB.cur}`}…" autocomplete="off"><button class="btn primary" type="submit">Send${mini ? '' : ' ' + ICON.send}</button></form>
   </section>`;
@@ -1033,12 +1033,13 @@ function crewSelect() {
         <div class="bl-kicker">EARTH BASELINE</div>
         <h2>Bring your health data from Earth.</h2>
         <p class="bl-lead">To support your care throughout the mission, we collect your health data on Earth as your baseline. The same biomarkers are measured again in space and compared with it, so your care team can see what has changed for you.</p>
-        <hr>
+        <div class="bl-done"><span class="bl-ok" aria-hidden="true">✓</span><div><b>Already submitted</b><small>Crew <span class="bl-crew">${sel}</span>'s Earth baseline records are on file. Your care team compares your space readings with them.</small></div></div>
+        <div class="bl-actions">
         <div class="bl-step"><i>1</i><p>Download the template to see which biomarkers to prepare and how to measure each one.</p></div>
         <a class="bl-btn light" href="${ROOT}/ui/baseline_template.csv" download="baseline_template.csv">${ICON.download}Download baseline template (.csv)</a>
         <div class="bl-step"><i>2</i><p>Fill in your Earth results and upload the file.</p></div>
         <button type="button" class="bl-btn primary" data-upload-done>${ICON.upload}Upload baseline records (.csv)</button>
-        <div class="bl-drop">${ICON.doc}<div><b>No file uploaded yet</b><small>Drop your completed CSV here.</small></div></div>
+        </div>
       </section>
     </div>
   </div></main>`;
@@ -1148,7 +1149,7 @@ document.addEventListener('click', (e) => {
     // update in place so the horizontal crew strip keeps its scroll position
     state.pick = d.pick;
     document.querySelectorAll('[data-pick]').forEach((b) => { const on = b.dataset.pick === d.pick; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
-    const next = document.querySelector('.ob-next'); if (next) next.dataset.me = d.pick;
+    const next = document.querySelector('.ob-next'); if (next) next.dataset.me = d.pick; document.querySelectorAll('.bl-crew').forEach((x) => { x.textContent = d.pick; });
     t.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }
   else if (d.loc) {
