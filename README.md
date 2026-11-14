@@ -21,7 +21,7 @@
 NASA Space Apps Challenge · *Create Health Monitoring Software for Astronauts on Space Missions*
 Team Kook · Sooyeon Cho, Haejun Paik, Dahyun Lee
 
-[Space Apps team page](https://www.spaceappschallenge.org/2026/find-a-team/team-cook/?tab=details) · [Live dashboard](https://chosooy.github.io/nasa-hackathon/dashboard/) · [Test bench](https://chosooy.github.io/nasa-hackathon/test/) · [Slides](https://docs.google.com/presentation/d/1-_GjA7EkPju9ftL7wJygjFODrgVq4lCvm-AXgDYFebA/edit?slide=id.p#slide=id.p) · [Data flow](docs/data-flow.md)
+[Space Apps team page](https://www.spaceappschallenge.org/2026/find-a-team/team-cook/?tab=details) · [Live dashboard](https://chosooy.github.io/nasa-hackathon/dashboard/) · [Test bench](https://chosooy.github.io/nasa-hackathon/test/) · [Slides (PDF)](docs/project-demonstration.pdf) · [Data flow](docs/data-flow.md)
 
 ## Summary
 
@@ -30,6 +30,23 @@ KOOK (Kinetic Observation & Optimal Keel) is a health monitoring dashboard desig
 On long missions, astronauts are exposed to the five major health hazards identified by NASA. These risks vary in severity, so astronauts need a system that lets them assess their health immediately and gives them step-by-step guidance.
 
 KOOK aims to lower the barriers to health management in space with an intuitive, accessible dashboard that anyone can understand and use.
+
+## Project demonstration
+
+[Open the slides as a PDF](docs/project-demonstration.pdf). GitHub's PDF viewer scrolls through all 7 pages.
+
+<details>
+<summary><b>Show all slides here</b></summary>
+
+<img src="docs/slides/slide-01.jpg" width="100%" alt="Slide 1">
+<img src="docs/slides/slide-02.jpg" width="100%" alt="Slide 2">
+<img src="docs/slides/slide-03.jpg" width="100%" alt="Slide 3">
+<img src="docs/slides/slide-04.jpg" width="100%" alt="Slide 4">
+<img src="docs/slides/slide-05.jpg" width="100%" alt="Slide 5">
+<img src="docs/slides/slide-06.jpg" width="100%" alt="Slide 6">
+<img src="docs/slides/slide-07.jpg" width="100%" alt="Slide 7">
+
+</details>
 
 ## Background
 
