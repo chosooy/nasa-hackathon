@@ -17,11 +17,11 @@ const PATHS = {
   instr: `${ROOT}/data/health_instruction/health_instruction.csv`,
 };
 const IMG = {
-  A: `${ROOT}/assets/image/A_profile.png`,
-  B: `${ROOT}/assets/image/B_profile.png`,
-  C: `${ROOT}/assets/image/C_profile.png`,
-  D: `${ROOT}/assets/image/D_profile.png`,
-  doctor: `${ROOT}/assets/image/doctor_profile.png`,
+  A: `${ROOT}/assets/image/web/A_profile.jpg`,
+  B: `${ROOT}/assets/image/web/B_profile.jpg`,
+  C: `${ROOT}/assets/image/web/C_profile.jpg`,
+  D: `${ROOT}/assets/image/web/D_profile.jpg`,
+  doctor: `${ROOT}/assets/image/web/doctor_profile.jpg`,
   logo: `${ROOT}/assets/logo/Logo_yellow%20ver..png`,
   earth: `${ROOT}/assets/background/Background_Earth.jpeg`,
   mars: `${ROOT}/assets/background/Background_Mars.jpeg`,
@@ -517,15 +517,26 @@ function transmissionLog(c) {
     }
     if (e) { entries.push(e); seq += e.packets; }
   }
-  // hot data: every Potential / Urgent reading, compressed and sent at once
+  // hot data: Potential / Urgent readings are bundled per minute and sent at the end of that minute
+  const MIN_MS = 60 * 1000;
+  const byMinute = new Map();
   rows.filter((r) => r.st === 'potential' || r.st === 'urgent').forEach((r) => {
-    const key = `${c}|${day}|hot|${r.b}|${r.ts}`;
+    const m = Math.floor(r.ts / MIN_MS) * MIN_MS;
+    if (!byMinute.has(m)) byMinute.set(m, []);
+    byMinute.get(m).push(r);
+  });
+  byMinute.forEach((list, m) => {
+    const sentAt = m + MIN_MS;
+    if (sentAt > now) return;                              // this minute's bundle is still open
+    const key = `${c}|${day}|hot|${m}`;
     let e = TX.cache.get(key);
     if (!e && z) {
-      const raw = utf8.encode(toCsv([r]));
+      const raw = utf8.encode(toCsv(list));
       const packed = z.compress(raw, ZSTD_LEVEL);
       const ok = unutf8.decode(z.decompress(packed)) === unutf8.decode(raw);
-      e = { kind: 'hot', st: r.st, name: `hot_${c}_${r.b.replace(/[^A-Za-z0-9]+/g, '-').replace(/-+$/, '')}_${r.time.replace(':', '')}.zst`, label: `${nice(r.b)} ${fmtU(r.v, r.b)}`, raw: raw.length, zst: packed.length, wire: packed.length, ok, sentAt: r.ts };
+      const st = list.some((r) => r.st === 'urgent') ? 'urgent' : 'potential';
+      const names = [...new Set(list.map((r) => nice(r.b)))];
+      e = { kind: 'hot', st, name: `hot_${c}_${day}T${hhmm(m).replace(':', '')}.zst`, label: `${list.length} reading${list.length > 1 ? 's' : ''} · ${names.slice(0, 2).join(', ')}${names.length > 2 ? '…' : ''}`, readings: list.length, raw: raw.length, zst: packed.length, wire: packed.length, ok, sentAt };
       TX.cache.set(key, e);
     }
     if (e) entries.push(e);
@@ -552,10 +563,10 @@ function txPanel(c) {
   return `<section class="tx-slot">${head}
     <div class="tx-next"><div><small>Next cold batch</small><b class="tx-count" data-next="${nextAt}">${countdown(nextAt - now)}</b></div>
       <div class="tx-buf">${buffer.length} Normal readings buffered<br><small>${fmtBytes(utf8.encode(toCsv(buffer)).length)} raw · sends ${hhmm(nextAt)} UTC</small></div></div>
-    <div class="tx-rules"><span><i class="dot normal"></i>Normal → zstd + CCSDS · hourly</span><span><i class="dot urgent"></i>Potential / Urgent → zstd · instantly</span></div>
+    <div class="tx-rules"><span><i class="dot normal"></i>Normal → zstd + CCSDS · hourly</span><span><i class="dot urgent"></i>Potential / Urgent → zstd · every minute</span></div>
     <div class="tx-stats">
       <div><small>Cold data today</small><b>${cold.length} batches</b><span>${fmtBytes(coldRaw)} → ${fmtBytes(coldWire)}${coldRaw ? ` (${Math.round((coldWire / coldRaw) * 100)}%)` : ''}</span></div>
-      <div><small>Hot data today</small><b>${hot.length} alerts</b><span>${fmtBytes(hotRaw)} → ${fmtBytes(hotWire)}</span></div>
+      <div><small>Hot data today</small><b>${hot.length} bundles</b><span>${fmtBytes(hotRaw)} → ${fmtBytes(hotWire)}</span></div>
     </div>
     <ul class="tx-log">${entries.slice(0, 40).map(row).join('') || '<li class="tx-note">Nothing sent yet today.</li>'}</ul>
     <p class="tx-foot">zstd level ${ZSTD_LEVEL} · CCSDS Space Packet, APID 0x${APID[c].toString(16)}, CUC time, CRC-16</p>
