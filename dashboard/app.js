@@ -344,8 +344,7 @@ function donutSvg(hz, size, centerSvg) {
   const C = size / 2, R = size * 0.34, T = size * 0.105;
   const col = { urgent: '#E43700', potential: '#EAFE07', normal: '#A8C8FF' };
   const pt = (a, r) => [C + r * Math.cos((a * Math.PI) / 180), C + r * Math.sin((a * Math.PI) / 180)];
-  // Dashed outer ring only on the large hazard board, not on the small crew-hazard circles.
-  let g = size > 120 ? `<circle cx="${C}" cy="${C}" r="${R + T * 0.95}" fill="none" stroke="#C9D3E6" stroke-dasharray="1.5 3.5"/>` : "";
+  let g = '';
   hz.forEach((h, i) => {
     const a0 = -90 + i * 72 + 3, a1 = a0 + 66;
     const [x0, y0] = pt(a0, R), [x1, y1] = pt(a1, R);
