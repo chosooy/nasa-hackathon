@@ -39,7 +39,9 @@
   .progress i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s linear; }
 
   /* three cards */
-  main { width: min(1200px, 100%); margin: 0 auto; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 28px 20px; align-items: start; }
+  main { width: min(1240px, 100%); margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr) 64px minmax(0, 1fr) 64px minmax(0, 1fr); gap: 0; padding: 28px 20px; align-items: start; }
+  .hop { align-self: start; margin-top: 46px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted); font-size: 11.5px; text-align: center; }
+  .hop i { font-style: normal; font-size: 22px; line-height: 1; color: var(--text); }
   .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; backdrop-filter: blur(14px) saturate(1.15); -webkit-backdrop-filter: blur(14px) saturate(1.15); display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
   .head { padding: 18px 20px 16px; border-bottom: 1px solid var(--line); }
   .kind { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -48,8 +50,8 @@
   .size { font: 600 34px/1.15 var(--font); font-variant-numeric: tabular-nums; margin-top: 10px; }
   .size small { font-size: 15px; font-weight: 500; color: var(--muted); margin-left: 8px; }
   .meta { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
-  .card.hot .kind b { color: var(--warn); }
-  .card.cold .kind b { color: var(--accent); }
+  .card.astro .kind b { color: #EAFE07; }
+  .card.doctor .kind b { color: var(--accent); }
 
   .list { height: clamp(220px, 52vh, 480px); overflow-y: auto; font: 12.5px/1.45 var(--mono); }
   .r { display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto; gap: 10px; padding: 4px 20px; align-items: baseline; }
@@ -59,13 +61,13 @@
   .r .v { text-align: right; font-variant-numeric: tabular-nums; }
   .r .v.Warning { color: var(--warn); }
   .r .v.Critical { color: var(--danger); }
+  .r .v.potential { color: var(--warn); }
+  .r .v.urgent { color: var(--danger); }
   .r .s { color: var(--faint); font-size: 11px; margin-left: 6px; }
-  .r .s.sent { color: var(--ok); }
-  .cold .r { grid-template-columns: minmax(0, 1fr) 3em 5.5em; }
-  .cold .r .n { text-align: right; color: var(--faint); }
+  .astro .r, .doctor .r { grid-template-columns: 3.2em minmax(0, 1fr) auto; }
   .empty { color: var(--faint); padding: 18px 20px; font: 13px var(--font); }
 
-  @media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); } .list { max-height: 320px; } }
+  @media (max-width: 1000px) { main { grid-template-columns: minmax(0, 1fr); gap: 8px; } .hop { margin: 0; flex-direction: row; } .hop i { transform: rotate(90deg); } .list { max-height: 320px; } }
 </style>
 </head>
 <body>
@@ -88,32 +90,36 @@
   <main>
     <section class="card raw">
       <div class="head">
-        <div class="kind"><b>RAW</b><span>every reading, CSV</span></div>
+        <div class="kind"><b>RAW</b><span>device readings · CSV</span></div>
         <div class="size" id="rawSize">0 B</div>
         <div class="meta" id="rawMeta">Press Start to replay the day.</div>
       </div>
       <div class="list" id="rawList"></div>
     </section>
 
-    <section class="card hot">
+    <div class="hop" aria-hidden="true"><i>→</i>zstd</div>
+
+    <section class="card astro">
       <div class="head">
-        <div class="kind"><b>HOT</b><span>Potential / Urgent · zstd + dictionary · every second</span></div>
-        <div class="size" id="hotSize">0 B</div>
-        <div class="meta" id="hotMeta">Nothing sent yet.</div>
+        <div class="kind"><b>ASTRONAUT DASHBOARD</b><span>Mars · right away</span></div>
+        <div class="size" id="astroSize">0 B</div>
+        <div class="meta" id="astroMeta">One zstd file per 5-minute slot, every status.</div>
       </div>
-      <div class="list" id="hotList"></div>
+      <div class="list" id="astroList"></div>
     </section>
 
-    <section class="card cold">
+    <div class="hop" aria-hidden="true"><i>→</i>+20 min</div>
+
+    <section class="card doctor">
       <div class="head">
-        <div class="kind"><b>COLD</b><span>Normal · summary · CCSDS 121 · hourly</span></div>
-        <div class="size" id="coldSize">0 B</div>
-        <div class="meta" id="coldMeta">Builds up as Normal readings come in.</div>
+        <div class="kind"><b>DOCTOR DASHBOARD</b><span>Earth · 20 min later</span></div>
+        <div class="size" id="docSize">0 B</div>
+        <div class="meta" id="docMeta">The same files arrive 20 minutes after they were measured.</div>
       </div>
-      <div class="list" id="coldList"></div>
+      <div class="list" id="docList"></div>
     </section>
   </main>
 
-<script type="module" src="app.js?v=9"></script>
+<script type="module" src="app.js?v=10"></script>
 </body>
 </html>

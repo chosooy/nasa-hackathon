@@ -1,33 +1,24 @@
-// KOOK test bench: replays one crew's day and shows what each transmission lane carries.
+// KOOK test bench: replays one crew's day through the same data flow as the dashboard.
 //
-//   RAW   every reading as CSV (what the crew measured)
-//   HOT   Potential / Urgent readings, gathered every second, each file zstd-compressed with the shared
-//         dictionary in data/compression/hot.zdict (same one the dashboard uses)
-//   COLD  Normal readings summarised per biomarker, compressed with CCSDS 121, sent hourly
+//   RAW                  device readings, one 5-minute slot at a time (CSV rows)
+//   ASTRONAUT DASHBOARD  each slot is zstd-compressed into one file (every status) and shown on Mars right away
+//   DOCTOR DASHBOARD     the same file reaches Earth 20 minutes after it was measured (one-way light time)
 //
-// The lane logic is the Rust/WebAssembly simulator in ./pkg (from minuncho/prep space-sim):
-// rows go in one by one (Sim.playStep), it asks for files (nextRequest), we compress them and queue
-// them (enqueue), and it releases them in order (dispatch). Its "priority" lane is our HOT lane.
-// Status rules are the dashboard's: biomarker.csv yellow = normal range, red = urgent, otherwise potential.
-// The simulator expects Normal / Warning / Critical, so potential → Warning and urgent → Critical.
-
-const VERSION = new URL(import.meta.url).search;
-const { default: init, Sim } = await import(`./pkg/space_sim.js${VERSION}`);
+// Every file is decompressed again and compared with its rows. Status (for colour only) follows the
+// dashboard's rules: biomarker.csv yellow = normal range, red = urgent, otherwise potential.
 
 const ROOT = '..';
-const TX_DELAY_MS = 20 * 60000;           // one-way light delay (same as the dashboard)
-const LINK_BYTES_PER_SEC = 10 * 1024;
-const COLD_EVERY_MS = 60 * 60000;
-const PRIO_EVERY_MS = 1000;
+const LIGHT_MIN = 20;
 const ZSTD_LEVEL = 19;
-const ZSTD_PKG = 'https://cdn.jsdelivr.net/npm/@bokuweb/zstd-wasm@0.0.27';
+const ZSTD_PKG = 'https://cdn.jsdelivr.net/npm/@bokuweb/zstd-wasm@0.0.22';
 const DEFAULT_DAY = '2026-11-13';
-const MAX_RAW_ROWS = 300;
+const MAX_ROWS = 300;
 
 const $ = (id) => document.getElementById(id);
-const utf8 = new TextEncoder();
+const utf8 = new TextEncoder(), unutf8 = new TextDecoder();
 const fmtBytes = (n) => (n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(2)} MB`);
 const pct = (a, b) => (b ? `${((a / b) * 100).toFixed(1)}%` : '');
+const addMin = (hhmm, m) => { const t = (+hhmm.slice(0, 2) * 60 + +hhmm.slice(3, 5) + m) % 1440; return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`; };
 
 // ===== CSV + status rules (same as dashboard/app.js) =====
 function parseCSV(text) {
@@ -61,155 +52,119 @@ const test1 = (p, v) => (p.op === 'range' ? v >= p.lo && v <= p.hi : p.op === '<
 const RULES = {};
 function statusOf(b, v) {
   const r = RULES[b];
-  if (!r || Number.isNaN(v)) return 'Normal';
-  if (r.red && r.red.some((p) => test1(p, v))) return 'Critical';
-  if (r.yellow) return r.yellow.some((p) => test1(p, v)) ? 'Normal' : 'Warning';
-  return 'Normal';
+  if (!r || Number.isNaN(v)) return 'normal';
+  if (r.red && r.red.some((p) => test1(p, v))) return 'urgent';
+  if (r.yellow) return r.yellow.some((p) => test1(p, v)) ? 'normal' : 'potential';
+  return 'normal';
 }
-const LABEL = { Normal: 'Normal', Warning: 'Potential', Critical: 'Urgent' };
+const worst = (list) => (list.some((r) => r.st === 'urgent') ? 'urgent' : list.some((r) => r.st === 'potential') ? 'potential' : 'normal');
 
 parseCSV(await fetch(`${ROOT}/data/biomarker/biomarker.csv`).then((r) => r.text()))
   .forEach((r) => { RULES[r.biomarker] = { yellow: parseRule(r.yellow), red: parseRule(r.red) }; });
 
-// ===== simulator + zstd =====
-await init({ module_or_path: new URL(`./pkg/space_sim_bg.wasm${VERSION}`, import.meta.url) });
-const sim = new Sim(true, 0, 0, TX_DELAY_MS, LINK_BYTES_PER_SEC, COLD_EVERY_MS, PRIO_EVERY_MS, Date.now());
-let zstd = null, dict = null, cctx = 0;
-import(`${ZSTD_PKG}/+esm`).then(async (m) => {
-  await m.init(`${ZSTD_PKG}/dist/esm/zstd.wasm`);
-  dict = new Uint8Array(await fetch(`${ROOT}/data/compression/hot.zdict`).then((r) => r.arrayBuffer()));
-  cctx = m.createCCtx();
-  zstd = m;
-}).catch((e) => console.error('zstd failed to load', e));
+let zstd = null;
+const zstdReady = import(`${ZSTD_PKG}/+esm`).then(async (m) => { await m.init(`${ZSTD_PKG}/dist/web/zstd.wasm`); zstd = m; })
+  .catch((e) => { console.error('zstd failed to load', e); $('astroMeta').textContent = 'The zstd encoder could not load. Check the connection and reload.'; });
 
 // ===== state =====
-let slots = [], slotIdx = 0, timer = null, total = 0;
-const played = { n: 0, bytes: 0, hotRaw: 0, coldRaw: 0 };
-const SENT = { hot: { n: 0, bytes: 0 }, cold: { n: 0, bytes: 0 } };
-const pending = new Map();
-const rowBytes = (r) => utf8.encode(`${r.ts},${r.b},${r.fig},${r.st}\n`).length;
+let slots = [], slotIdx = 0, timer = null, total = 0, crew = 'A', day = DEFAULT_DAY;
+const files = [];                                  // { time, arrive, n, raw, zst, ok, st }
+const sum = { readings: 0, raw: 0 };
 
 async function loadDay() {
   stop();
-  const crew = $('crewSel').value, day = $('daySel').value;
-  const rows = parseCSV(await fetch(`${ROOT}/data/crew/${crew}_hotdata.csv`).then((r) => r.text()))
+  crew = $('crewSel').value; day = $('daySel').value;
+  const rows = parseCSV(await fetch(`${ROOT}/data/crew/${crew}_raw.csv`).then((r) => r.text()))
     .filter((r) => r.date === day)
-    .map((r) => ({ ts: `${r.date} ${r.time}`, b: r.biomarker, fig: r.figure, st: statusOf(r.biomarker, parseFloat(r.figure)) }))
-    .sort((a, z) => a.ts.localeCompare(z.ts));
-  sim.load('timestamp,Biomarker,Figure,Status\n' + rows.map((r) => `${r.ts},${r.b},${r.fig},${r.st}`).join('\n') + '\n');
+    .map((r) => ({ date: r.date, time: r.time, b: r.biomarker, fig: r.figure, st: statusOf(r.biomarker, parseFloat(r.figure)) }))
+    .sort((a, z) => a.time.localeCompare(z.time));
   slots = [];
-  rows.forEach((r) => { if (!slots.length || slots[slots.length - 1][0].ts !== r.ts) slots.push([]); slots[slots.length - 1].push(r); });
+  rows.forEach((r) => { if (!slots.length || slots[slots.length - 1][0].time !== r.time) slots.push([]); slots[slots.length - 1].push(r); });
   total = rows.length;
   reset();
-  $('btnStart').disabled = false; $('btnReset').disabled = false;
+  $('btnReset').disabled = false;
 }
 function reset() {
   stop();
-  sim.reset();
-  slotIdx = 0;
-  Object.assign(played, { n: 0, bytes: 0, hotRaw: 0, coldRaw: 0 });
-  Object.values(SENT).forEach((x) => { x.n = 0; x.bytes = 0; });
-  pending.clear();
+  slotIdx = 0; files.length = 0; sum.readings = 0; sum.raw = 0;
   $('rawList').innerHTML = '<div class="empty">Press Start to replay the day.</div>';
+  $('btnStart').disabled = !slots.length;
   render();
 }
 
 // ===== playback: one 5-minute slot per tick =====
 function step() {
-  if (slotIdx >= slots.length) { stop(); $('btnStart').disabled = true; return; }
+  if (slotIdx >= slots.length) { stop(); $('btnStart').disabled = true; render(); return; }
+  const slot = slots[slotIdx++];
+  const text = slot.map((r) => `${r.date},${r.time},${r.b},${r.fig}\n`).join('');   // rows only; both sides know the columns
+  const raw = utf8.encode(text);
+  const packed = zstd.compress(raw, ZSTD_LEVEL);
+  const ok = unutf8.decode(zstd.decompress(packed)) === text;
+  files.push({ time: slot[0].time, arrive: addMin(slot[0].time, LIGHT_MIN), n: slot.length, raw: raw.length, zst: packed.length, ok, st: worst(slot) });
+  sum.readings += slot.length; sum.raw += raw.length;
+
   const box = $('rawList');
   const empty = box.querySelector('.empty'); if (empty) empty.remove();
   const stick = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
-  slots[slotIdx++].forEach((r) => {
-    sim.playStep();
-    played.n++; const n = rowBytes(r); played.bytes += n;
-    if (r.st === 'Normal') played.coldRaw += n; else played.hotRaw += n;
-    const el = document.createElement('div');
-    el.className = 'r';
-    el.innerHTML = `<span class="t"></span><span class="b"></span><span class="v ${r.st}"></span>`;
-    el.children[0].textContent = r.ts.slice(11); el.children[1].textContent = r.b; el.children[2].textContent = r.fig;
-    el.title = LABEL[r.st];
-    box.appendChild(el);
-  });
-  while (box.children.length > MAX_RAW_ROWS) box.firstElementChild.remove();
+  slot.forEach((r) => box.appendChild(row([[r.time, 't'], [r.b, 'b'], [r.fig, `v ${r.st}`]])));
+  while (box.children.length > MAX_ROWS) box.firstElementChild.remove();
   if (stick) box.scrollTop = box.scrollHeight;
+  render();
 }
-function start() {
+async function start() {
   if (slotIdx >= slots.length) return;
-  sim.setPlaying(true);
+  await zstdReady; if (!zstd) return;
   timer = setInterval(step, +$('speedSel').value);
   $('btnStart').textContent = 'Pause';
   step();
 }
 function stop() { clearInterval(timer); timer = null; $('btnStart').textContent = 'Start'; }
 
-// ===== lanes: compress what the simulator asks for, count what it sends =====
-function pump(now) {
-  if (zstd) {
-    for (;;) {
-      const s = sim.nextRequest(now); if (!s) break;
-      const req = JSON.parse(s);
-      const text = utf8.encode(req.text || '');
-      const bytes = req.encoding === 'ccsds121' ? new Uint8Array(req.bytes)
-        : req.kind === 'priority' ? zstd.compressUsingDict(cctx, text, dict, ZSTD_LEVEL)   // HOT: shared dictionary
-        : zstd.compress(text, ZSTD_LEVEL);
-      pending.set(sim.enqueue(req.kind, req.name, bytes.length), bytes);
-    }
-  }
-  for (;;) {
-    const s = sim.dispatch(now); if (!s) break;
-    const d = JSON.parse(s);
-    const bytes = pending.get(d.blockId); pending.delete(d.blockId);
-    const k = /priority/i.test(d.name) ? 'hot' : /cold/i.test(d.name) ? 'cold' : null;
-    if (k && bytes) { SENT[k].n++; SENT[k].bytes += bytes.length; }
-  }
-}
-
 // ===== render =====
-function rows(id, list, make, emptyText) {
+function row(cells) {
+  const el = document.createElement('div'); el.className = 'r';
+  cells.forEach(([text, cls]) => { const s = document.createElement('span'); s.textContent = text; if (cls) s.className = cls; el.appendChild(s); });
+  return el;
+}
+function fill(id, list, make, emptyText) {
   const box = $(id);
   if (!list.length) { box.innerHTML = `<div class="empty">${emptyText}</div>`; return; }
-  box.replaceChildren(...list.map((x) => { const el = document.createElement('div'); el.className = 'r'; make(el, x); return el; }));
+  const stick = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  box.replaceChildren(...list.slice(-MAX_ROWS).map(make));
+  if (stick) box.scrollTop = box.scrollHeight;
 }
-function cell(el, text, cls) { const s = document.createElement('span'); s.textContent = text; if (cls) s.className = cls; el.appendChild(s); }
 function render() {
-  const snap = JSON.parse(sim.snapshot(Date.now()));
-  const cur = slots[Math.max(0, slotIdx - 1)];
-  const crew = $('crewSel').value;
+  const now = slotIdx ? slots[slotIdx - 1][0].time : null;
   if (!$('stampImg').src.endsWith(`${crew}_profile.jpg`)) { $('stampImg').src = `${ROOT}/assets/image/web/${crew}_profile.jpg`; $('stampImg').alt = `Crew ${crew}`; }
-  $('stampDate').textContent = $('daySel').value;
-  $('stampTime').textContent = slotIdx && cur ? cur[0].ts.slice(11) : '--:--';
+  $('stampDate').textContent = day;
+  $('stampTime').textContent = now || '--:--';
   $('progress').style.width = slots.length ? `${(slotIdx / slots.length) * 100}%` : '0';
 
   // RAW
-  $('rawSize').textContent = fmtBytes(played.bytes);
-  $('rawMeta').textContent = played.n ? `${played.n} of ${total} readings` : 'Press Start to replay the day.';
+  $('rawSize').textContent = fmtBytes(sum.raw);
+  $('rawMeta').textContent = sum.readings ? `${sum.readings} of ${total} readings` : 'Press Start to replay the day.';
 
-  // HOT (the simulator's priority lane)
-  $('hotSize').innerHTML = `${fmtBytes(SENT.hot.bytes)}${played.hotRaw ? `<small>${pct(SENT.hot.bytes, played.hotRaw)} of its rows</small>` : ''}`;
-  $('hotMeta').textContent = SENT.hot.n
-    ? `${SENT.hot.n} file${SENT.hot.n > 1 ? 's' : ''} sent · ${snap.prioSent} rows · ${snap.prioPending} waiting`
-    : played.hotRaw ? `${snap.prioPending} rows waiting to send` : 'Nothing sent yet.';
-  rows('hotList', [...snap.prioRows].reverse(), (el, r) => {
-    cell(el, r[0].slice(11, 16), 't'); cell(el, r[1], 'b');
-    const v = document.createElement('span'); v.className = `v ${r[3]}`; v.textContent = r[2];
-    const st = document.createElement('span'); st.className = `s ${/sent/i.test(r[5]) ? 'sent' : ''}`; st.textContent = /sent/i.test(r[5]) ? 'sent' : 'waiting';
-    v.appendChild(st); el.appendChild(v);
-  }, 'Potential and Urgent readings show up here.');
+  // ASTRONAUT: every file, right away
+  const zst = files.reduce((n, f) => n + f.zst, 0);
+  const bad = files.filter((f) => !f.ok).length;
+  $('astroSize').innerHTML = files.length ? `${fmtBytes(zst)}<small>${pct(zst, sum.raw)} of raw</small>` : '0 B';
+  $('astroMeta').textContent = files.length ? `${files.length} zstd file${files.length > 1 ? 's' : ''} · ${bad ? `${bad} failed the check` : 'all verified'}` : 'One zstd file per 5-minute slot, every status.';
+  fill('astroList', files, (f) => row([[f.time, 't'], [`${f.n} reading${f.n > 1 ? 's' : ''}`, 'b'], [`${f.raw} → ${f.zst} B`, `v ${f.st}`]]), 'Files show up here as each slot is measured.');
 
-  // COLD
-  const cold = sim.coldPayload().length;
-  $('coldSize').innerHTML = `${fmtBytes(cold)}${played.coldRaw ? `<small>${pct(cold, played.coldRaw)} of its rows</small>` : ''}`;
-  $('coldMeta').textContent = snap.coldRows.length
-    ? `${snap.coldRows.length} biomarkers summarised${SENT.cold.n ? ` · ${SENT.cold.n} file${SENT.cold.n > 1 ? 's' : ''} sent` : ''}`
-    : 'Builds up as Normal readings come in.';
-  rows('coldList', snap.coldRows, (el, r) => { cell(el, r[0], 'b'); cell(el, `×${r[1]}`, 'n'); cell(el, r[4], 'v'); }, 'Summary per biomarker: count, min, max, mean.');
+  // DOCTOR: the same files, 20 minutes later (replay time; files measured after 23:40 arrive the next day)
+  const got = now ? files.filter((f) => f.arrive <= now && f.arrive >= f.time) : [];
+  const transit = files.length - got.length;
+  const docBytes = got.reduce((n, f) => n + f.zst, 0);
+  $('docSize').innerHTML = got.length ? `${fmtBytes(docBytes)}<small>${got.length} file${got.length > 1 ? 's' : ''}</small>` : '0 B';
+  $('docMeta').textContent = files.length
+    ? `${got.length ? `Latest reading ${got[got.length - 1].time}` : 'Nothing has arrived yet'} · ${transit} in transit`
+    : 'The same files arrive 20 minutes after they were measured.';
+  fill('docList', got, (f) => row([[f.arrive, 't'], [`measured ${f.time}`, 'b'], [`${f.zst} B`, `v ${f.st}`]]), `Each file arrives ${LIGHT_MIN} minutes after it was measured.`);
 }
-setInterval(() => { pump(Date.now()); render(); }, 400);
 
 // ===== controls =====
 $('btnStart').addEventListener('click', () => (timer ? stop() : start()));
-$('btnReset').addEventListener('click', () => { reset(); $('btnStart').disabled = false; });
+$('btnReset').addEventListener('click', reset);
 $('speedSel').addEventListener('change', () => { if (timer) { stop(); start(); } });
 $('crewSel').addEventListener('change', loadDay);
 $('daySel').addEventListener('change', loadDay);

@@ -13,46 +13,53 @@
 - [ ] Nasa Data + Other Data Resources 밝히기
 
 
-## Compressed transmission
+## Data flow
 
-![KOOK data compression and transmission](assets/diagram/data_compression.png)
+![KOOK data flow: raw readings → zstd → astronaut dashboard → 20 min → doctor dashboard](assets/diagram/data_flow.png)
 
-How crew health data travels from Mars to Earth in the dashboard. The **Conversation** page shows the live log of what was sent; this section explains how it works. Code: [`dashboard/app.js`](dashboard/app.js) (`transmissionLog`, `ccsdsPacketize`, `ccsdsUnpack`).
+Crew health data goes through three stages:
 
-**Link:** Mars → Earth, 20 min one-way light delay. Every entry is stamped *Sent* (Mars) and *Earth* (sent + 20 min) and shows *In transit* until it arrives.
-
-**Two lanes, split by each reading's status** (biomarker rules in `data/biomarker/biomarker.csv`):
-
-| Lane | Readings | When | Encoding |
+| Stage | Where | What it holds | When |
 | --- | --- | --- | --- |
-| **Cold data** | Normal | Hourly batch, sent on the hour | CSV → zstd (level 19) → CCSDS Space Packets |
-| **Hot data** | Potential / Urgent | Every minute, as they happen | CSV rows → zstd (level 19) with a shared dictionary |
+| **Raw** | Ear-worn device | Every reading as CSV rows (`date,time,biomarker,figure`), one 5-minute slot at a time | As measured |
+| **Astronaut dashboard** | Mars | Each slot zstd-compressed into one file, whatever the readings' status | Right away |
+| **Doctor dashboard** | Earth | The same files | 20 minutes later (one-way light time) |
 
-Normal readings can wait, so they are buffered for an hour and sent together. Potential and Urgent readings go out right away so the ground doctor sees them as soon as the light delay allows.
+- **zstd.** Real Zstandard compression (level 19) runs in the browser via WebAssembly ([`@bokuweb/zstd-wasm`](https://www.npmjs.com/package/@bokuweb/zstd-wasm)), called from JavaScript.
+  - A file holds only the rows, with no CSV header; both dashboards know the columns.
+  - Each file is decompressed again and compared with the original rows. The log shows `✓ verified` when they match.
+- **File names.** `A_2026-11-14T1335.zst` means Crew A's readings measured at 13:35 UTC on Nov 14.
+- **Doctor dashboard.** It uses only readings that have arrived, so each reading appears exactly 20 minutes after it was measured.
+  - At the same moment the astronaut's and the doctor's latest values can differ.
+  - The doctor's top bar shows the last arrival (`Received HH:MM UTC`).
+- **Chat** has the same 20-minute delay. The sender sees a message right away as *In transit*, which turns into *Delivered* when it arrives. The other side sees it only on arrival.
+- **Where to see it**
+  - The astronaut's **Conversation** page shows the file log: name, readings, raw → zstd size, check, measured time, doctor arrival time.
+  - The [test bench](test/) replays a whole day as **Raw | Astronaut dashboard | Doctor dashboard**.
+- **Code:** [`dashboard/app.js`](dashboard/app.js) (`transmissionLog`, `arrivalMs`, `earthCrew`) and [`test/app.js`](test/app.js).
+- **Data:** `data/crew/{A,B,C,D}_raw.csv`.
 
-**zstd:** real Zstandard compression in the browser via WebAssembly ([`@bokuweb/zstd-wasm`](https://www.npmjs.com/package/@bokuweb/zstd-wasm)), level 19. The payload is a small CSV: `date,time,biomarker,figure`.
+**Size for one day** (2026-11-13, 288 slots, 1,168 readings per crew):
 
-**CCSDS Space Packet** (CCSDS 133.0-B), used for the cold lane:
+| Crew | Raw | zstd, one file per slot | (reference) whole day in one file |
+| --- | ---: | ---: | ---: |
+| A | 45.5 KB | 29.1 KB (64.0%) | 3.6 KB (7.8%) |
+| B | 45.5 KB | 29.0 KB (63.8%) | 3.9 KB (8.6%) |
+| C | 45.5 KB | 29.1 KB (64.0%) | 3.8 KB (8.3%) |
+| D | 45.5 KB | 29.1 KB (63.8%) | 3.9 KB (8.5%) |
 
-- **Primary header (6 bytes):** version 0, telemetry, secondary header present, APID per crew (A `0x101`, B `0x102`, C `0x103`, D `0x104`), sequence flags, 14-bit sequence count, data length.
-- **Secondary header (6 bytes):** CUC time, 4 bytes of seconds since the mission epoch (2026-10-01) plus 2 bytes of fine time.
-- **User data:** up to 1018 bytes of the zstd stream per packet, so each packet is at most 1032 bytes. Larger batches are split, and the sequence flags mark the first, middle and last packets.
-- **Error control (2 bytes):** CRC-16/CCITT-FALSE over the whole packet.
+A 5-minute slot holds about four readings (~160 B), which zstd brings to ~100 B. A whole day in one file would be far smaller, but the doctor would then wait until the day ends. Sending every slot keeps the doctor exactly 20 minutes behind.
 
-**Ground-side check:** every batch is decoded right after it is built. The packets are reassembled, every CRC is checked, the stream is decompressed and compared byte for byte with the original CSV. The log shows `✓ verified` when all of that matches.
+## Design history
 
-**What the ground doctor sees:** the doctor's screens use only readings that have reached Earth on this schedule. The astronaut's screens show everything measured so far.
+Before the flow above, we split readings into two lanes by status:
 
-- Potential and Urgent readings appear about 21 minutes after they are measured (a 1-minute bundle plus 20 minutes of light time).
-- Normal readings arrive in hourly batches, 20 minutes after each hour ends. A 10:05 reading, for example, shows up at 11:20.
+- **hot:** Potential/Urgent readings, sent every minute
+- **cold:** Normal readings, batched hourly and packed into CCSDS Space Packets
 
-So at the same moment the two screens can show different latest values, and the doctor's top bar shows when data last arrived (`Received HH:MM UTC`). Chat follows the same 20-minute light delay: the sender sees a message right away as *In transit*, which turns into *Delivered* when it arrives. The other side sees it only when it arrives.
+We later added a shared zstd dictionary for the hot lane. That design was replaced by the single zstd flow above. These are the measurements we made along the way.
 
-**Log entry:** file name, number of readings, raw size → size on the wire, number of packets (cold only), verification, and send/arrival times.
-
-**Note:** a hot bundle usually holds a single reading (readings come every 5 minutes), so zstd's frame overhead can make it a few bytes larger than the raw CSV. The gain shows up in the hourly cold batches.
-
-### Size experiments: what we tried
+### Size experiments (hot/cold design)
 
 All numbers are for one 24-hour day (2026-11-13) of crew data, measured with real zstd (level 19). Status rules come from `data/biomarker/biomarker.csv`. The scripts live outside the repo; the method is described here so the numbers can be redone.
 
@@ -90,13 +97,13 @@ A single row gives zstd nothing earlier to refer back to, so the ~72 B bundle gr
 
 The test bench's size table first showed "priority: 1.5% of raw". That looked like proof that sending anomalies every second compresses far better than 1-minute bundles. It doesn't. The figure came from compressing *all* anomaly rows so far in one go.
 
-The files the simulator actually sent (`A_priority.bin`) were 127–155 B each, larger than the rows inside them. Sending every second only helps when several anomalies pile up within that second. That happens in the fast replay, but not in real time, where readings are 5 minutes apart. The test bench now shows both: "If compressed in one go (reference)" and "Files actually sent so far".
+The files the simulator actually sent (`A_priority.bin`) were 127–155 B each, larger than the rows inside them. Sending every second only helps when several anomalies pile up within that second. That happens in the fast replay, but not in real time, where readings are 5 minutes apart. After that the test bench showed both: "If compressed in one go (reference)" and "Files actually sent so far".
 
 **4. What actually shrinks small bundles** (Crew A, 288 hot bundles, raw with header 21.9 KB)
 
 | Option | Total | vs raw | Per bundle |
 | --- | ---: | ---: | ---: |
-| a) header + rows, zstd (dashboard today) | 23.4 KB | 107% | 81 B |
+| a) header + rows, zstd (what the hot lane first did) | 23.4 KB | 107% | 81 B |
 | b) rows only, no compression | 14.1 KB | 64% | 49 B |
 | c) rows only, zstd | 15.8 KB | 72% | 55 B |
 | d) rows only, zstd with a shared dictionary | 9.4 KB | 43% | 33 B |
@@ -107,15 +114,8 @@ For d, the 2 KB dictionary was trained on Nov 1–12 readings. Both Mars and Ear
 
 A shared dictionary gives zstd the repeated parts (dates, biomarker names, number formats) before the first bundle, so even a one-row bundle compresses. It keeps the 21-minute delivery and cuts the hot lane by almost two-thirds.
 
-**Adopted (option d).** The dashboard and the test bench now compress hot files with the shared dictionary in [`data/compression/hot.zdict`](data/compression/hot.zdict) (2 KB). It was trained on Nov 1–12 readings of all four crews in both file formats by [`data/compression/train_dict.py`](data/compression/train_dict.py), and checked on Nov 13, a day it never saw:
+**Then replaced.** We used option d for a while: a 2 KB dictionary trained on Nov 1–12 data cut Crew A's 288 hot bundles from 15.8 KB to 9.6 KB.
 
-| Crew A, 288 hot bundles | Raw | zstd | zstd + dictionary |
-| --- | ---: | ---: | ---: |
-| Dashboard format (rows only) | 14.1 KB | 15.8 KB | 9.6 KB |
-| Test bench format (header + rows) | 27.3 KB | 26.8 KB | 10.0 KB |
+In the end we dropped the hot/cold split, CCSDS packets and the dictionary for the simpler flow in [Data flow](#data-flow). Every 5-minute slot goes out as one plain zstd file, and the doctor sees it 20 minutes later.
 
-In the dashboard a typical two-reading bundle goes from 87 B to about 42 B, and every bundle still decompresses back to the exact original (`✓ verified`).
-
-The dashboard uses zstd-wasm's `compressUsingDict` and `decompressUsingDict`. The frame-header trimming from option d2 isn't available through that API, so we stop at d.
-
-**Test bench:** [`test/`](test/) runs the ear-worn device and the compression simulator on our data, so these effects can be watched live. See [`test/README.md`](test/README.md).
+**Test bench:** [`test/`](test/) replays a day as Raw | Astronaut dashboard | Doctor dashboard. See [`test/README.md`](test/README.md).

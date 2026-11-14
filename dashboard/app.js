@@ -1,5 +1,5 @@
 /* KOOK dashboard — Crews A–D, November 2026. Layout follows Figma "최종" frames.
- * Data: ../data/calendar/events.csv, ../data/crew/{A,B,C,D}_hotdata.csv, ../data/biomarker/biomarker.csv,
+ * Data: ../data/calendar/events.csv, ../data/crew/{A,B,C,D}_raw.csv, ../data/biomarker/biomarker.csv,
  *       ../data/biomarker/raw biomarker.csv, ../data/health_instruction/health_instruction.csv
  */
 (() => {
@@ -8,10 +8,10 @@
 const ROOT = '..';
 const PATHS = {
   events: `${ROOT}/data/calendar/events.csv`,
-  crewA: `${ROOT}/data/crew/A_hotdata.csv`,
-  crewB: `${ROOT}/data/crew/B_hotdata.csv`,
-  crewC: `${ROOT}/data/crew/C_hotdata.csv`,
-  crewD: `${ROOT}/data/crew/D_hotdata.csv`,
+  crewA: `${ROOT}/data/crew/A_raw.csv`,
+  crewB: `${ROOT}/data/crew/B_raw.csv`,
+  crewC: `${ROOT}/data/crew/C_raw.csv`,
+  crewD: `${ROOT}/data/crew/D_raw.csv`,
   rules: `${ROOT}/data/biomarker/biomarker.csv`,
   raw: `${ROOT}/data/biomarker/raw%20biomarker.csv`,
   instr: `${ROOT}/data/health_instruction/health_instruction.csv`,
@@ -202,13 +202,9 @@ function buildCrew(rows) {
   });
   return crewFromSeries(s);
 }
-/** When a reading reaches Earth (same schedule as the transmission log):
- *  Normal → hourly cold batch sent at the end of its hour; Potential/Urgent → 1-minute hot bundle; + 20 min light time. */
+/** When a reading reaches the doctor dashboard on Earth: 20 minutes (one-way light time) after it was measured. */
 function arrivalMs(b, pt) {
-  const ts = Date.parse(`${pt.date}T${pt.time}:00Z`);
-  const st = statusOf(b, pt.v);
-  const sent = st === 'potential' || st === 'urgent' ? (Math.floor(ts / 60000) + 1) * 60000 : (Math.floor(ts / HOUR_MS) + 1) * HOUR_MS;
-  return sent + LIGHT_MS;
+  return Date.parse(`${pt.date}T${pt.time}:00Z`) + LIGHT_MS;
 }
 const EARTH = { key: -1, crews: {}, lastRx: 0 };
 /** The crew's readings as the ground doctor has them right now (rebuilt once per simulated minute). */
@@ -459,36 +455,23 @@ function todayArt() {
     <circle cx="58" cy="46" r="7" fill="none" stroke="#07173F" stroke-width="2"/><circle cx="104" cy="30" r="5" fill="none" stroke="#07173F" stroke-width="2"/><circle cx="128" cy="56" r="4" fill="none" stroke="#07173F" stroke-width="2"/>    <path d="M25 112c14-4 22 6 36 2s20-10 34-6 18 10 30 6" fill="none" stroke="#07173F" stroke-width="2.2" stroke-linecap="round"/></svg>`;
 }
 
-/* ---------------- Mars → Earth transmission: zstd + CCSDS ----------------
- * Hot data = the crew's own readings. Every clock hour the Normal readings are batched into
- * "cold data": serialized as CSV, zstd-compressed, then split into CCSDS Space Packets
- * (6-byte primary header + 6-byte CUC time + data + CRC-16). Potential/Urgent readings skip the
- * batch: each one is zstd-compressed and sent the moment it is recorded.
- * One-way light time Mars → Earth is fixed at 20 minutes. Compression runs for real in the browser. */
+/* ---------------- Raw → astronaut dashboard → doctor dashboard ----------------
+ * Readings come in 5-minute slots. Each slot (every biomarker measured at that time, whatever its
+ * status) is written as CSV rows and zstd-compressed into one file. That file feeds the astronaut
+ * dashboard on Mars as soon as the slot is measured, and the same file reaches the doctor dashboard
+ * on Earth 20 minutes later (one-way light time). Compression runs for real in the browser and every
+ * file is decompressed again to check it matches the original rows. */
 const LIGHT_MS = 20 * 60 * 1000;
-const HOUR_MS = 3600 * 1000;
 const ZSTD_LEVEL = 19;
 const ZSTD_PKG = 'https://cdn.jsdelivr.net/npm/@bokuweb/zstd-wasm@0.0.22';
-const CCSDS_MAX_DATA = 1018;                  // payload bytes per packet → packets ≤ 1032 bytes
-const APID = { A: 0x101, B: 0x102, C: 0x103, D: 0x104 };
-const TX_DOC = 'https://github.com/chosooy/nasa-hackathon#compressed-transmission';
-const MISSION_EPOCH = Date.UTC(2026, 9, 1);   // CUC coarse time counts seconds from Oct 1, 2026
-const HOT_DICT = `${ROOT}/data/compression/hot.zdict`;   // shared zstd dictionary for hot bundles (see data/compression/train_dict.py)
-const TX = { zstd: null, dict: null, cctx: 0, dctx: 0, loading: null, error: null, cache: new Map() };
+const TX_DOC = 'https://github.com/chosooy/nasa-hackathon#data-flow';
+const TX = { zstd: null, loading: null, error: null, cache: new Map() };
 
 function loadZstd() {
   if (TX.zstd || TX.error) return Promise.resolve();
   if (!TX.loading) {
     TX.loading = import(`${ZSTD_PKG}/+esm`)
-      .then(async (m) => {
-        await m.init(`${ZSTD_PKG}/dist/web/zstd.wasm`);
-        // shared dictionary for the hot lane (trained on Nov 1–12; Mars and Earth both hold it)
-        const res = await fetch(HOT_DICT);
-        if (!res.ok) throw new Error(`hot dictionary → ${res.status}`);
-        TX.dict = new Uint8Array(await res.arrayBuffer());
-        TX.cctx = m.createCCtx(); TX.dctx = m.createDCtx();
-        TX.zstd = m;
-      })
+      .then(async (m) => { await m.init(`${ZSTD_PKG}/dist/web/zstd.wasm`); TX.zstd = m; })
       .catch((e) => { TX.error = e && e.message ? e.message : 'zstd failed to load'; })
       .finally(() => { if (route().parts[1] === 'chat' && route().parts[0] === 'crew') rerender(); });
   }
@@ -496,127 +479,49 @@ function loadZstd() {
 }
 const utf8 = new TextEncoder();
 const unutf8 = new TextDecoder();
-function crc16(bytes, end) {                    // CRC-16/CCITT-FALSE, as used for the CCSDS packet error control
-  let c = 0xffff;
-  for (let i = 0; i < end; i++) { c ^= bytes[i] << 8; for (let k = 0; k < 8; k++) c = c & 0x8000 ? ((c << 1) ^ 0x1021) & 0xffff : (c << 1) & 0xffff; }
-  return c;
-}
-/** Split a payload into CCSDS Space Packets (telemetry, secondary header = CUC time). */
-function ccsdsPacketize(payload, apid, seq0, timeMs) {
-  const chunks = [];
-  for (let i = 0; i < payload.length; i += CCSDS_MAX_DATA) chunks.push(payload.subarray(i, i + CCSDS_MAX_DATA));
-  if (!chunks.length) chunks.push(new Uint8Array(0));
-  const secs = Math.max(0, Math.floor((timeMs - MISSION_EPOCH) / 1000));
-  const packets = chunks.map((chunk, i) => {
-    const flags = chunks.length === 1 ? 0b11 : i === 0 ? 0b01 : i === chunks.length - 1 ? 0b10 : 0b00;
-    const dataLen = 6 + chunk.length + 2;               // secondary header + user data + CRC
-    const pkt = new Uint8Array(6 + dataLen);
-    const seq = (seq0 + i) & 0x3fff;
-    pkt[0] = (0 << 5) | (0 << 4) | (1 << 3) | ((apid >> 8) & 0x07);   // version 0, TM, sec. header present
-    pkt[1] = apid & 0xff;
-    pkt[2] = (flags << 6) | (seq >> 8);
-    pkt[3] = seq & 0xff;
-    pkt[4] = ((dataLen - 1) >> 8) & 0xff;
-    pkt[5] = (dataLen - 1) & 0xff;
-    pkt[6] = (secs >>> 24) & 0xff; pkt[7] = (secs >>> 16) & 0xff; pkt[8] = (secs >>> 8) & 0xff; pkt[9] = secs & 0xff;
-    pkt[10] = 0; pkt[11] = 0;                            // fine time (1/65536 s)
-    pkt.set(chunk, 12);
-    const crc = crc16(pkt, pkt.length - 2);
-    pkt[pkt.length - 2] = crc >> 8; pkt[pkt.length - 1] = crc & 0xff;
-    return pkt;
-  });
-  const file = new Uint8Array(packets.reduce((n, p) => n + p.length, 0));
-  let o = 0; packets.forEach((p) => { file.set(p, o); o += p.length; });
-  return { file, packets: packets.length };
-}
-/** Reassemble packets, check every CRC, return the payload (ground-side check). */
-function ccsdsUnpack(file) {
-  const parts = []; let o = 0, crcOk = true;
-  while (o + 6 <= file.length) {
-    const len = ((file[o + 4] << 8) | file[o + 5]) + 1, total = 6 + len, pkt = file.subarray(o, o + total);
-    if (crc16(pkt, total - 2) !== ((pkt[total - 2] << 8) | pkt[total - 1])) crcOk = false;
-    parts.push(pkt.subarray(12, total - 2)); o += total;
-  }
-  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0)); let k = 0; parts.forEach((p) => { out.set(p, k); k += p.length; });
-  return { payload: out, crcOk };
-}
 const fmtBytes = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`);
 const hhmm = (ms) => new Date(ms).toISOString().slice(11, 16);
+// rows only: both dashboards already know the columns (date,time,biomarker,figure)
 const toRows = (rows) => rows.map((r) => `${r.date},${r.time},${r.b},${r.v}\n`).join('');
-const toCsv = (rows) => 'date,time,biomarker,figure\n' + toRows(rows);
 
-/** Everything transmitted (or buffering) for crew c on the dashboard's current day, up to the dashboard clock. */
+/** Every zstd file made for crew c today, up to the dashboard clock (one per 5-minute slot). */
 function transmissionLog(c) {
   const now = simNow().getTime(), day = TODAY;
-  const d0 = Date.UTC(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10));
   const rows = withCrew(c, () => Object.entries(DB.series).flatMap(([b, arr]) => arr.filter((p) => p.date === day)
     .map((p) => ({ b, date: p.date, time: p.time, v: p.v, ts: Date.parse(`${p.date}T${p.time}:00Z`), st: statusOf(b, p.v) }))))
     .filter((r) => r.ts <= now).sort((a, z) => a.ts - z.ts);
-  const z = TX.zstd;
-  const entries = [];
-  // cold data: one batch per completed hour of Normal readings
-  let seq = 0;
-  const curHour = Math.floor((now - d0) / HOUR_MS);
-  for (let h = 0; h < curHour; h++) {
-    const batch = rows.filter((r) => r.st === 'normal' && r.ts >= d0 + h * HOUR_MS && r.ts < d0 + (h + 1) * HOUR_MS);
-    if (!batch.length) continue;
-    const sentAt = d0 + (h + 1) * HOUR_MS, key = `${c}|${day}|cold|${h}`;
+  const bySlot = new Map();
+  rows.forEach((r) => { if (!bySlot.has(r.ts)) bySlot.set(r.ts, []); bySlot.get(r.ts).push(r); });
+  const z = TX.zstd, entries = [];
+  bySlot.forEach((list, ts) => {
+    const key = `${c}|${ts}`;
     let e = TX.cache.get(key);
     if (!e && z) {
-      const raw = utf8.encode(toCsv(batch));
-      const packed = z.compress(raw, ZSTD_LEVEL);
-      const { file, packets } = ccsdsPacketize(packed, APID[c], seq, sentAt);
-      const back = ccsdsUnpack(file);
-      const ok = back.crcOk && unutf8.decode(z.decompress(back.payload)) === unutf8.decode(raw);
-      e = { kind: 'cold', name: `cold_data_${c}_${day}T${String(h).padStart(2, '0')}.zst.ccsds`, readings: batch.length, raw: raw.length, zst: packed.length, wire: file.length, packets, ok, sentAt };
-      TX.cache.set(key, e);
-    }
-    if (e) { entries.push(e); seq += e.packets; }
-  }
-  // hot data: Potential / Urgent readings are bundled per minute and sent at the end of that minute
-  const MIN_MS = 60 * 1000;
-  const byMinute = new Map();
-  rows.filter((r) => r.st === 'potential' || r.st === 'urgent').forEach((r) => {
-    const m = Math.floor(r.ts / MIN_MS) * MIN_MS;
-    if (!byMinute.has(m)) byMinute.set(m, []);
-    byMinute.get(m).push(r);
-  });
-  byMinute.forEach((list, m) => {
-    const sentAt = m + MIN_MS;
-    if (sentAt > now) return;                              // this minute's bundle is still open
-    const key = `${c}|${day}|hot|${m}`;
-    let e = TX.cache.get(key);
-    if (!e && z) {
-      // rows only (no CSV header: the receiver knows the columns) + shared dictionary, so even a
-      // one-reading bundle compresses — plain zstd made these larger than the raw rows
       const raw = utf8.encode(toRows(list));
-      const packed = z.compressUsingDict(TX.cctx, raw, TX.dict, ZSTD_LEVEL);
-      const ok = unutf8.decode(z.decompressUsingDict(TX.dctx, packed, TX.dict)) === unutf8.decode(raw);
-      const st = list.some((r) => r.st === 'urgent') ? 'urgent' : 'potential';
-      const names = [...new Set(list.map((r) => nice(r.b)))];
-      e = { kind: 'hot', st, name: `hot_${c}_${day}T${hhmm(m).replace(':', '')}.zst`, label: `${list.length} reading${list.length > 1 ? 's' : ''} · ${names.slice(0, 2).join(', ')}${names.length > 2 ? '…' : ''}`, readings: list.length, raw: raw.length, zst: packed.length, wire: packed.length, ok, sentAt };
+      const packed = z.compress(raw, ZSTD_LEVEL);
+      const ok = unutf8.decode(z.decompress(packed)) === unutf8.decode(raw);
+      const st = list.some((r) => r.st === 'urgent') ? 'urgent' : list.some((r) => r.st === 'potential') ? 'potential' : 'normal';
+      e = { st, name: `${c}_${day}T${hhmm(ts).replace(':', '')}.zst`, readings: list.length, raw: raw.length, zst: packed.length, ok, sentAt: ts };
       TX.cache.set(key, e);
     }
     if (e) entries.push(e);
   });
-  const buffer = rows.filter((r) => r.st === 'normal' && r.ts >= d0 + curHour * HOUR_MS);
-  return { entries: entries.sort((a, z2) => z2.sentAt - a.sentAt), buffer, nextAt: d0 + (curHour + 1) * HOUR_MS, now };
+  return { entries: entries.sort((a, z2) => z2.sentAt - a.sentAt), now };
 }
-function countdown(ms) { const s = Math.max(0, Math.round(ms / 1000)); return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
 function txPanel(c) {
   loadZstd();
-  const head = `<div class="tx-head">${ICON.upload}<b>Compressed transmission</b></div>
-    <div class="tx-link"><span class="tx-dot"></span>Mars → Earth · ${LIGHT_MS / 60000} min one-way<a class="tx-how" href="${TX_DOC}" target="_blank" rel="noopener">How it works ↗</a></div>`;
+  const head = `<div class="tx-head">${ICON.upload}<b>Compressed data · zstd</b></div>
+    <div class="tx-link"><span class="tx-dot"></span>Astronaut now · Doctor +${LIGHT_MS / 60000} min<a class="tx-how" href="${TX_DOC}" target="_blank" rel="noopener">How it works ↗</a></div>`;
   if (TX.error) return `<section class="tx-slot">${head}<p class="tx-note">The zstd encoder could not load (${esc(TX.error)}). Check the connection and reload.</p></section>`;
   if (!TX.zstd) return `<section class="tx-slot">${head}<p class="tx-note">Loading zstd encoder…</p></section>`;
   const { entries, now } = transmissionLog(c);
   const status = (e) => { const arrive = e.sentAt + LIGHT_MS; return `<span class="tx-st ${now >= arrive ? 'done' : 'transit'}" data-arrive="${arrive}">${now >= arrive ? 'Delivered' : 'In transit'}</span>`; };
-  const row = (e) => `<li class="tx-row ${e.kind} ${e.st || ''}">
-      <div class="tx-r1"><span class="tx-tag ${e.kind} ${e.st || ''}">${e.kind === 'cold' ? 'COLD' : e.st === 'urgent' ? 'URGENT' : 'POTENTIAL'}</span><span class="tx-name">${esc(e.name)}</span></div>
-      <div class="tx-r2">${e.kind === 'cold' ? `${e.readings} readings · ${fmtBytes(e.raw)} → ${fmtBytes(e.wire)} · ${e.packets} pkt${e.packets > 1 ? 's' : ''}` : `${esc(e.label)} · ${fmtBytes(e.raw)} → ${fmtBytes(e.wire)}`}${e.ok ? ' · ✓ verified' : ' · ✕ check failed'}</div>
-      <div class="tx-r3">Sent ${hhmm(e.sentAt)} · Earth ${hhmm(e.sentAt + LIGHT_MS)} UTC ${status(e)}</div></li>`;
+  const row = (e) => `<li class="tx-row ${e.st}">
+      <div class="tx-r1"><span class="tx-tag ${e.st}">${e.st.toUpperCase()}</span><span class="tx-name">${esc(e.name)}</span></div>
+      <div class="tx-r2">${e.readings} reading${e.readings > 1 ? 's' : ''} · ${fmtBytes(e.raw)} → ${fmtBytes(e.zst)}${e.ok ? ' · ✓ verified' : ' · ✕ check failed'}</div>
+      <div class="tx-r3">Measured ${hhmm(e.sentAt)} · Doctor ${hhmm(e.sentAt + LIGHT_MS)} UTC ${status(e)}</div></li>`;
   return `<section class="tx-slot">${head}
-    <ul class="tx-log">${entries.slice(0, 60).map(row).join('') || '<li class="tx-note">Nothing sent yet today.</li>'}</ul>
+    <ul class="tx-log">${entries.slice(0, 60).map(row).join('') || '<li class="tx-note">Nothing measured yet today.</li>'}</ul>
   </section>`;
 }
 
@@ -637,7 +542,7 @@ function topbar(role, active) {
     <span class="spacer"></span>
     <span class="meta live-clock">UTC ${simStamp()}</span>
     <span class="meta live-sol">SOL ${pad3(missionDay(TODAY))}</span>
-    ${role === 'doctor' ? `<span class="meta earth-rx" title="The ground doctor sees only readings that have reached Earth: Potential/Urgent about 21 min after measurement, Normal in hourly batches 20 min after each hour.">${earthRxText()}</span>` : ''}
+    ${role === 'doctor' ? `<span class="meta earth-rx" title="The doctor dashboard shows each reading 20 minutes after it was measured (one-way light time from Mars).">${earthRxText()}</span>` : ''}
     <a class="profile-link" href="${base}/profile">Profile</a>
   </header>`;
 }
@@ -1282,7 +1187,6 @@ const earthRxText = () => { const t = earthLastRx(); return t ? `Received ${hhmm
 setInterval(() => {
   document.querySelectorAll('.live-clock').forEach((c) => { c.textContent = `UTC ${simStamp()}`; });
   const nowMs = simNow().getTime();
-  document.querySelectorAll('.tx-count[data-next]').forEach((el) => { el.textContent = countdown(+el.dataset.next - nowMs); });
   document.querySelectorAll('.tx-st[data-arrive]').forEach((el) => { const done = nowMs >= +el.dataset.arrive; el.textContent = done ? 'Delivered' : 'In transit'; el.classList.toggle('done', done); el.classList.toggle('transit', !done); });
   // A new 5-minute reading becomes "latest": refresh today's view unless the viewer is typing or in a dialog.
   const slot = Math.floor(simNow().getTime() / 300000);
@@ -1291,7 +1195,7 @@ setInterval(() => {
     const busy = document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
     if (state.date === TODAY && !busy && !$('#modal-root').innerHTML && route().parts[0]) rerender();
   }
-  // Doctor: re-render when new data has reached Earth (hot bundles every minute, cold batches at :20).
+  // Doctor: re-render when new readings reach Earth (each one 20 min after it was measured).
   if (route().parts[0] === 'doctor' && state.date === TODAY) {
     const n = earthCount();
     if (n !== lastEarth) {

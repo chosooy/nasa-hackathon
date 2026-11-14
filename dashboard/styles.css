@@ -955,9 +955,6 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 .tx-row { padding: 9px 11px; border-radius: 12px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.06); font-size: 11px; color: var(--navy-200); display: flex; flex-direction: column; gap: 3px; }
 .tx-r1 { display: flex; align-items: center; gap: 7px; min-width: 0; }
 .tx-tag { flex: none; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px; }
-.tx-tag.cold { background: rgba(168,200,255,.18); color: var(--sky); }
-.tx-tag.hot.potential { background: var(--yellow); color: var(--navy-900); }
-.tx-tag.hot.urgent { background: var(--crit-strong); color: #fff; }
 .tx-name { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tx-r2, .tx-r3 { font-variant-numeric: tabular-nums; }
 .tx-r3 { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; color: var(--navy-300); }
@@ -1209,3 +1206,8 @@ input::placeholder, textarea::placeholder { color: #5F6D88; opacity: 1; }
 /* top bar: Test link opens the test bench in a new tab */
 .nav-ext span[aria-hidden] { margin-left: 4px; font-size: .9em; opacity: .8; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* compressed data log: one zstd file per 5-minute slot, tagged by its worst reading */
+.tx-tag.normal { background: rgba(168,200,255,.18); color: var(--sky); }
+.tx-tag.potential { background: var(--yellow); color: var(--navy-900); }
+.tx-tag.urgent { background: var(--crit-strong); color: #fff; }

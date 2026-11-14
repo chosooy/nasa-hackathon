@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="620" viewBox="0 0 1600 620" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#A9B6D3"/></marker>
+    <marker id="y" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#EAFE07"/></marker>
+  </defs>
+  <style>
+    .w { fill: #FFFFFF; } .m { fill: #A9B6D3; } .y { fill: #EAFE07; } .b { fill: #7FA8FF; }
+    .title { font-size: 40px; font-weight: 700; }
+    .k { font-size: 15px; font-weight: 700; letter-spacing: 2px; }
+    .n { font-size: 26px; font-weight: 700; }
+    .s { font-size: 17px; }
+    .tag { font-size: 18px; font-weight: 700; }
+  </style>
+  <rect width="1600" height="620" fill="#050E2A"/>
+
+  <text x="60" y="92" class="w title">How crew data gets from the device to the doctor</text>
+
+  <text x="60" y="180" class="y k">MARS</text>
+  <text x="1540" y="180" text-anchor="end" class="y k">EARTH</text>
+
+  <!-- raw -->
+  <rect x="60" y="240" width="330" height="140" rx="22" fill="#0F2052" stroke="#2C4386" stroke-width="2"/>
+  <text x="225" y="296" text-anchor="middle" class="w n">Raw readings</text>
+  <text x="225" y="328" text-anchor="middle" class="m s">ear-worn device · every 5 min</text>
+  <text x="225" y="354" text-anchor="middle" class="m s">CSV rows</text>
+
+  <!-- raw -> astronaut : zstd -->
+  <path d="M390 310 H566" stroke="#A9B6D3" stroke-width="2.5" marker-end="url(#g)"/>
+  <rect x="418" y="270" width="120" height="30" rx="15" fill="#13295E" stroke="#7FA8FF" stroke-width="1.5"/>
+  <text x="478" y="291" text-anchor="middle" class="b tag">zstd</text>
+  <text x="478" y="346" text-anchor="middle" class="m" font-size="14">every status</text>
+
+  <!-- astronaut -->
+  <rect x="570" y="240" width="380" height="140" rx="22" fill="#0F2052" stroke="#EAFE07" stroke-width="2"/>
+  <text x="760" y="296" text-anchor="middle" class="y n">Astronaut dashboard</text>
+  <text x="760" y="328" text-anchor="middle" class="w s">one .zst file per 5-minute slot</text>
+  <text x="760" y="354" text-anchor="middle" class="m s">shown right away</text>
+
+  <!-- astronaut -> doctor : 20 min -->
+  <path d="M950 310 H1226" stroke="#EAFE07" stroke-width="2.5" stroke-dasharray="10 8" marker-end="url(#y)"/>
+  <text x="1110" y="290" text-anchor="middle" class="y" font-size="30" font-weight="700">20 min</text>
+  <text x="1110" y="346" text-anchor="middle" class="m" font-size="14">light delay, same file</text>
+
+  <!-- doctor -->
+  <rect x="1230" y="240" width="310" height="140" rx="22" fill="#0F2052" stroke="#7FA8FF" stroke-width="2"/>
+  <text x="1385" y="296" text-anchor="middle" class="b n">Doctor dashboard</text>
+  <text x="1385" y="328" text-anchor="middle" class="w s">each reading 20 min later</text>
+  <text x="1385" y="354" text-anchor="middle" class="m s">decompress · verify · show</text>
+
+  <!-- notes -->
+  <line x1="60" y1="500" x2="1540" y2="500" stroke="#22346B" stroke-width="1.5"/>
+  <circle cx="72" cy="547" r="8" fill="#7FA8FF"/>
+  <text x="92" y="553" class="w s">Every reading is compressed with zstd, whatever its status</text>
+  <circle cx="702" cy="547" r="8" fill="#EAFE07"/>
+  <text x="722" y="553" class="w s">The doctor sees each reading 20 min after it was measured</text>
+  <circle cx="1292" cy="547" r="8" fill="#A9B6D3"/>
+  <text x="1312" y="553" class="w s">Chat: same 20-min delay</text>
+</svg>
