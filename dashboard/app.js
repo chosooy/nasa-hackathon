@@ -621,7 +621,7 @@ function topbar(role, active) {
   const base = role === 'crew' ? '#/crew' : '#/doctor';
   return `<header class="topbar">
     <a class="logo" href="#/" aria-label="KOOK"><img src="${IMG.logo}" alt="KOOK"></a>
-    <nav><a href="${base}" class="${active === 'home' ? 'active' : ''}">Overview</a><a href="${base}/instructions" class="${active === 'instr' ? 'active' : ''}">Health Instruction</a></nav>
+    <nav><a href="${base}" class="${active === 'home' ? 'active' : ''}">Overview</a><a href="${base}/instructions" class="${active === 'instr' ? 'active' : ''}">Health Instruction</a><a href="${ROOT}/test/" target="_blank" rel="noopener" class="nav-ext">Test <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></nav>
     <span class="spacer"></span>
     <span class="meta live-clock">UTC ${simStamp()}</span>
     <span class="meta live-sol">SOL ${pad3(missionDay(TODAY))}</span>
