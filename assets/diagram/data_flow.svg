@@ -38,8 +38,8 @@
 
   <!-- astronaut -> doctor : 20 min -->
   <path d="M950 310 H1226" stroke="#EAFE07" stroke-width="2.5" stroke-dasharray="10 8" marker-end="url(#y)"/>
-  <rect x="1050" y="228" width="120" height="30" rx="15" fill="#13295E" stroke="#7FA8FF" stroke-width="1.5"/>
-  <text x="1110" y="249" text-anchor="middle" class="b tag">zstd</text>
+  <rect x="1022" y="228" width="176" height="30" rx="15" fill="#13295E" stroke="#7FA8FF" stroke-width="1.5"/>
+  <text x="1110" y="249" text-anchor="middle" class="b tag">columns + zstd</text>
   <text x="1110" y="292" text-anchor="middle" class="y" font-size="28" font-weight="700">20 min</text>
   <text x="1110" y="342" text-anchor="middle" class="m" font-size="14">sent on a new Potential/Urgent</text>
   <text x="1110" y="362" text-anchor="middle" class="m" font-size="14">or every 6 hours</text>

@@ -194,7 +194,7 @@ function buildCrew(rows) {
   rows.forEach((r) => {
     const v = parseFloat(r.figure);
     if (!r.biomarker || Number.isNaN(v)) return;
-    (s[r.biomarker] = s[r.biomarker] || []).push({ date: r.date, time: r.time, v });
+    (s[r.biomarker] = s[r.biomarker] || []).push({ date: r.date, time: r.time, v, dec: decimalsOf(r.figure) });
   });
   Object.values(s).forEach((arr) => arr.sort((a, z) => (a.date + a.time).localeCompare(z.date + z.time)));
   const crew = crewFromSeries(s);
@@ -486,7 +486,7 @@ function todayArt() {
 
 /* ---------------- Raw → astronaut dashboard → doctor dashboard ----------------
  * The astronaut dashboard on Mars shows every reading right away and keeps it in a buffer. The buffer
- * is written as CSV rows, zstd-compressed into one file and sent to Earth when a biomarker newly turns
+ * is packed as columns + deltas (see packReadings), zstd-compressed into one file and sent to Earth when a biomarker newly turns
  * Potential or Urgent, or when the buffer is 6 hours old (see sendSchedule). The file reaches the doctor
  * dashboard 20 minutes later (one-way light time). Compression runs for real in the browser and every
  * file is decompressed again to check it matches the original rows. */
@@ -511,6 +511,67 @@ const unutf8 = new TextDecoder();
 const fmtBytes = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`);
 const hhmm = (ms) => new Date(ms).toISOString().slice(11, 16);
 
+/* ---------- packed file format: columns + deltas, then zstd ----------
+ * Both sides load data/biomarker/biomarker.csv; its row order gives every biomarker an id.
+ *   varint day      days since 2026-01-01 of the file's first reading
+ *   varint groups   number of biomarkers in the file
+ *   per biomarker:  varint id · byte decimals · varint count ·
+ *                   count × (varint Δminutes, varint zigzag Δvalue)
+ * Minutes count from 00:00 of `day` (a file may cross midnight); values are scaled by 10^decimals,
+ * so 142.1 with 1 decimal is 1421. Each number is the change from the previous one, so readings that
+ * barely move become runs of tiny numbers that zstd squeezes very well. */
+const PACK_EPOCH = Date.UTC(2026, 0, 1);
+const PACK_DAY_MS = 86400000;
+function uvar(n, out) { do { const b = n % 128; n = Math.floor(n / 128); out.push(n ? b + 128 : b); } while (n); }
+const zigzag = (n) => (n >= 0 ? 2 * n : -2 * n - 1);
+const unzigzag = (n) => (n % 2 ? -(n + 1) / 2 : n / 2);
+const decimalsOf = (s) => { const i = String(s).indexOf('.'); return i < 0 ? 0 : String(s).length - i - 1; };
+/** rows: [{ b, ts (ms UTC), v (number), dec (decimals) }] → Uint8Array */
+function packReadings(rows, ids) {
+  const day = Math.floor((Math.min(...rows.map((r) => r.ts)) - PACK_EPOCH) / PACK_DAY_MS);
+  const base = PACK_EPOCH + day * PACK_DAY_MS;
+  const by = new Map();
+  rows.forEach((r) => {
+    const id = ids[r.b];
+    if (id === undefined) throw new Error(`${r.b} is not in biomarker.csv`);
+    if (!by.has(id)) by.set(id, []);
+    by.get(id).push(r);
+  });
+  const out = [];
+  uvar(day, out); uvar(by.size, out);
+  [...by.keys()].sort((a, z) => a - z).forEach((id) => {
+    const list = by.get(id).slice().sort((a, z) => a.ts - z.ts);
+    const dec = Math.max(...list.map((r) => r.dec));
+    uvar(id, out); out.push(dec); uvar(list.length, out);
+    let pm = 0, pv = 0;
+    list.forEach((r) => {
+      const m = Math.round((r.ts - base) / 60000), v = Math.round(r.v * 10 ** dec);
+      uvar(m - pm, out); uvar(zigzag(v - pv), out); pm = m; pv = v;
+    });
+  });
+  return Uint8Array.from(out);
+}
+/** Uint8Array → [{ b, ts, v }] */
+function unpackReadings(bytes, names) {
+  let pos = 0;
+  const rd = () => { let n = 0, mul = 1, b; do { b = bytes[pos++]; n += (b % 128) * mul; mul *= 128; } while (b >= 128); return n; };
+  const base = PACK_EPOCH + rd() * PACK_DAY_MS, rows = [];
+  for (let g = rd(); g > 0; g--) {
+    const b = names[rd()], dec = bytes[pos++];
+    let m = 0, v = 0;
+    for (let k = rd(); k > 0; k--) { m += rd(); v += unzigzag(rd()); rows.push({ b, ts: base + m * 60000, v: v / 10 ** dec }); }
+  }
+  return rows;
+}
+/** Same readings, same times, same values (to each biomarker's decimals)? */
+function sameReadings(a, b) {
+  const key = (r) => `${r.b}|${r.ts}|${Math.round(r.v * 1e6)}`;
+  const ka = a.map(key).sort(), kb = b.map(key).sort();
+  return ka.length === kb.length && ka.every((k, i) => k === kb[i]);
+}
+const bioNames = () => Object.keys(DB.rules);
+const bioIds = () => TX.ids || (TX.ids = Object.fromEntries(bioNames().map((b, i) => [b, i])));
+
 /** zstd files crew c sent today, up to the dashboard clock, plus what is waiting in the buffer. */
 function transmissionLog(c) {
   const now = simNow().getTime(), day = TODAY;
@@ -521,10 +582,11 @@ function transmissionLog(c) {
     const key = `${c}|${f.sentAt}`;
     let e = TX.cache.get(key);
     if (!e && z) {
-      const text = f.items.map((x) => `${x.pt.date},${x.pt.time},${x.b},${x.pt.v}\n`).join('');
-      const raw = utf8.encode(text);
-      const packed = z.compress(raw, ZSTD_LEVEL);
-      const ok = unutf8.decode(z.decompress(packed)) === text;
+      // size of the same readings as plain CSV rows, for comparison
+      const raw = utf8.encode(f.items.map((x) => `${x.pt.date},${x.pt.time},${x.b},${x.pt.v}\n`).join(''));
+      const readings = f.items.map((x) => ({ b: x.b, ts: Date.parse(`${x.pt.date}T${x.pt.time}:00Z`), v: x.pt.v, dec: x.pt.dec }));
+      const packed = z.compress(packReadings(readings, bioIds()), ZSTD_LEVEL);
+      const ok = sameReadings(readings, unpackReadings(z.decompress(packed), bioNames()));
       const trig = f.reason === 'new' ? [...new Set(f.items.filter((x) => x.st !== 'normal' && x.pt.time === hhmm(f.sentAt)).map((x) => nice(x.b)))] : [];
       e = { st: f.reason === 'new' ? f.st : 'normal', reason: f.reason, trig, name: `${c}_${day}T${hhmm(f.sentAt).replace(':', '')}.zst`, readings: f.items.length, from: f.start, raw: raw.length, zst: packed.length, ok, sentAt: f.sentAt };
       TX.cache.set(key, e);
@@ -539,7 +601,7 @@ function transmissionLog(c) {
 }
 function txPanel(c) {
   loadZstd();
-  const head = `<div class="tx-head">${ICON.upload}<b>Compressed data · zstd</b></div>
+  const head = `<div class="tx-head">${ICON.upload}<b>Compressed data · columns + zstd</b></div>
     <div class="tx-link"><span class="tx-dot"></span>Sends on a new Potential/Urgent or every 6 h · Doctor +${LIGHT_MS / 60000} min<a class="tx-how" href="${TX_DOC}" target="_blank" rel="noopener">How it works ↗</a></div>`;
   if (TX.error) return `<section class="tx-slot">${head}<p class="tx-note">The zstd encoder could not load (${esc(TX.error)}). Check the connection and reload.</p></section>`;
   if (!TX.zstd) return `<section class="tx-slot">${head}<p class="tx-note">Loading zstd encoder…</p></section>`;
@@ -548,7 +610,7 @@ function txPanel(c) {
   const tag = (e) => (e.reason === 'new' ? e.st.toUpperCase() : '6 H');
   const row = (e) => `<li class="tx-row ${e.st}">
       <div class="tx-r1"><span class="tx-tag ${e.reason === 'new' ? e.st : 'normal'}">${tag(e)}</span><span class="tx-name">${esc(e.name)}</span></div>
-      <div class="tx-r2">${e.reason === 'new' ? `New ${e.st}: ${esc(e.trig.slice(0, 2).join(', ') || 'reading')}` : '6-hour send'} · ${e.readings} readings since ${hhmm(e.from)} · ${fmtBytes(e.raw)} → ${fmtBytes(e.zst)}${e.ok ? ' · ✓ verified' : ' · ✕ check failed'}</div>
+      <div class="tx-r2">${e.reason === 'new' ? `New ${e.st}: ${esc(e.trig.slice(0, 2).join(', ') || 'reading')}` : '6-hour send'} · ${e.readings} readings since ${hhmm(e.from)} · CSV ${fmtBytes(e.raw)} → ${fmtBytes(e.zst)}${e.ok ? ' · ✓ verified' : ' · ✕ check failed'}</div>
       <div class="tx-r3">Sent ${hhmm(e.sentAt)} · Doctor ${hhmm(e.sentAt + LIGHT_MS)} UTC ${status(e)}</div></li>`;
   const buffer = `<div class="tx-buffer"><b>${waiting}</b> reading${waiting === 1 ? '' : 's'} in the buffer${since !== null ? ` since ${hhmm(since)} · sends by ${hhmm(capAt)} UTC at the latest` : ''}</div>`;
   return `<section class="tx-slot">${head}${buffer}

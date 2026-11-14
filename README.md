@@ -32,9 +32,11 @@ Crew health data goes through three stages:
 
 That means a new problem reaches the doctor 20 minutes after it is measured, and everything else arrives in larger files that compress much better.
 
-- **zstd.** Real Zstandard compression (level 19) runs in the browser via WebAssembly ([`@bokuweb/zstd-wasm`](https://www.npmjs.com/package/@bokuweb/zstd-wasm)), called from JavaScript.
-  - A file holds only the rows, with no CSV header; both sides know the columns.
-  - Each file is decompressed again and compared with the original rows (`✓ verified`).
+- **Packing + zstd.** Before compression the buffer is packed as **columns + deltas** (option f in [Shrinking further](#shrinking-further-under-the-same-rule)).
+  - Readings are grouped by biomarker. The id comes from the row order of `data/biomarker/biomarker.csv`, which both sides hold.
+  - Each time and value is stored as the change from the previous one, as small whole numbers.
+  - Then real Zstandard compression (level 19) runs in the browser via WebAssembly ([`@bokuweb/zstd-wasm`](https://www.npmjs.com/package/@bokuweb/zstd-wasm)), called from JavaScript.
+  - Each file is decompressed and unpacked again and must give back the same readings (`✓ verified`).
 - **File names.** `A_2026-11-14T1300.zst` is Crew A's buffer, sent at 13:00 UTC on Nov 14.
 - **Doctor dashboard.** It uses only readings whose file has arrived, and its top bar shows the last arrival (`Received HH:MM UTC`). The astronaut's and the doctor's latest values can differ by up to 6 hours for Normal data.
 - **Chat** has the same 20-minute delay. The sender sees *In transit*, then *Delivered*; the other side sees a message only on arrival.
@@ -46,20 +48,20 @@ That means a new problem reaches the doctor 20 minutes after it is measured, and
 
 **Size for one day** (2026-11-13, 1,168 readings per crew, buffer starting empty at 00:00):
 
-| Crew | Raw | Files sent | zstd total | Longest wait for Normal data |
+| Crew | Raw CSV | Files sent | Sent (columns + zstd) | Longest wait for Normal data |
 | --- | ---: | ---: | ---: | ---: |
-| A (blood pressure turns Potential often) | 45.5 KB | 17 | 5.5 KB (12.1%) | 6 h |
-| B | 45.5 KB | 5 | 4.6 KB (10.1%) | 6 h |
-| C | 45.5 KB | 5 | 4.5 KB (9.8%) | 6 h |
-| D (all Normal) | 45.5 KB | 4 | 4.5 KB (9.8%) | 6 h |
+| A (blood pressure turns Potential often) | 45.5 KB | 17 | 1.8 KB (4.1%) | 6 h |
+| B | 45.5 KB | 5 | 1.7 KB (3.6%) | 6 h |
+| C | 45.5 KB | 5 | 1.6 KB (3.6%) | 6 h |
+| D (all Normal) | 45.5 KB | 4 | 1.6 KB (3.6%) | 6 h |
 
-For comparison, sending every 5-minute slot as its own file kept the doctor exactly 20 minutes behind on everything, but came to about 64% of raw (see Design history).
+For comparison, sending every 5-minute slot as its own CSV + zstd file kept the doctor exactly 20 minutes behind on everything, but came to about 64% of raw (see Design history).
 
 ### The trade-off
 
 This flow does **not** give the smallest possible size. zstd shrinks data better the more it gets at once, because repeated dates and biomarker names are stored only once. So the longer Mars waits, the smaller the data, and the later the doctor sees it:
 
-| How often Mars sends (Nov 13, ~45.5 KB raw per crew) | Size vs raw | When the doctor sees it |
+| How often Mars sends (Nov 13, ~45.5 KB raw per crew, CSV rows + zstd) | Size vs raw | When the doctor sees it |
 | --- | ---: | --- |
 | Every 5-minute slot | ~64% | Always 20 min after measurement |
 | **New Potential/Urgent, or every 6 h (current)** | 9.8–12.1% | New problems after 20 min; Normal data within 6 h |
@@ -94,7 +96,7 @@ What we learned:
 - **The format matters more than the compressor.** Option f takes a day to 3.6–4.1% of raw. That is about a third of the current size, and smaller than a whole day of CSV in one file (7.8%), while keeping the same 20-minute alerts.
 - The values come back exactly, but number formatting does not: `142.0` comes back as `142`.
 
-**Not applied yet.** The dashboard and test bench still send option a (CSV rows + zstd). Option f is the recommended next step.
+**Applied: option f.** The dashboard and the test bench now pack every file as columns + deltas before zstd (`packReadings` and `unpackReadings` in [`dashboard/app.js`](dashboard/app.js) and [`test/app.js`](test/app.js)). On the dashboard, Crew A's 13:00 file on Nov 14 went from 772 B (CSV + zstd) to 264 B, from 8.1 KB of CSV.
 
 ## Design history
 
