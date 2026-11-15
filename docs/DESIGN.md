@@ -16,14 +16,13 @@ A step-by-step health dashboard for astronauts and their ground doctors.
 5. [UI patterns](#5-ui-patterns)
 6. [Key screens](#6-key-screens)
 7. [Accessibility](#7-accessibility)
-8. [Files](#8-files)
 
 ---
 
 ## 1. Logo
 
 <p align="center">
-  <img src="docs/design/logo-yellow.png" width="560" alt="KOOK logo">
+  <img src="docs/logo-yellow.png" width="560" alt="KOOK logo">
 </p>
 
 The wordmark is built from bold, geometric letters. Its two **O**s are drawn as a pair of eyes glancing to the side.
@@ -105,15 +104,3 @@ KOOK uses two typefaces:
 - Body text is 14 px or larger; 11 px uppercase is used only for short labels.
 - Neon Yellow is used on Deep Blue, never on white, to keep contrast high.
 - Icons that carry meaning have text labels or `aria-label`s.
-
----
-
-## 8. Files
-
-| Asset | Location |
-|---|---|
-| Brand sheets (color, type, icons, logo) | `docs/design/` |
-| Logo SVG | `dashboard/assets/kook-logo-*.svg` |
-| Location icons | `dashboard/assets/loc-*.svg` |
-| Icon set (code) | `dashboard/icons.js` |
-| Figma file | *add link* |
