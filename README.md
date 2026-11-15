@@ -179,11 +179,10 @@ Our team's greatest strength is the way we bring together different perspectives
 **Sooyeon Cho** — Development
 
 - Developed the KOOK dashboard with Claude (an AI coding assistant), turning the team's Figma designs into a working web app.
-- Drew the structure diagrams that mapped out the data and dashboard flow before development.
 - Created the dummy crew data: a month of readings for four crew members, each with a different mix of Normal, Potential and Urgent biomarkers.
 - Designed the data compression for the Mars–Earth link and measured it. Readings are buffered on Mars and sent when a biomarker newly turns Potential or Urgent, or every 6 hours. Each file is packed as columns + deltas and compressed with zstd, which brings a day of data to about 4% of its raw size.
 
-📎 Details: [Data flow](docs/data-flow.md) · [Structure diagrams](plan/README.md)
+📎 [Data flow](docs/data-flow.md)
 
 **Haejun Paik** — Design
 
@@ -191,7 +190,7 @@ Our team's greatest strength is the way we bring together different perspectives
 - Designed the user interface to make the health-monitoring experience intuitive and accessible for astronauts.
 - Created the final presentation deck to communicate the project's concept, key features and design solutions.
 
-📎 Details: [Design](docs/design.md) · [UI pages](ui/README.md)
+📎 [Design](docs/design.md)
 
 **Dahyun Lee** — Biology
 
@@ -199,7 +198,7 @@ Our team's greatest strength is the way we bring together different perspectives
 - Organized the biomarkers into categories and set reference ranges and risk thresholds that classify health conditions into steps.
 - Turned the biological data into practical health-monitoring features, including personalized recommendations and action guidelines for astronauts.
 
-📎 Details: [Data README](data/README.md) · [Biomarkers](data/biomarker/biomarker.csv) · [Health instructions](data/health_instruction/health_instruction.csv)
+📎 [Data README](data/README.md)
 
 ## Repository
 
