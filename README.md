@@ -6,7 +6,7 @@
 
 <table>
 <tr>
-<td align="center" width="33%"><img src="assets/image/team/sooyeon.jpg" width="110" alt="Sooyeon Cho"><br><b>Sooyeon Cho</b><br><a href="docs/DEVELOPMENT.md">Development</a></td>
+<td align="center" width="33%"><img src="assets/image/team/sooyeon-2.jpg" width="110" alt="Sooyeon Cho"><br><b>Sooyeon Cho</b><br><a href="docs/DEVELOPMENT.md">Development</a></td>
 <td align="center" width="33%"><img src="assets/image/team/haejun.jpg" width="110" alt="Haejun Paik"><br><b>Haejun Paik</b><br><a href="docs/DESIGN.md">Design</a></td>
 <td align="center" width="33%"><img src="assets/image/team/dahyun.jpg" width="110" alt="Dahyun Lee"><br><b>Dahyun Lee</b><br><a href="data/README.md">Biology</a></td>
 </tr>
