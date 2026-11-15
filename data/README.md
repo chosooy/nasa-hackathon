@@ -1,4 +1,6 @@
-clear = biomarker that has obvious value to be divided as normal/potential/urgent state / unclear = biomarker that has ambiguous value to be divided as normal/potential/urgent state
+clear = biomarker that has obvious value to be divided as normal/potential/urgent state
+
+unclear = biomarker that has ambiguous value to be divided as normal/potential/urgent state
 
 | data | explanation |
 | --- | --- |
@@ -8,6 +10,9 @@ clear = biomarker that has obvious value to be divided as normal/potential/urgen
 | [events.csv](data/events.csv) | event dummy data |
 
 reference list
+
 for making dummy data : https://www.nasa.gov/blogs/spacestation/
+
 for selecting measurment methods : https://www.nasa.gov/humans-in-space/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/
+
 for categorizing biomarkers by 5 criteria : https://www.nasa.gov/hrp/hazards/
