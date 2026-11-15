@@ -18,3 +18,5 @@ for making dummy data : https://www.nasa.gov/blogs/spacestation/
 for selecting measurment methods : https://www.nasa.gov/humans-in-space/spaceflight-standard-measures-characterizing-how-humans-adapt-in-space/
 
 for categorizing biomarkers by 5 criteria : https://www.nasa.gov/hrp/hazards/
+
+for researching how space environment affects human physiology : https://osdr.nasa.gov/bio/repo/search?q=&data_source=cgene,alsda,esa&data_type=study
