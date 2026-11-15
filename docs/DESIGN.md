@@ -22,8 +22,8 @@ A step-by-step health dashboard for astronauts and their ground doctors.
 ## 1. Logo
 
 <p align="center">
-  <img src="docs/logo-yellow.png" width="560" alt="KOOK logo">
-</p>
+<img width="695" height="352" alt="logo-yellow" src="https://github.com/user-attachments/assets/0f43cfe1-7845-4ac1-b3cc-bdc97c6c9647" />
+
 
 The wordmark is built from bold, geometric letters. Its two **O**s are drawn as a pair of eyes glancing to the side.
 
@@ -42,7 +42,9 @@ KOOK's palette references the [NASA Space Apps Challenge brand guidelines](https
 | ![](https://placehold.co/24x24/EAFE07/EAFE07.png) | **Accent · Neon Yellow** | `#EAFE07` | Logo, key actions, selected states |
 | ![](https://placehold.co/24x24/E43700/E43700.png) | **Status · Signal** | `#1B7F5A` Normal · `#C27400` Potential · `#E43700` Urgent | Health status chips and alerts |
 
-<img src="docs/design/colors.png" width="720" alt="KOOK color palette">
+
+<img width="2928" height="3198" alt="colors" src="https://github.com/user-attachments/assets/3149d55b-4e69-4c55-99f3-ae2f415f0bc6" />
+
 
 ---
 
@@ -52,7 +54,8 @@ KOOK uses two typefaces:
 - **Space Grotesk** for headings and numbers, for a technical, mission-control feel.
 - **Pretendard** for body text, which stays clear at small sizes.
 
-<img src="docs/design/typography.png" width="720" alt="KOOK typography scale">
+<img width="5952" height="4052" alt="typography" src="https://github.com/user-attachments/assets/9c2bce72-0694-4bdf-9243-836dc38e3641" />
+
 
 ---
 
@@ -62,7 +65,9 @@ KOOK uses two typefaces:
 - **Stroke:** 1.6–1.8 px, round caps and joins
 - **Sets:** System · Health & Mission · Role · Location · 5 Hazards
 
-<img src="docs/design/icons.png" width="720" alt="KOOK icon set">
+
+<img width="2928" height="3198" alt="icons" src="https://github.com/user-attachments/assets/ffdc85df-9e2e-4f80-a649-81ef47bfb8ba" />
+
 
 ---
 
@@ -92,9 +97,6 @@ KOOK uses two typefaces:
 | Conversation with the ground doctor | Conversation with the crew |
 | Profile | Profile |
 
-<!-- Add screenshots here, e.g.
-<img src="docs/design/screens/space-home.png" width="720">
--->
 
 ---
 
