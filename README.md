@@ -31,13 +31,6 @@ Team Kook · Sooyeon Cho, Haejun Paik, Dahyun Lee
 </tr>
 </table>
 
-<table>
-<tr>
-<td align="center" width="50%"><a href="docs/data-flow.md"><img src="assets/preview/data-flow.jpg" width="260" alt="Data flow"></a><h3><a href="docs/data-flow.md">Data flow</a></h3></td>
-<td align="center" width="50%"><a href="https://www.spaceappschallenge.org/2026/find-a-team/team-cook/?tab=details"><img src="assets/preview/team-page.jpg" width="260" alt="Space Apps team page"></a><h3><a href="https://www.spaceappschallenge.org/2026/find-a-team/team-cook/?tab=details">Space Apps team page</a></h3></td>
-</tr>
-</table>
-
 </div>
 
 ## Summary
