@@ -2,12 +2,14 @@ clear = biomarker that has obvious value to be divided as normal/potential/urgen
 
 unclear = biomarker that has ambiguous value to be divided as normal/potential/urgent state
 
+
 | data | explanation |
 | --- | --- |
 | [biomarker.csv](data/biomarker.csv) | clear biomarker to make visualization(graph) |
 | [health_instruction.csv](data/health_instruction.csv) | clear biomarker + unclear biomarker used to make health instruction page |
 | [raw biomarker.csv](data/raw_biomarker.csv) | every column + clear biomarker + unclear biomarker |
 | [events.csv](data/events.csv) | event dummy data |
+
 
 reference list
 
