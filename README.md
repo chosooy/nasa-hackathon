@@ -60,7 +60,7 @@ KOOK aims to lower the barriers to health management in space with an intuitive,
 
 ## Background
 
-> *How can astronauts on space missions monitor and improve their health in real time?*
+> *How can astronauts on space missions monitor and improve their health?*
 
 | Problem | Our answer |
 | --- | --- |
