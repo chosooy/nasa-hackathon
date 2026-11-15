@@ -190,7 +190,7 @@ Our team's greatest strength is the way we bring together different perspectives
 - Designed the user interface to make the health-monitoring experience intuitive and accessible for astronauts.
 - Created the final presentation deck to communicate the project's concept, key features and design solutions.
 
-📎 [Design](docs/design.md)
+📎 [Design](docs/DESIGN.md)
 
 **Dahyun Lee** — Biology
 
