@@ -31,4 +31,4 @@ Then open http://localhost:8765/test/.
 - Readings come from `data/crew/{A,B,C,D}_raw.csv`.
 - Colours follow `data/biomarker/biomarker.csv`: yellow column = normal range, red = urgent, otherwise potential. Status also decides when the buffer is sent: a biomarker that newly turns Potential or Urgent sends it.
 - zstd (level 19) runs in the browser via WebAssembly ([`@bokuweb/zstd-wasm`](https://www.npmjs.com/package/@bokuweb/zstd-wasm)). Every file is decompressed again and compared with its rows.
-- See [`docs/data-flow.md`](../docs/data-flow.md) for the numbers and the design history.
+- See the [development document](../docs/DEVELOPMENT.md#data-flow) for the numbers and the design history.

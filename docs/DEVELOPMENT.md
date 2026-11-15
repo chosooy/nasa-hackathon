@@ -1,7 +1,118 @@
-<!-- How crew health data moves from the device to the doctor, and how we got there. Linked from the README and the dashboard's "How it works". -->
+<!-- KOOK development document: how the dashboard works, how data moves from Mars to Earth, and why it is built this way. Linked from the README and the dashboard's "How it works". -->
 [← Back to README](../README.md)
 
-# Data flow
+# KOOK development document
+
+How KOOK works inside: the parts, the data it reads, how a reading becomes Normal, Potential or Urgent, how data travels from Mars to Earth, and the experiments behind those choices.
+
+**Contents**
+
+- [Architecture](#architecture)
+- [Running it](#running-it)
+- [Data](#data)
+- [Status rules](#status-rules)
+- [How the dashboard works](#how-the-dashboard-works)
+- [Data flow](#data-flow)
+- [Packed file format](#packed-file-format)
+- [Test bench and tools](#test-bench-and-tools)
+- [Design history](#design-history)
+
+## Architecture
+
+KOOK is a static web app: plain HTML, CSS and JavaScript with no build step and no server code. Everything runs in the browser and reads CSV files from the repository.
+
+```
+data/*.csv ──fetch──▶ dashboard/app.js ──▶ crew view (#/crew, Mars)
+                         │                    every reading right away
+                         │
+                         └─ sendSchedule ──▶ doctor view (#/doctor, Earth)
+                            buffer → zstd       only files that have arrived (+20 min)
+```
+
+| Part | Files | Role |
+| --- | --- | --- |
+| Dashboard | [`dashboard/`](../dashboard/) (`index.html`, `app.js`, `styles.css`) | The app itself: astronaut and ground doctor screens in one page |
+| Test bench | [`test/`](../test/) | Replays one crew's day as Raw → Astronaut dashboard → Doctor dashboard |
+| Data | [`data/`](../data/) | Crew readings, biomarker rules, health instructions, event calendar |
+| Tools | [`tools/`](../tools/) | Python scripts that generated the demo data and measured compression. Not used at runtime |
+| Assets | [`assets/`](../assets/) | Logos, profile photos, backgrounds, diagrams |
+
+External libraries, all loaded from a CDN:
+
+- [`@bokuweb/zstd-wasm`](https://www.npmjs.com/package/@bokuweb/zstd-wasm) 0.0.22: real Zstandard compression in the browser (WebAssembly)
+- Fonts: Space Grotesk (Google Fonts) and Pretendard
+
+## Running it
+
+Serve the **repository root** over HTTP, because the pages read `../data` and `../assets`:
+
+```bash
+python3 -m http.server 8765
+```
+
+- Dashboard: http://localhost:8765/dashboard/
+- Test bench: http://localhost:8765/test/
+
+GitHub Pages serves `main` at https://chosooy.github.io/nasa-hackathon/. Opening `index.html` as a file does not work, because the browser blocks `fetch` on `file://`.
+
+## Data
+
+| File | Columns | Used for |
+| --- | --- | --- |
+| `data/crew/{A,B,C,D}_raw.csv` | `date,time,biomarker,figure` | Readings for Nov 1–30, 2026, mostly every 5 minutes |
+| `data/biomarker/biomarker.csv` | `biomarker, category, summary, method, period, baseline, hazard, yellow, red, …, unit` | Status thresholds (`yellow`, `red`), units. Its row order also gives each biomarker its id in packed files |
+| `data/health_instruction/health_instruction.csv` | `biomarker, category, summary, method, period, baseline, hazard, yellow_instruction, red_instruction, unit` | Summaries, the hazards each biomarker belongs to, and what to do for Potential (`yellow_instruction`) and Urgent (`red_instruction`) |
+| `data/biomarker/raw biomarker.csv` | every column from the research | Detail page: Earth vs space comparison, measurement criteria and timing |
+| `data/calendar/events.csv` | `event_id,date,start_time,end_time,duration_min,crew,category,title,hazard` | Crew schedules and the hazard tag on each event |
+
+See [`data/README.md`](../data/README.md) for how the biomarker data was put together.
+
+On load, `app.js` fetches every file, parses it with a small CSV parser (`parseCSV`) and builds one in-memory model (`buildModel` → `DB`):
+
+- `DB.rules[biomarker]`: parsed `yellow` / `red` thresholds and unit
+- `DB.info[biomarker]`: summary, hazards and instructions
+- `DB.crews[A–D]`: each crew's readings as a time-sorted series per biomarker, plus daily mean/min/max for continuous biomarkers (more than 200 readings) and the send schedule (`files`)
+
+## Status rules
+
+Every reading gets one of three statuses from `biomarker.csv` (`statusOf`):
+
+| Status | Rule |
+| --- | --- |
+| **Urgent** | The value matches the `red` column |
+| **Potential** | Otherwise, the value is outside the `yellow` column (the normal range) |
+| **Normal** | Otherwise |
+
+- Thresholds are written as text such as `<120 mmHg`, `36.1–37.2 °C` or `<40 OR >120 beats/min`. `parseRule` turns them into comparisons. Rules relative to the astronaut's own baseline (`B-2SD`) are skipped for now.
+- A biomarker's current status is its **latest reading** at the dashboard clock (`valueAt`).
+- **Hazard board.** Each biomarker belongs to one or more of NASA's five hazards (Radiation, Isolation, Distance, Gravity, Habitat) through the `hazard` column. A hazard takes the worst status among its Potential/Urgent biomarkers (`hazardStatus`).
+- **Instructions.** Potential shows `yellow_instruction`, Urgent shows `red_instruction` (`instructionFor`).
+
+## How the dashboard works
+
+**One page, hash routes.** `index.html` holds an empty `#app`. `render()` reads `location.hash` and writes the whole screen as an HTML string:
+
+| Route | Screen |
+| --- | --- |
+| `#/` | Landing |
+| `#/select` | Onboarding: choose crew member and location |
+| `#/crew` · `/day/<date>` · `/instructions` · `/bio/<name>` · `/chat` · `/profile` | Astronaut screens |
+| `#/doctor` · `/crew/<A–D>` · `/instructions` · `/attention` · `/bio/<name>` · `/chat` · `/profile` | Ground doctor screens |
+
+**The clock.** The data covers Nov 1–30, 2026. The dashboard folds real time into that window (`simNow`), so "now" moves forward at real speed and loops back to Nov 1 after Nov 30. A timer runs every second to update clocks, deliver chat messages and files, and roll over to the next day.
+
+**Two views of the same data.** The astronaut and the doctor see different data on purpose:
+
+- **Astronaut (Mars), `DB.view = 'live'`:** every reading up to now.
+- **Doctor (Earth), `DB.view = 'earth'`:** only readings whose file has already arrived (`earthCrew`). It is rebuilt once per simulated minute, and the doctor's screen re-renders when a new file lands.
+
+`withCrew(c, fn)` switches the current crew, so the same page functions draw any crew's data.
+
+**Charts** are hand-written SVG strings (`zoneChart`, `areaChart`, `donutSvg`) with Normal / Potential / Urgent bands drawn behind the line.
+
+**Saved in the browser.** Chat, doctor edits to instructions and library additions are saved in `localStorage` (keys start with `kook.`). For the demo both roles share it in the same browser.
+
+## Data flow
 
 ![KOOK data flow: raw readings → astronaut dashboard (buffer) → zstd, 20 min → doctor dashboard](../assets/diagram/data_flow.png)
 
@@ -20,7 +131,7 @@ Crew health data goes through three stages:
 
 That means a new problem reaches the doctor 20 minutes after it is measured, and everything else arrives in larger files that compress much better.
 
-- **Packing + zstd.** Before compression the buffer is packed as **columns + deltas** (option f in [Shrinking further](#shrinking-further-under-the-same-rule)).
+- **Packing + zstd.** Before compression the buffer is packed as **columns + deltas** (option f in [Shrinking further](#shrinking-further-under-the-same-rule); byte layout in [Packed file format](#packed-file-format)).
   - Readings are grouped by biomarker. The id comes from the row order of `data/biomarker/biomarker.csv`, which both sides hold.
   - Each time and value is stored as the change from the previous one, as small whole numbers.
   - Then real Zstandard compression (level 19) runs in the browser via WebAssembly ([`@bokuweb/zstd-wasm`](https://www.npmjs.com/package/@bokuweb/zstd-wasm)), called from JavaScript.
@@ -45,7 +156,7 @@ That means a new problem reaches the doctor 20 minutes after it is measured, and
 
 For comparison, sending every 5-minute slot as its own CSV + zstd file kept the doctor exactly 20 minutes behind on everything, but came to about 64% of raw (see Design history).
 
-## The trade-off
+### The trade-off
 
 This flow does **not** give the smallest possible size. zstd shrinks data better the more it gets at once, because repeated dates and biomarker names are stored only once. So the longer Mars waits, the smaller the data, and the later the doctor sees it:
 
@@ -57,7 +168,7 @@ This flow does **not** give the smallest possible size. zstd shrinks data better
 
 We chose the middle row on purpose. It costs only 2–4 percentage points more than sending once a day, and in return a new problem reaches the doctor in 20 minutes instead of the next day.
 
-## Shrinking further under the same rule
+### Shrinking further under the same rule
 
 Same send rule, same files, packed differently. Every option is decoded again and must give back the same readings. Measured on 2026-11-13 by [`tools/compression_options.py`](../tools/compression_options.py) (dictionaries trained on Nov 1–12 files made by the same rule):
 
@@ -86,7 +197,31 @@ What we learned:
 
 **Applied: option f.** The dashboard and the test bench now pack every file as columns + deltas before zstd (`packReadings` and `unpackReadings` in [`dashboard/app.js`](../dashboard/app.js) and [`test/app.js`](../test/app.js)). On the dashboard, Crew A's 13:00 file on Nov 14 went from 772 B (CSV + zstd) to 264 B, from 8.1 KB of CSV.
 
-# Design history
+## Packed file format
+
+Each file sent to Earth is the buffer packed as **columns + deltas** (`packReadings`), then compressed with zstd level 19. Both sides hold `biomarker.csv`, so a biomarker travels as its row number, not its name.
+
+```
+varint  day        days since 2026-01-01 of the file's first reading
+varint  groups     number of biomarkers in the file
+per biomarker:
+  varint  id         row number in biomarker.csv
+  byte    decimals   e.g. 1 → 142.1 is stored as 1421
+  varint  count
+  count × (varint Δminutes, varint zigzag(Δvalue))
+```
+
+- Minutes count from 00:00 of `day`, so a file can cross midnight.
+- Every time and value is the **change from the previous one**. Readings that barely move become runs of tiny numbers, which zstd squeezes very well.
+- `varint` uses 7 bits per byte. `zigzag` maps negative changes to small positive numbers.
+- After compressing, the file is decompressed and unpacked again (`unpackReadings`) and must give back the same readings (`sameReadings`). The dashboard shows `✓ verified` for it.
+
+## Test bench and tools
+
+- **[Test bench](../test/)** ([`test/app.js`](../test/app.js)) replays one crew's day through the same rules: the send schedule, packing, zstd and the 20-minute delay. It also reads each new Potential/Urgent instruction aloud. See [`test/README.md`](../test/README.md).
+- **[Tools](../tools/)** are the Python scripts that generated Crews B–D and measured every option in this document. See [`tools/README.md`](../tools/README.md).
+
+## Design history
 
 **Step 2, one zstd file per 5-minute slot.** Every slot, whatever its status, went to the doctor 20 minutes after it was measured. It was simple, but each file held only about four readings, so a day came to ~29 KB (64% of raw). We also considered sending on any Potential/Urgent reading, else once a day: that cut Crews B–D to ~9%, but Crew A's blood pressure is Potential all day, so it still sent every 5 minutes (64%). Counting only *new* Potential/Urgent readings and adding the 6-hour cap gave the current flow.
 
@@ -97,7 +232,7 @@ What we learned:
 
 We later added a shared zstd dictionary for the hot lane. That design was replaced by step 2. These are the measurements we made along the way.
 
-## Size experiments (hot/cold design)
+### Size experiments (hot/cold design)
 
 All numbers are for one 24-hour day (2026-11-13) of crew data, measured with real zstd (level 19). Status rules come from `data/biomarker/biomarker.csv`. The scripts live outside the repo; the method is described here so the numbers can be redone.
 

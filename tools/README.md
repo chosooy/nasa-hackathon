@@ -1,6 +1,6 @@
 # Tools
 
-Python scripts we used to build the demo data and to measure the Mars–Earth data flow. None of them run in the dashboard; they produced the data in `data/crew/` and the numbers in [`docs/data-flow.md`](../docs/data-flow.md).
+Python scripts we used to build the demo data and to measure the Mars–Earth data flow. None of them run in the dashboard; they produced the data in `data/crew/` and the numbers in [`docs/DEVELOPMENT.md`](../docs/DEVELOPMENT.md).
 
 The measuring scripts need `zstandard` (`pip install zstandard`); the data scripts use only the standard library.
 

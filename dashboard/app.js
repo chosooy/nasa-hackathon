@@ -493,7 +493,7 @@ function todayArt() {
 const LIGHT_MS = 20 * 60 * 1000;
 const ZSTD_LEVEL = 19;
 const ZSTD_PKG = 'https://cdn.jsdelivr.net/npm/@bokuweb/zstd-wasm@0.0.22';
-const TX_DOC = 'https://github.com/chosooy/nasa-hackathon/blob/main/docs/data-flow.md';
+const TX_DOC = 'https://github.com/chosooy/nasa-hackathon/blob/main/docs/DEVELOPMENT.md#data-flow';
 const TX = { zstd: null, loading: null, error: null, cache: new Map() };
 
 function loadZstd() {

@@ -121,7 +121,7 @@ KOOK sorts each biomarker into one of three severity levels: **Urgent**, **Poten
 - The crew dashboard shows every reading right away.
 - Readings go to the doctor's dashboard as small compressed files. A new Potential or Urgent reading is sent at once, and everything else at least every 6 hours.
 - Each file arrives 20 minutes later, the one-way light delay. Chat has the same delay.
-- See [Data flow](docs/data-flow.md) for the details and the experiments behind it.
+- See the [development document](docs/DEVELOPMENT.md#data-flow) for the details and the experiments behind it.
 
 ## Screens
 
@@ -182,7 +182,7 @@ Our team's greatest strength is the way we bring together different perspectives
 - Created the dummy crew data: a month of readings for four crew members, each with a different mix of Normal, Potential and Urgent biomarkers.
 - Designed the data compression for the Mars–Earth link and measured it. Readings are buffered on Mars and sent when a biomarker newly turns Potential or Urgent, or every 6 hours. Each file is packed as columns + deltas and compressed with zstd, which brings a day of data to about 4% of its raw size.
 
-📎 [Data flow](docs/data-flow.md)
+📎 [Development](docs/DEVELOPMENT.md)
 
 **Haejun Paik** — Design
 
@@ -207,7 +207,7 @@ Our team's greatest strength is the way we bring together different perspectives
 | [`dashboard/`](dashboard/) | The KOOK dashboard (crew and ground doctor views). See [`dashboard/README.md`](dashboard/README.md) |
 | [`test/`](test/) | Test bench: replays a crew's day as Raw → Astronaut dashboard → Doctor dashboard |
 | [`data/`](data/) | Crew readings (`crew/{A,B,C,D}_raw.csv`), biomarker rules, health instructions, event calendar |
-| [`docs/`](docs/) | [Data flow](docs/data-flow.md): how data moves from Mars to Earth, and the design history |
+| [`docs/`](docs/) | [Development](docs/DEVELOPMENT.md): architecture, status rules, data flow from Mars to Earth, design history |
 | [`tools/`](tools/) | Scripts behind the size measurements |
 | [`assets/`](assets/) | Logos, profile photos, backgrounds, diagrams |
 
