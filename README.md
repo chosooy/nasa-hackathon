@@ -2,6 +2,10 @@
   <img src="assets/logo/banner.png" width="100%" alt="KOOK banner">
 </p>
 
+<p align="center">
+  <a href="https://chosooy.github.io/nasa-hackathon/dashboard/"><img src="assets/preview/live-dashboard-button.png" width="80%" alt="▶ Open the Live Dashboard"></a>
+</p>
+
 <div align="center">
 
 <table>
