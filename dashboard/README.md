@@ -1,3 +1,5 @@
+[← Back to README](../README.md)
+
 # KOOK Dashboard
 
 Static web dashboard built from the Figma **최종** section (astronaut + ground doctor screens).
